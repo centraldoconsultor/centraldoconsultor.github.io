@@ -128,10 +128,17 @@ let filtro = "todos", aberta = null, dados = { contatos:[], msgs:[], sugs:[], fu
 const { data: { session } } = await db.auth.getSession();
 if (!session) {
   document.body.innerHTML = `<div class="login"><h2 style="margin-top:0">Caixa de Entrada</h2>
-    <p style="color:var(--suave)">Entre com o seu e-mail. Você recebe um link de acesso.</p>
-    <input id="em" type="email" placeholder="seu e-mail" autocomplete="email"><button id="go">Receber link</button>
+    <input id="em" type="email" placeholder="seu e-mail" autocomplete="email">
+    <input id="pw" type="password" placeholder="senha" autocomplete="current-password">
+    <button id="entrar">Entrar</button>
+    <p style="text-align:center"><a href="#" id="go" style="color:var(--verde)">Prefiro receber um link por e-mail</a></p>
     <p id="msg" style="color:var(--suave)"></p></div>`;
-  $("go").onclick = async () => {
+  $("entrar").onclick = async () => {
+    const { error } = await db.auth.signInWithPassword({ email: $("em").value.trim(), password: $("pw").value });
+    if (error) $("msg").textContent = "Nao foi possivel: " + error.message; else location.reload();
+  };
+  $("pw").onkeydown = (e) => { if (e.key === "Enter") $("entrar").click(); };
+  $("go").onclick = async (e) => { e.preventDefault();
     const { error } = await db.auth.signInWithOtp({ email: $("em").value.trim(), options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: false } });
     $("msg").textContent = error ? "Nao foi possivel: " + error.message : "Link enviado. Abra no seu e-mail neste aparelho.";
   };
