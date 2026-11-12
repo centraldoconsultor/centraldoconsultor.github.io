@@ -88,6 +88,7 @@
       <button data-f="ia">IA atendendo</button>
       <button data-f="cotar">Pronto p/ cotar</button>
       <button data-f="fim">Encerradas</button>
+      <button data-f="app">No app</button>
     </div>
     <div id="itens"><div class="aviso">Carregando…</div></div>
   </main>
@@ -171,29 +172,30 @@ async function iniciar() {
 async function carregar() {
   const [c, m, s, f] = await Promise.all([
     db.from("contatos").select("*"),
-    db.from("mensagens").select("contato_id,direcao,tipo,texto,criado_em").order("criado_em", { ascending: true }).limit(2000),
+    db.from("mensagens").select("contato_id,direcao,tipo,texto,criado_em").order("criado_em", { ascending: false }).limit(3000),
     db.from("sugestoes").select("*").order("criado_em", { ascending: true }),
     db.from("funil_leads").select("*"),
   ]);
-  dados = { contatos: c.data ?? [], msgs: m.data ?? [], sugs: s.data ?? [], funil: f.data ?? [] };
+  dados = { contatos: c.data ?? [], msgs: (m.data ?? []).reverse(), sugs: s.data ?? [], funil: f.data ?? [] };
   aberta ? desenharConversa() : desenharLista();
 }
 
 function situacao(ct) {
   if (ct.etiqueta === "ENCERRADO" || ct.etiqueta === "FECHADO") return "fim";
+  if (ct.etiqueta === "APP") return "app";
   const pend = dados.sugs.some((s) => s.contato_id === ct.id && ["pendente", "erro"].includes(s.status));
   if (pend || ct.etiqueta === "ASSUMIDO") return "voce";
   if (dados.funil.some((f) => f.contato_id === ct.id)) return "cotar";
   return "ia";
 }
-const ROTULO = { ia:["IA atendendo","t-ia"], voce:["Precisa de você","t-voce"], cotar:["Pronto para cotar","t-cotar"], fim:["Encerrada","t-fim"] };
+const ROTULO = { ia:["IA atendendo","t-ia"], voce:["Precisa de você","t-voce"], cotar:["Pronto para cotar","t-cotar"], fim:["Encerrada","t-fim"], app:["No app","t-fim"] };
 
 function desenharLista() {
   const linhas = dados.contatos.map((ct) => {
     const ms = dados.msgs.filter((m) => m.contato_id === ct.id);
     const ult = ms[ms.length - 1];
     return { ct, ult, sit: situacao(ct), quando: ult ? new Date(ult.criado_em).getTime() : 0 };
-  }).filter((l) => filtro === "todos" ? l.sit !== "fim" : l.sit === filtro)
+  }).filter((l) => filtro === "todos" ? !["fim", "app"].includes(l.sit) : l.sit === filtro)
     .sort((a, b) => ((b.sit === "voce") - (a.sit === "voce")) || (b.quando - a.quando));
   if (!linhas.length) { $("itens").innerHTML = `<div class="vazio">Nenhuma conversa aqui.</div>`; return; }
   $("itens").innerHTML = linhas.map(({ ct, ult, sit }) => {
@@ -213,8 +215,8 @@ function desenharConversa(rolar) {
   const ct = dados.contatos.find((c) => c.id === aberta); if (!ct) return;
   $("cNome").textContent = (ct.nome_perfil || "Sem nome") + " · " + fone(ct.wa_id);
   const sit = situacao(ct);
-  $("bAssumir").style.display = ct.etiqueta === "ASSUMIDO" || sit === "fim" ? "none" : "";
-  $("bIA").style.display = ct.etiqueta === "ASSUMIDO" ? "" : "none";
+  $("bAssumir").style.display = ["ASSUMIDO", "APP"].includes(ct.etiqueta) || sit === "fim" ? "none" : "";
+  $("bIA").style.display = ["ASSUMIDO", "APP"].includes(ct.etiqueta) ? "" : "none";
   $("bEncerrar").style.display = sit === "fim" ? "none" : "";
 
   const f = dados.funil.find((x) => x.contato_id === ct.id);
