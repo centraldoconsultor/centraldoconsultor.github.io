@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Conectar WhatsApp — Central</title>
+<style>
+  :root { --fundo:#f3f4f6; --card:#ffffff; --texto:#1f2328; --suave:#6b7280; --linha:#e5e7eb;
+          --verde:#0b6b3a; --verdeClaro:#dcfce7; --amarelo:#a16207; --amareloClaro:#fef3c7; --vermelho:#b42318; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fundo:#0d1117; --card:#161b22; --texto:#e6edf3; --suave:#9198a1; --linha:#30363d;
+            --verde:#3fb950; --verdeClaro:#12261b; --amarelo:#e3b341; --amareloClaro:#2b2111; --vermelho:#f85149; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--fundo); color:var(--texto); font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  header { background:var(--verde); color:#fff; padding:12px 16px; display:flex; align-items:center; gap:10px; }
+  header h1 { font-size:17px; margin:0; flex:1; }
+  header a { color:#fff; text-decoration:none; background:rgba(255,255,255,.18); border-radius:8px; padding:6px 10px; font-size:14px; }
+  main { max-width:640px; margin:0 auto; padding:16px; }
+  .card { background:var(--card); border:1px solid var(--linha); border-radius:12px; padding:16px; margin-bottom:14px; }
+  h2 { font-size:16px; margin:0 0 8px; }
+  ol, ul { padding-left:1.2rem; margin:6px 0; }
+  li { margin:4px 0; }
+  label.chk { display:flex; gap:10px; align-items:flex-start; margin:8px 0; cursor:pointer; }
+  label.chk input { margin-top:4px; width:18px; height:18px; }
+  button.principal { width:100%; padding:14px; border:0; border-radius:10px; background:#1877f2; color:#fff; font:600 16px system-ui; cursor:pointer; }
+  button.principal:disabled { background:var(--linha); color:var(--suave); cursor:not-allowed; }
+  .alerta { background:var(--amareloClaro); color:var(--texto); border-left:4px solid var(--amarelo); border-radius:8px; padding:10px 12px; margin:10px 0; font-size:14px; }
+  .ok { background:var(--verdeClaro); border-left:4px solid var(--verde); border-radius:8px; padding:10px 12px; }
+  .erro { color:var(--vermelho); }
+  #log { font:13px/1.5 ui-monospace,Menlo,monospace; white-space:pre-wrap; color:var(--suave); margin-top:10px; }
+  .suave { color:var(--suave); font-size:14px; }
+</style>
+</head>
+<body>
+<header><h1>Conectar número do WhatsApp</h1><a href="../caixa/">Caixa</a></header>
+<main>
+  <div id="semLogin" class="card" style="display:none">
+    <h2>Entre primeiro</h2>
+    <p>Faça login na <a href="../caixa/">Caixa de Entrada</a> e depois volte para esta página.</p>
+  </div>
+
+  <div id="tela" style="display:none">
+    <div class="card">
+      <h2>O que acontece ao conectar</h2>
+      <ul>
+        <li>Seu WhatsApp Business continua funcionando normal no celular, com as mesmas conversas.</li>
+        <li>As mensagens novas também passam a chegar na Central, e a IA pode sugerir respostas.</li>
+        <li>Quem já é seu contato ou já conversou com você fica com a etiqueta <b>No app</b>: a IA não responde essas pessoas.</li>
+        <li>O número entra em <b>modo aprovação</b>: a IA só sugere, você aprova na Caixa. O automático você liga depois, quando quiser.</li>
+        <li>Se você responder pelo celular uma conversa que a IA estava atendendo, a IA sai dela na hora.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Antes de começar, confirme</h2>
+      <label class="chk"><input type="checkbox" class="pre"> O app WhatsApp Business está atualizado e aberto no celular deste número.</label>
+      <label class="chk"><input type="checkbox" class="pre"> Fiz backup das conversas no app (Configurações › Conversas › Backup).</label>
+      <label class="chk"><input type="checkbox" class="pre"> Sei que preciso abrir o app no celular pelo menos 1 vez a cada 14 dias para a conexão continuar.</label>
+      <label class="chk"><input type="checkbox" class="pre"> Vou aceitar compartilhar o histórico quando o WhatsApp perguntar (é o que ensina a IA a escrever como eu).</label>
+      <div class="alerta">Durante a conexão o WhatsApp mostra um QR code ou pede uma confirmação <b>no celular</b>. É só seguir o que aparecer na tela do app.</div>
+      <button id="bConectar" class="principal" disabled>Conectar com o Facebook</button>
+      <p id="naoPronto" class="suave" style="display:none">Esta tela ainda não está liberada: falta a aprovação da Meta (verificação da empresa e Provedor de Tecnologia). Assim que sair, ela é ativada.</p>
+      <div id="resultado"></div>
+      <div id="log"></div>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+const db = createClient("https://tqhrjivlfpexmhkwakwl.supabase.co", "sb_publishable_vI455mCunOwgHkEaPra01w_05Ynugib");
+
+// Preenchido depois que a Meta liberar (Login do Facebook para Empresas › Configurações)
+const CONFIG_ID = "";
+const APP_ID = "1161114629905065";
+const VERSAO = "v23.0";
+
+const $ = (id) => document.getElementById(id);
+const log = (t) => { $("log").textContent += t + String.fromCharCode(10); };
+
+const { data: { session } } = await db.auth.getSession();
+if (!session) { $("semLogin").style.display = ""; }
+else {
+  $("tela").style.display = "";
+  const pres = [...document.querySelectorAll(".pre")];
+  const atualizar = () => { $("bConectar").disabled = !CONFIG_ID || !pres.every((c) => c.checked); };
+  pres.forEach((c) => c.onchange = atualizar);
+  if (!CONFIG_ID) $("naoPronto").style.display = "";
+  atualizar();
+  iniciarFacebook();
+}
+
+let sessao = null, codigo = null, enviado = false;
+
+function iniciarFacebook() {
+  window.fbAsyncInit = () => FB.init({ appId: APP_ID, autoLogAppEvents: true, xfbml: false, version: VERSAO });
+  const s = document.createElement("script");
+  s.src = "https://connect.facebook.net/pt_BR/sdk.js"; s.async = true; s.defer = true; s.crossOrigin = "anonymous";
+  document.body.appendChild(s);
+
+  // O cadastro da Meta avisa por mensagem qual conta e numero foram escolhidos
+  window.addEventListener("message", (ev) => {
+    if (!String(ev.origin).endsWith("facebook.com")) return;
+    let d; try { d = typeof ev.data === "string" ? JSON.parse(ev.data) : ev.data; } catch { return; }
+    if (d?.type !== "WA_EMBEDDED_SIGNUP") return;
+    if (String(d.event).startsWith("FINISH")) {
+      sessao = d.data; log("Meta: " + d.event + " (numero " + (d.data?.phone_number_id ?? "?") + ")");
+      concluir();
+    } else if (d.event === "CANCEL") {
+      log("Cancelado na etapa: " + (d.data?.current_step ?? "?"));
+      mostrar("Conexão cancelada. Nada foi alterado no seu número.", true);
+    } else if (d.event === "ERROR") {
+      log("Erro da Meta: " + (d.data?.error_message ?? ""));
+      mostrar("A Meta informou um erro: " + (d.data?.error_message ?? "sem detalhe"), true);
+    }
+  });
+
+  $("bConectar").onclick = () => {
+    $("log").textContent = ""; $("resultado").innerHTML = ""; sessao = null; codigo = null; enviado = false;
+    FB.login((resp) => {
+      if (resp.authResponse?.code) { codigo = resp.authResponse.code; log("Codigo recebido"); concluir(); }
+      else if (!sessao) mostrar("Conexão não concluída. Nada foi alterado no seu número.", true);
+    }, {
+      config_id: CONFIG_ID, response_type: "code", override_default_response_type: true,
+      extras: { setup: {}, featureType: "whatsapp_business_app_onboarding", sessionInfoVersion: "3" },
+    });
+  };
+}
+
+async function concluir() {
+  if (!codigo || !sessao || enviado) return;
+  enviado = true;
+  mostrar("Finalizando a conexão na Central...");
+  const { data, error } = await db.functions.invoke("onboarding", {
+    body: { code: codigo, waba_id: sessao.waba_id, phone_number_id: sessao.phone_number_id },
+  });
+  const r = data ?? (await error?.context?.json?.().catch(() => null));
+  (r?.passos ?? []).forEach((p) => log("• " + p));
+  if (r?.ok) mostrar("<b>Pronto!</b> Número " + (r.numero ?? "") + " conectado. A IA está em modo aprovação. Contatos e histórico vão aparecendo na Caixa nos próximos minutos (filtro “No app”).");
+  else mostrar("Não deu certo: " + (r?.erro ?? error?.message ?? "erro desconhecido") + ". Seu número continua funcionando normal no celular.", true);
+}
+
+function mostrar(html, erro) {
+  $("resultado").innerHTML = '<div class="' + (erro ? "alerta erro" : "ok") + '" style="margin-top:12px">' + html + "</div>";
+}
+</script>
+</body>
+</html>
