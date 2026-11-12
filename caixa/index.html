@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Caixa de Entrada — Central</title>
+<style>
+  :root { --fundo:#f3f4f6; --card:#ffffff; --texto:#1f2328; --suave:#6b7280; --linha:#e5e7eb;
+          --verde:#0b6b3a; --verdeClaro:#dcfce7; --amarelo:#a16207; --amareloClaro:#fef3c7;
+          --azul:#1d4ed8; --azulClaro:#dbeafe; --cinza:#4b5563; --cinzaClaro:#e5e7eb;
+          --baloLead:#ffffff; --baloIA:#dcf8c6; --baloEu:#d1e7ff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fundo:#0d1117; --card:#161b22; --texto:#e6edf3; --suave:#9198a1; --linha:#30363d;
+            --verde:#3fb950; --verdeClaro:#12261b; --amarelo:#e3b341; --amareloClaro:#2b2111;
+            --azul:#58a6ff; --azulClaro:#0f2240; --cinza:#9198a1; --cinzaClaro:#21262d;
+            --baloLead:#21262d; --baloIA:#1b3a2a; --baloEu:#173057; }
+  }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; }
+  body { background:var(--fundo); color:var(--texto); font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  header { position:sticky; top:0; z-index:5; background:var(--verde); color:#fff; padding:12px 16px;
+           display:flex; align-items:center; gap:10px; }
+  header h1 { font-size:17px; margin:0; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  header button { background:rgba(255,255,255,.18); color:#fff; border:0; border-radius:8px; padding:6px 10px; font:inherit; cursor:pointer; }
+  .auto { display:flex; align-items:center; gap:6px; font-size:13px; white-space:nowrap; }
+  main { max-width:760px; margin:0 auto; padding:0 0 24px; }
+  .vazio, .aviso { color:var(--suave); text-align:center; padding:40px 16px; }
+  .item { display:flex; gap:12px; align-items:flex-start; background:var(--card); border-bottom:1px solid var(--linha);
+          padding:12px 16px; cursor:pointer; }
+  .item:active { opacity:.8; }
+  .avatar { width:40px; height:40px; border-radius:50%; background:var(--cinzaClaro); display:flex; align-items:center;
+            justify-content:center; font-weight:600; flex:none; }
+  .meio { flex:1; min-width:0; }
+  .linha1 { display:flex; justify-content:space-between; gap:8px; }
+  .nome { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .hora { color:var(--suave); font-size:12px; flex:none; }
+  .ultima { color:var(--suave); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:14px; }
+  .tag { display:inline-block; font-size:11px; font-weight:600; border-radius:999px; padding:2px 8px; margin-top:4px; }
+  .t-ia { background:var(--verdeClaro); color:var(--verde); }
+  .t-voce { background:var(--amareloClaro); color:var(--amarelo); }
+  .t-cotar { background:var(--azulClaro); color:var(--azul); }
+  .t-fim { background:var(--cinzaClaro); color:var(--cinza); }
+  .filtros { display:flex; gap:8px; padding:10px 16px; overflow-x:auto; }
+  .filtros button { border:1px solid var(--linha); background:var(--card); color:var(--texto); border-radius:999px;
+                    padding:6px 12px; font:inherit; font-size:13px; cursor:pointer; white-space:nowrap; }
+  .filtros button.on { background:var(--verde); color:#fff; border-color:var(--verde); }
+  /* conversa */
+  #conversa { display:none; flex-direction:column; height:100dvh; }
+  #conversa.on { display:flex; }
+  .topo { display:flex; gap:8px; padding:8px 16px; background:var(--card); border-bottom:1px solid var(--linha); flex-wrap:wrap; }
+  .topo button { border:1px solid var(--linha); background:var(--card); color:var(--texto); border-radius:8px; padding:6px 10px; font:inherit; font-size:13px; cursor:pointer; }
+  .topo button.forte { background:var(--amareloClaro); border-color:transparent; color:var(--amarelo); font-weight:600; }
+  .resumo { margin:10px 16px 0; background:var(--azulClaro); color:var(--texto); border-radius:10px; padding:10px 12px; font-size:14px; }
+  .resumo b { color:var(--azul); }
+  .pend { margin:10px 16px 0; background:var(--amareloClaro); border-radius:10px; padding:10px 12px; font-size:14px; }
+  .pend textarea { width:100%; min-height:70px; margin-top:6px; border:1px solid var(--linha); border-radius:8px; padding:8px; font:inherit; background:var(--card); color:var(--texto); }
+  .pend .acoes { display:flex; gap:8px; margin-top:6px; }
+  .pend button { border:0; border-radius:8px; padding:7px 12px; font:inherit; cursor:pointer; }
+  .ok { background:var(--verde); color:#fff; }
+  .nao { background:var(--cinzaClaro); color:var(--texto); }
+  .msgs { flex:1; overflow-y:auto; padding:12px 16px; display:flex; flex-direction:column; gap:6px; }
+  .b { max-width:82%; padding:7px 10px; border-radius:10px; white-space:pre-wrap; word-wrap:break-word; box-shadow:0 1px 1px rgba(0,0,0,.06); }
+  .b small { display:block; text-align:right; color:var(--suave); font-size:11px; margin-top:2px; }
+  .lead { align-self:flex-start; background:var(--baloLead); }
+  .ia { align-self:flex-end; background:var(--baloIA); }
+  .eu { align-self:flex-end; background:var(--baloEu); }
+  .selo { font-size:10px; font-weight:700; color:var(--verde); margin-right:4px; }
+  .janela { color:var(--suave); font-size:12px; text-align:center; padding:4px 16px; }
+  form.enviar { display:flex; gap:8px; padding:10px 16px calc(10px + env(safe-area-inset-bottom)); background:var(--card); border-top:1px solid var(--linha); }
+  form.enviar textarea { flex:1; resize:none; height:42px; border:1px solid var(--linha); border-radius:20px; padding:10px 14px; font:inherit; background:var(--fundo); color:var(--texto); }
+  form.enviar button { border:0; border-radius:20px; background:var(--verde); color:#fff; padding:0 16px; font:inherit; font-weight:600; cursor:pointer; }
+  .login { max-width:380px; margin:60px auto; background:var(--card); border-radius:12px; padding:20px; }
+  .login input { width:100%; padding:10px; border:1px solid var(--linha); border-radius:8px; font:inherit; margin:8px 0; background:var(--fundo); color:var(--texto); }
+  .login button { width:100%; padding:10px; border:0; border-radius:8px; background:var(--verde); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+</style>
+</head>
+<body>
+<div id="lista">
+  <header>
+    <h1>Caixa de Entrada</h1>
+    <label class="auto" title="IA responde sozinha até o fecho da cotação"><input type="checkbox" id="auto"> IA automática</label>
+  </header>
+  <main>
+    <div class="filtros" id="filtros">
+      <button data-f="todos" class="on">Todas</button>
+      <button data-f="voce">Precisa de você</button>
+      <button data-f="ia">IA atendendo</button>
+      <button data-f="cotar">Pronto p/ cotar</button>
+      <button data-f="fim">Encerradas</button>
+    </div>
+    <div id="itens"><div class="aviso">Carregando…</div></div>
+  </main>
+</div>
+
+<div id="conversa">
+  <header>
+    <button id="voltar" aria-label="Voltar">‹</button>
+    <h1 id="cNome">Conversa</h1>
+  </header>
+  <div class="topo">
+    <button id="bAssumir" class="forte">Assumir conversa</button>
+    <button id="bIA">Devolver para a IA</button>
+    <button id="bEncerrar">Encerrar conversa</button>
+  </div>
+  <div id="cResumo"></div>
+  <div id="cPend"></div>
+  <div class="msgs" id="cMsgs"></div>
+  <div class="janela" id="cJanela"></div>
+  <form class="enviar" id="fEnviar">
+    <textarea id="tEnviar" placeholder="Escreva para o lead…" rows="1"></textarea>
+    <button>Enviar</button>
+  </form>
+</div>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+const db = createClient("https://tqhrjivlfpexmhkwakwl.supabase.co", "sb_publishable_vI455mCunOwgHkEaPra01w_05Ynugib");
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const hora = (d) => { const x = new Date(d); const hoje = new Date().toDateString() === x.toDateString();
+  return hoje ? x.toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit" }) : x.toLocaleDateString("pt-BR", { day:"2-digit", month:"2-digit" }); };
+const fone = (w) => w && w.length >= 12 ? `(${w.slice(2,4)}) ${w.slice(4, w.length-4)}-${w.slice(-4)}` : (w || "");
+let filtro = "todos", aberta = null, dados = { contatos:[], msgs:[], sugs:[], funil:[] };
+
+// ---------- login ----------
+const { data: { session } } = await db.auth.getSession();
+if (!session) {
+  document.body.innerHTML = `<div class="login"><h2 style="margin-top:0">Caixa de Entrada</h2>
+    <p style="color:var(--suave)">Entre com o seu e-mail. Você recebe um link de acesso.</p>
+    <input id="em" type="email" placeholder="seu e-mail" autocomplete="email"><button id="go">Receber link</button>
+    <p id="msg" style="color:var(--suave)"></p></div>`;
+  $("go").onclick = async () => {
+    const { error } = await db.auth.signInWithOtp({ email: $("em").value.trim(), options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: false } });
+    $("msg").textContent = error ? "Nao foi possivel: " + error.message : "Link enviado. Abra no seu e-mail neste aparelho.";
+  };
+} else {
+  iniciar();
+}
+
+async function iniciar() {
+  const { data: cfg } = await db.from("config").select("valor").eq("chave", "modo_automatico").maybeSingle();
+  $("auto").checked = cfg?.valor === true;
+  $("auto").onchange = async (e) => {
+    if (e.target.checked && !confirm("Ligar a IA automatica? Ela vai responder sozinha os leads novos ate o fecho da cotacao.")) { e.target.checked = false; return; }
+    await db.from("config").update({ valor: e.target.checked }).eq("chave", "modo_automatico");
+  };
+  $("filtros").onclick = (e) => { const b = e.target.closest("button"); if (!b) return;
+    filtro = b.dataset.f; [...$("filtros").children].forEach((x) => x.classList.toggle("on", x === b)); desenharLista(); };
+  $("voltar").onclick = () => { aberta = null; $("conversa").classList.remove("on"); $("lista").style.display = ""; desenharLista(); };
+  $("bAssumir").onclick = () => etiquetar("ASSUMIDO");
+  $("bIA").onclick = () => etiquetar(null);
+  $("bEncerrar").onclick = () => { if (confirm("Encerrar esta conversa? Ela sai da lista principal e a IA nao responde mais esse contato.")) etiquetar("ENCERRADO"); };
+  $("fEnviar").onsubmit = enviarManual;
+  await carregar();
+  db.channel("caixa")
+    .on("postgres_changes", { event: "*", schema: "public", table: "mensagens" }, carregar)
+    .on("postgres_changes", { event: "*", schema: "public", table: "sugestoes" }, carregar)
+    .subscribe();
+  setInterval(carregar, 20000);
+}
+
+async function carregar() {
+  const [c, m, s, f] = await Promise.all([
+    db.from("contatos").select("*"),
+    db.from("mensagens").select("contato_id,direcao,tipo,texto,criado_em").order("criado_em", { ascending: true }).limit(2000),
+    db.from("sugestoes").select("*").order("criado_em", { ascending: true }),
+    db.from("funil_leads").select("*"),
+  ]);
+  dados = { contatos: c.data ?? [], msgs: m.data ?? [], sugs: s.data ?? [], funil: f.data ?? [] };
+  aberta ? desenharConversa() : desenharLista();
+}
+
+function situacao(ct) {
+  if (ct.etiqueta === "ENCERRADO" || ct.etiqueta === "FECHADO") return "fim";
+  const pend = dados.sugs.some((s) => s.contato_id === ct.id && ["pendente", "erro"].includes(s.status));
+  if (pend || ct.etiqueta === "ASSUMIDO") return "voce";
+  if (dados.funil.some((f) => f.contato_id === ct.id)) return "cotar";
+  return "ia";
+}
+const ROTULO = { ia:["IA atendendo","t-ia"], voce:["Precisa de você","t-voce"], cotar:["Pronto para cotar","t-cotar"], fim:["Encerrada","t-fim"] };
+
+function desenharLista() {
+  const linhas = dados.contatos.map((ct) => {
+    const ms = dados.msgs.filter((m) => m.contato_id === ct.id);
+    const ult = ms[ms.length - 1];
+    return { ct, ult, sit: situacao(ct), quando: ult ? new Date(ult.criado_em).getTime() : 0 };
+  }).filter((l) => filtro === "todos" ? l.sit !== "fim" : l.sit === filtro)
+    .sort((a, b) => ((b.sit === "voce") - (a.sit === "voce")) || (b.quando - a.quando));
+  if (!linhas.length) { $("itens").innerHTML = `<div class="vazio">Nenhuma conversa aqui.</div>`; return; }
+  $("itens").innerHTML = linhas.map(({ ct, ult, sit }) => {
+    const nome = ct.nome_perfil || fone(ct.wa_id);
+    const prev = ult ? (ult.direcao === "saida" ? "Você: " : "") + (ult.texto ?? `[${ult.tipo}]`) : "";
+    return `<div class="item" data-id="${ct.id}">
+      <div class="avatar">${esc((nome || "?").trim()[0] || "?").toUpperCase()}</div>
+      <div class="meio"><div class="linha1"><span class="nome">${esc(nome)}</span><span class="hora">${ult ? hora(ult.criado_em) : ""}</span></div>
+      <div class="ultima">${esc(prev)}</div><span class="tag ${ROTULO[sit][1]}">${ROTULO[sit][0]}</span></div></div>`;
+  }).join("");
+  [...document.querySelectorAll(".item")].forEach((el) => el.onclick = () => abrir(el.dataset.id));
+}
+
+function abrir(id) { aberta = id; $("lista").style.display = "none"; $("conversa").classList.add("on"); desenharConversa(true); }
+
+function desenharConversa(rolar) {
+  const ct = dados.contatos.find((c) => c.id === aberta); if (!ct) return;
+  $("cNome").textContent = (ct.nome_perfil || "Sem nome") + " · " + fone(ct.wa_id);
+  const sit = situacao(ct);
+  $("bAssumir").style.display = ct.etiqueta === "ASSUMIDO" || sit === "fim" ? "none" : "";
+  $("bIA").style.display = ct.etiqueta === "ASSUMIDO" ? "" : "none";
+  $("bEncerrar").style.display = sit === "fim" ? "none" : "";
+
+  const f = dados.funil.find((x) => x.contato_id === ct.id);
+  $("cResumo").innerHTML = f ? `<div class="resumo"><b>Pronto para cotar</b><br>
+    Vidas: ${esc(f.vidas)} · Idades: ${esc((f.idades || []).join(", "))}<br>
+    Cidade: ${esc(f.cidade)} · Uso: ${esc(f.uso)}${f.observacoes ? "<br>Obs.: " + esc(f.observacoes) : ""}</div>` : "";
+
+  const pend = dados.sugs.filter((s) => s.contato_id === ct.id && ["pendente", "erro"].includes(s.status));
+  $("cPend").innerHTML = pend.map((s) => `<div class="pend" data-s="${s.id}">
+    <b>${s.status === "erro" ? "Falha no envio" : (s.passar_para_diego ? "Precisa de você" : "Sugestão da IA")}</b>
+    ${s.motivo ? `<div style="color:var(--suave)">${esc(s.motivo)}</div>` : ""}
+    <textarea>${esc((s.linhas || []).join("\n"))}</textarea>
+    <div class="acoes"><button class="ok" data-a="enviar">Enviar</button><button class="nao" data-a="descartar">Descartar</button></div></div>`).join("");
+  [...$("cPend").querySelectorAll(".pend")].forEach((box) => box.querySelectorAll("button").forEach((b) => b.onclick = () => decidir(box, b.dataset.a)));
+
+  const ms = dados.msgs.filter((m) => m.contato_id === ct.id);
+  const enviadasIA = new Set(dados.sugs.filter((s) => s.contato_id === ct.id && ["enviada", "editada"].includes(s.status) && s.motivo !== "Mensagem do Diego").flatMap((s) => s.linhas || []));
+  $("cMsgs").innerHTML = ms.map((m) => {
+    if (m.direcao === "entrada") return `<div class="b lead">${esc(m.texto ?? "[" + m.tipo + "]")}<small>${hora(m.criado_em)}</small></div>`;
+    const ehIA = enviadasIA.has(m.texto);
+    return `<div class="b ${ehIA ? "ia" : "eu"}">${ehIA ? '<span class="selo">IA</span>' : ""}${esc(m.texto ?? "[" + m.tipo + "]")}<small>${hora(m.criado_em)}</small></div>`;
+  }).join("") || `<div class="vazio">Sem mensagens.</div>`;
+  if (rolar !== false) $("cMsgs").scrollTop = $("cMsgs").scrollHeight;
+
+  const ultLead = [...ms].reverse().find((m) => m.direcao === "entrada");
+  if (ultLead) {
+    const resta = 24 * 3600e3 - (Date.now() - new Date(ultLead.criado_em).getTime());
+    $("cJanela").textContent = resta > 0 ? `Mensagem livre ainda por ${Math.floor(resta / 3600e3)}h${String(Math.floor(resta % 3600e3 / 60e3)).padStart(2, "0")}` : "Janela de 24h encerrada: só mensagem modelo aprovada pela Meta.";
+  } else $("cJanela").textContent = "";
+}
+
+async function etiquetar(valor) {
+  const { error } = await db.from("contatos").update({ etiqueta: valor }).eq("id", aberta);
+  if (error) alert("Erro: " + error.message);
+  await carregar();
+}
+
+async function decidir(box, acao) {
+  box.querySelectorAll("button").forEach((b) => b.disabled = true);
+  const s = dados.sugs.find((x) => x.id === box.dataset.s);
+  const linhas = box.querySelector("textarea").value.split("\n").map((l) => l.trim()).filter(Boolean);
+  const editou = linhas.join("\n") !== (s.linhas || []).join("\n");
+  const tipo = acao === "descartar" ? "descartar" : (editou || !(s.linhas || []).length ? "editar" : "aprovar");
+  const { data, error } = await db.functions.invoke("aprovar-sugestao", { body: { sugestao_id: s.id, acao: tipo, linhas_editadas: linhas } });
+  if (error || data?.ok === false) alert("Nao enviou: " + (data?.erro || error?.message));
+  await carregar();
+}
+
+async function enviarManual(e) {
+  e.preventDefault();
+  const texto = $("tEnviar").value.trim(); if (!texto) return;
+  const linhas = texto.split("\n").map((l) => l.trim()).filter(Boolean);
+  $("tEnviar").disabled = true;
+  const { data: s, error } = await db.from("sugestoes").insert({ contato_id: aberta, linhas, motivo: "Mensagem do Diego" }).select().single();
+  if (!error) {
+    const r = await db.functions.invoke("aprovar-sugestao", { body: { sugestao_id: s.id, acao: "aprovar" } });
+    if (r.error || r.data?.ok === false) alert("Nao enviou: " + (r.data?.erro || r.error?.message));
+    else await db.from("contatos").update({ etiqueta: "ASSUMIDO" }).eq("id", aberta).is("etiqueta", null);
+  } else alert("Erro: " + error.message);
+  $("tEnviar").value = ""; $("tEnviar").disabled = false;
+  await carregar();
+}
+</script>
+</body>
+</html>
