@@ -265,9 +265,9 @@ async function salvarOferta(e) {
 function abrirPerfil() {
 $("lista").style.display = "none"; $("perfil").style.display = "";
 $("pfNome").value = EU.nome || ""; $("pfCorretora").value = EU.corretora || ""; $("pfCidade").value = EU.cidade || ""; $("pfMsg").textContent = "";
-$("pfNumero").innerHTML = EU.phone_number_id
+$("pfNumero").innerHTML = '<b>Plano: ' + (EU.plano === "ia" ? "Com IA" : "Essencial (sem IA)") + '</b>' + (EU.phone_number_id
 ? '<b>WhatsApp conectado</b><span class="aviso" style="padding:0;text-align:left">As mensagens do seu número chegam nesta Caixa. Para trocar de número, fale com o administrador.</span>'
-: '<b>WhatsApp ainda não conectado</b><span class="aviso" style="padding:0;text-align:left">Conecte o seu WhatsApp Business: ele continua funcionando no celular e as conversas novas chegam aqui.</span><a class="ok" href="../conectar/" style="text-align:center;padding:10px;border-radius:8px;text-decoration:none;font-weight:600">Conectar meu número</a>';
+: '<b>WhatsApp ainda não conectado</b><span class="aviso" style="padding:0;text-align:left">Conecte o seu WhatsApp Business: ele continua funcionando no celular e as conversas novas chegam aqui.</span><a class="ok" href="../conectar/" style="text-align:center;padding:10px;border-radius:8px;text-decoration:none;font-weight:600">Conectar meu número</a>');
 }
 async function salvarPerfil(e) {
 e.preventDefault();
@@ -284,6 +284,8 @@ async function iniciar() {
   EU = eu;
   if (!eu) { document.body.innerHTML = '<div class="login"><h2 style="margin-top:0">Conta sem cadastro de consultor</h2><p>Seu login existe, mas ainda não foi liberado como consultor. Fale com o administrador da Central.</p></div>'; return; }
   $("auto").checked = eu.modo_automatico === true;
+  // v2.1: plano essencial (sem IA) esconde o que e da IA
+  if (eu.plano !== "ia") { $("auto").closest("label").style.display = "none"; $("bOfertas").style.display = "none"; const fIA = document.querySelector('#filtros [data-f="ia"]'); if (fIA) fIA.style.display = "none"; }
   $("auto").onchange = async (e) => {
     if (e.target.checked && !confirm("Ligar a IA automatica? Ela vai responder sozinha os leads novos ate o fecho da cotacao.")) { e.target.checked = false; return; }
     const { error: eAuto } = await db.from("consultores").update({ modo_automatico: e.target.checked }).eq("id", EU.id);
@@ -327,6 +329,7 @@ async function carregar() {
 function situacao(ct) {
   if (ct.etiqueta === "ENCERRADO" || ct.etiqueta === "FECHADO") return "fim";
   if (ct.etiqueta === "APP") return "app";
+if (EU && EU.plano !== "ia" && !ct.etiqueta) return "voce";
   const pend = dados.sugs.some((s) => s.contato_id === ct.id && ["pendente", "erro"].includes(s.status));
   if (pend || ct.etiqueta === "ASSUMIDO") return "voce";
   if (dados.funil.some((f) => f.contato_id === ct.id)) return "cotar";
