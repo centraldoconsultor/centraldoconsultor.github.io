@@ -84,6 +84,8 @@
   .of-form input { width:100%; padding:9px; border:1px solid var(--linha); border-radius:8px; font:inherit; background:var(--fundo); color:var(--texto); }
   .of-form .datas { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .of-form button.ok { background:var(--verde); color:#fff; border-color:var(--verde); font-weight:600; }
+.arq { display:inline-block; margin:2px 0; color:var(--azul); font-weight:600; text-decoration:none; }
+form.enviar .clipe { background:var(--cinzaClaro); color:var(--texto); padding:0 12px; font-size:18px; }
 </style>
 </head>
 <body>
@@ -139,6 +141,7 @@
   <div class="msgs" id="cMsgs"></div>
   <div class="janela" id="cJanela"></div>
   <form class="enviar" id="fEnviar">
+<button type="button" class="clipe" id="bClipe" title="Enviar arquivo (cotação, documento, foto)">📎</button><input type="file" id="fArq" hidden>
     <textarea id="tEnviar" placeholder="Escreva para o lead…" rows="1"></textarea>
     <button>Enviar</button>
   </form>
@@ -229,6 +232,9 @@ async function iniciar() {
   $("ofVoltar").onclick = () => { $("ofertas").classList.remove("on"); $("lista").style.display = ""; };
   $("ofForm").onsubmit = salvarOferta;
   $("fEnviar").onsubmit = enviarManual;
+$("bClipe").onclick = () => $("fArq").click();
+$("fArq").onchange = enviarArquivo;
+$("cMsgs").onclick = abrirArquivo;
   await carregar();
   db.channel("caixa")
     .on("postgres_changes", { event: "*", schema: "public", table: "mensagens" }, carregar)
@@ -240,7 +246,7 @@ async function iniciar() {
 async function carregar() {
   const [c, m, s, f] = await Promise.all([
     db.from("contatos").select("*"),
-    db.from("mensagens").select("contato_id,direcao,tipo,texto,criado_em").order("criado_em", { ascending: false }).limit(3000),
+    db.from("mensagens").select("contato_id,direcao,tipo,texto,criado_em,arquivo_path,arquivo_nome,arquivo_mime").order("criado_em", { ascending: false }).limit(3000),
     db.from("sugestoes").select("*").order("criado_em", { ascending: true }),
     db.from("funil_leads").select("*"),
   ]);
@@ -303,9 +309,9 @@ function desenharConversa(rolar) {
   const ms = dados.msgs.filter((m) => m.contato_id === ct.id);
   const enviadasIA = new Set(dados.sugs.filter((s) => s.contato_id === ct.id && ["enviada", "editada"].includes(s.status) && s.motivo !== "Mensagem do Diego").flatMap((s) => s.linhas || []));
   $("cMsgs").innerHTML = ms.map((m) => {
-    if (m.direcao === "entrada") return `<div class="b lead">${esc(m.texto ?? "[" + m.tipo + "]")}<small>${hora(m.criado_em)}</small></div>`;
+    if (m.direcao === "entrada") return `<div class="b lead">${corpo(m)}<small>${hora(m.criado_em)}</small></div>`;
     const ehIA = enviadasIA.has(m.texto);
-    return `<div class="b ${ehIA ? "ia" : "eu"}">${ehIA ? '<span class="selo">IA</span>' : ""}${esc(m.texto ?? "[" + m.tipo + "]")}<small>${hora(m.criado_em)}</small></div>`;
+    return `<div class="b ${ehIA ? "ia" : "eu"}">${ehIA ? '<span class="selo">IA</span>' : ""}${corpo(m)}<small>${hora(m.criado_em)}</small></div>`;
   }).join("") || `<div class="vazio">Sem mensagens.</div>`;
   if (rolar !== false) $("cMsgs").scrollTop = $("cMsgs").scrollHeight;
 
@@ -314,6 +320,41 @@ function desenharConversa(rolar) {
     const resta = 24 * 3600e3 - (Date.now() - new Date(ultLead.criado_em).getTime());
     $("cJanela").textContent = resta > 0 ? `Mensagem livre ainda por ${Math.floor(resta / 3600e3)}h${String(Math.floor(resta % 3600e3 / 60e3)).padStart(2, "0")}` : "Janela de 24h encerrada: só mensagem modelo aprovada pela Meta.";
   } else $("cJanela").textContent = "";
+}
+
+function corpo(m) {
+if (!m.arquivo_path) return esc(m.texto ?? "[" + m.tipo + "]");
+const nome = m.arquivo_nome || m.arquivo_path.split("/").pop();
+return '<a href="#" class="arq" data-p="' + esc(m.arquivo_path) + '" data-n="' + esc(nome) + '">📎 ' + esc(nome) + '</a>' + (m.texto ? "\n" + esc(m.texto) : "");
+}
+
+async function abrirArquivo(e) {
+const a = e.target.closest("a.arq"); if (!a) return;
+e.preventDefault();
+const w = window.open("", "_blank");
+const { data, error } = await db.storage.from("arquivos").createSignedUrl(a.dataset.p, 600, { download: a.dataset.n });
+if (error) { if (w) w.close(); alert("Não foi possível baixar: " + error.message); return; }
+if (w) w.location = data.signedUrl; else location.href = data.signedUrl;
+}
+
+async function enviarArquivo() {
+const arq = $("fArq").files[0]; $("fArq").value = "";
+if (!arq || !aberta) return;
+if (arq.size > 50 * 1024 * 1024) { alert("Arquivo maior que 50 MB."); return; }
+const legenda = $("tEnviar").value.trim();
+if (!confirm('Enviar "' + arq.name + '" para este contato' + (legenda ? " com o texto escrito como legenda" : "") + "?")) return;
+$("bClipe").disabled = true; $("bClipe").textContent = "…";
+const seguro = arq.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w.\-]+/g, "_");
+const path = aberta + "/envio-" + Date.now() + "-" + seguro;
+const up = await db.storage.from("arquivos").upload(path, arq, { contentType: arq.type || "application/octet-stream" });
+if (up.error) alert("Não subiu: " + up.error.message);
+else {
+const { data, error } = await db.functions.invoke("enviar-arquivo", { body: { contato_id: aberta, path, nome: arq.name, mime: arq.type, legenda } });
+if (error || data?.ok === false) alert("Não enviou: " + (data?.erro || error?.message));
+else $("tEnviar").value = "";
+}
+$("bClipe").disabled = false; $("bClipe").textContent = "📎";
+await carregar();
 }
 
 async function etiquetar(valor) {
