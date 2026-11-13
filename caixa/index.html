@@ -73,12 +73,24 @@
   .login { max-width:380px; margin:60px auto; background:var(--card); border-radius:12px; padding:20px; }
   .login input { width:100%; padding:10px; border:1px solid var(--linha); border-radius:8px; font:inherit; margin:8px 0; background:var(--fundo); color:var(--texto); }
   .login button { width:100%; padding:10px; border:0; border-radius:8px; background:var(--verde); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+  #ofertas { display:none; }
+  #ofertas.on { display:block; }
+  .of-item { background:var(--card); border-bottom:1px solid var(--linha); padding:12px 16px; display:flex; gap:10px; align-items:center; }
+  .of-item .meio { flex:1; min-width:0; }
+  .of-item small { color:var(--suave); display:block; }
+  .of-item button, .of-form button { border:1px solid var(--linha); background:var(--card); color:var(--texto); border-radius:8px; padding:6px 10px; font:inherit; cursor:pointer; }
+  .of-off { opacity:.5; }
+  .of-form { background:var(--card); margin:12px 16px; border:1px solid var(--linha); border-radius:12px; padding:14px; display:grid; gap:8px; }
+  .of-form input { width:100%; padding:9px; border:1px solid var(--linha); border-radius:8px; font:inherit; background:var(--fundo); color:var(--texto); }
+  .of-form .datas { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .of-form button.ok { background:var(--verde); color:#fff; border-color:var(--verde); font-weight:600; }
 </style>
 </head>
 <body>
 <div id="lista">
   <header>
     <h1>Caixa de Entrada</h1>
+    <button id="bOfertas" type="button">Ofertas</button>
     <label class="auto" title="IA responde sozinha até o fecho da cotação"><input type="checkbox" id="auto"> IA automática</label>
   </header>
   <main>
@@ -91,6 +103,24 @@
       <button data-f="app">No app</button>
     </div>
     <div id="itens"><div class="aviso">Carregando…</div></div>
+  </main>
+</div>
+
+<div id="ofertas">
+  <header>
+    <button id="ofVoltar" aria-label="Voltar">‹</button>
+    <h1>Ofertas do mês</h1>
+  </header>
+  <main>
+    <p class="aviso" style="padding:14px 16px;text-align:left">A IA só cita ofertas ativas e dentro da validade, com as mesmas palavras daqui. Nunca passa valor de mensalidade.</p>
+    <div id="ofLista"><div class="aviso">Carregando…</div></div>
+    <form class="of-form" id="ofForm">
+      <b>Nova oferta</b>
+      <input id="ofOp" placeholder="Operadora (ex.: MedSenior)" required>
+      <input id="ofDesc" placeholder="Oferta (ex.: 10% de desconto nas mensalidades)" required>
+      <div class="datas"><label>Início<input type="date" id="ofIni" required></label><label>Fim<input type="date" id="ofFim" required></label></div>
+      <button class="ok" type="submit">Salvar oferta</button>
+    </form>
   </main>
 </div>
 
@@ -147,6 +177,41 @@ if (!session) {
   iniciar();
 }
 
+
+function hojeISO() { return new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }); }
+function dataBR(d) { return String(d || "").split("-").reverse().join("/"); }
+async function abrirOfertas() {
+  $("lista").style.display = "none"; $("ofertas").classList.add("on");
+  const h = hojeISO(); const fimMes = new Date(); fimMes.setMonth(fimMes.getMonth() + 1, 0);
+  if (!$("ofIni").value) $("ofIni").value = h;
+  if (!$("ofFim").value) $("ofFim").value = fimMes.toLocaleDateString("en-CA");
+  await carregarOfertas();
+}
+async function carregarOfertas() {
+  const { data, error } = await db.from("ofertas").select("*").order("fim", { ascending: false });
+  if (error) { $("ofLista").innerHTML = '<div class="aviso">Não foi possível carregar as ofertas.</div>'; return; }
+  const h = hojeISO();
+  $("ofLista").innerHTML = (data || []).map(function (o) {
+    const vale = o.ativo && o.inicio <= h && o.fim >= h;
+    const sit = !o.ativo ? "Desativada" : vale ? "Valendo agora" : (o.fim < h ? "Vencida" : "Começa em " + dataBR(o.inicio));
+    return '<div class="of-item' + (vale ? "" : " of-off") + '"><div class="meio"><b>' + esc(o.operadora) + '</b> · ' + esc(o.descricao) +
+      '<small>' + sit + ' · ' + dataBR(o.inicio) + ' a ' + dataBR(o.fim) + '</small></div>' +
+      '<button data-of="' + o.id + '" data-at="' + (o.ativo ? "0" : "1") + '">' + (o.ativo ? "Desativar" : "Ativar") + '</button></div>';
+  }).join("") || '<div class="aviso">Nenhuma oferta cadastrada.</div>';
+  [...$("ofLista").querySelectorAll("button[data-of]")].forEach(function (b) {
+    b.onclick = async function () { await db.from("ofertas").update({ ativo: b.dataset.at === "1" }).eq("id", b.dataset.of); carregarOfertas(); };
+  });
+}
+async function salvarOferta(e) {
+  e.preventDefault();
+  const o = { operadora: $("ofOp").value.trim(), descricao: $("ofDesc").value.trim(), inicio: $("ofIni").value, fim: $("ofFim").value };
+  if (!o.operadora || !o.descricao || !o.inicio || !o.fim) return;
+  if (o.fim < o.inicio) { alert("A data de fim precisa ser depois do início."); return; }
+  const { error } = await db.from("ofertas").insert(o);
+  if (error) { alert("Não foi possível salvar: " + error.message); return; }
+  $("ofOp").value = ""; $("ofDesc").value = ""; carregarOfertas();
+}
+
 async function iniciar() {
   const { data: cfg } = await db.from("config").select("valor").eq("chave", "modo_automatico").maybeSingle();
   $("auto").checked = cfg?.valor === true;
@@ -160,6 +225,9 @@ async function iniciar() {
   $("bAssumir").onclick = () => etiquetar("ASSUMIDO");
   $("bIA").onclick = () => etiquetar(null);
   $("bEncerrar").onclick = () => { if (confirm("Encerrar esta conversa? Ela sai da lista principal e a IA nao responde mais esse contato.")) etiquetar("ENCERRADO"); };
+  $("bOfertas").onclick = abrirOfertas;
+  $("ofVoltar").onclick = () => { $("ofertas").classList.remove("on"); $("lista").style.display = ""; };
+  $("ofForm").onsubmit = salvarOferta;
   $("fEnviar").onsubmit = enviarManual;
   await carregar();
   db.channel("caixa")
