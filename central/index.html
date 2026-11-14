@@ -1,4 +1,4 @@
-<!doctype html><html><head><script src="central-db.js?v=2"></script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><script src="central-db.js?v=4"></script><script src="assinatura.js?v=1"></script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -588,6 +588,7 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(
     if(s){ return A.eu().then(function(eu){
       if(!eu||eu.ativo===false){ $("cclogin").hidden=false; $("ccForm").innerHTML='<span class="mk">CC</span><h2>Acesso não liberado</h2><p>Seu login existe, mas ainda não foi liberado como consultor. Fale com o administrador da Central.</p><a href="#" onclick="CentralAuth.sair();return false">Sair</a>'; return; }
       var n=$("ccNome"); if(n) n.textContent=(eu.nome||"Consultor")+" · "+(eu.plano==="ia"?"Com IA":"Essencial");
+      if(window.CentralAssinatura&&A.rpc) CentralAssinatura.verificar(A.rpc);
     }); }
     $("cclogin").hidden=false; $("ccEmail").focus();
   });
