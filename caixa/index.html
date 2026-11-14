@@ -115,6 +115,7 @@ header button{background:rgba(255,255,255,.12)}
 .pend{border-left:4px solid var(--ouro)}
 .avatar{background:var(--topo);color:var(--ouro2)}
 </style>
+<script src="../central/assinatura.js?v=1"></script>
 </head>
 <body>
 <div id="lista">
@@ -263,6 +264,8 @@ $("pw").onkeydown = (e) => { if (e.key === "Enter") $("entrar").click(); };
 } else if (tipoLink === "invite" || tipoLink === "recovery") {
   definirSenha();
 } else {
+  window.__ccSair = async () => { await db.auth.signOut(); location.reload(); };
+  if (window.CentralAssinatura) window.CentralAssinatura.verificar((n, a) => db.rpc(n, a || {}));
   iniciar();
 }
 
