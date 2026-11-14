@@ -258,6 +258,7 @@
     entrar: async function (email, senha) { var c = await sb(); var r = await c.auth.signInWithPassword({ email: email, password: senha }); if (r.error) throw r.error; return r.data; },
     esqueci: async function (email) { var c = await sb(); var r = await c.auth.resetPasswordForEmail(email, { redirectTo: "https://centraldoconsultor.github.io/caixa/" }); if (r.error) throw r.error; },
     sair: async function () { var c = await sb(); await c.auth.signOut(); location.reload(); },
-    funcao: async function (nome, corpo) { var c = await sb(); return c.functions.invoke(nome, { body: corpo }); }
+    funcao: async function (nome, corpo) { var c = await sb(); return c.functions.invoke(nome, { body: corpo }); },
+    rpc: async function (nome, args) { var c = await sb(); return c.rpc(nome, args || {}); }
   };
 })();
