@@ -198,7 +198,8 @@
     var eu = await carregarEu(); if (!eu) return null;
     return {
       id: function () { return eu.id; },
-      isOwner: function () { return eu.papel === "dono"; },
+      /* na Central todos usam a visão de consultor; o controle fica no Painel ADM */
+      isOwner: function () { return eu.papel === "dono" && window.__CENTRAL_ADMIN === true; },
       canEdit: function () { return true; },
       can: function () { return true; },
       name: function () { return eu.nome || ""; },
