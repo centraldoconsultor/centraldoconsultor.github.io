@@ -1,0 +1,255 @@
+<!doctype html><html><head><script src="central-db.js?v=1"></script><script>window.__C=null;try{if(window.parent!==window&&parent.__CC){(function(){var P=parent,pc=P.__CC;
+var toP=function(v){if(v===null||typeof v!=="object")return v;return P.JSON.parse(JSON.stringify(v))};
+var isRef=function(r){return r&&typeof r==="object"&&(typeof r.onSnapshot==="function"||typeof r.collection==="function"||typeof r.doc==="function")};
+var out=function(r){return isRef(r)?wrap(r):r};
+function wrap(o){return new Proxy({},{get:function(_,k){var v=o[k];if(typeof v!=="function")return v;return function(){var a=[].slice.call(arguments).map(function(x){return x&&typeof x==="object"?toP(x):x});var r=v.apply(o,a);if(r&&typeof r.then==="function")return r.then(out);return out(r)}},has:function(_,k){return k in o}})}
+window.__C={use:function(n){return pc.use(n).then(function(ns){return ns&&n==="db"?wrap(ns):ns})}};})()}}catch(e){}</script><script>if(!window.__C){window.__C=(function(getC){var dbp=null;return {use:function(n){var c=getC();if(!c||!c.use)return Promise.resolve(null);if(n!=="db")return c.use(n);if(!dbp)dbp=Promise.all([c.use("db"),c.use("user")]).then(function(r){var db=r[0],u=r[1];if(!db||!u||!u.id)return null;return Promise.resolve(u.id()).then(function(id){if(!id)return null;var b="data/users/"+id+"/ws/";return {collection:function(p){return db.collection(b+p)},doc:function(p){return db.doc(b+p)}};});});return dbp;}};})(function(){return window.claude});}</script><script>(function(){
+  /* Mês único da Central: a barra do topo escolhe o mês e todas as abas seguem. CMES.on(fn) recebe "AAAA-MM". */
+  var MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  function pad(n){return (n<10?"0":"")+n}
+  var d0=new Date(), atual=d0.getFullYear()+"-"+pad(d0.getMonth()+1);
+  var cur=null, fns=[];
+  function fire(){ fns.forEach(function(f){ try{f(cur)}catch(e){} }); }
+  function isOdonto(p){
+    if(!p) return false;
+    if(p.ramo) return p.ramo==="odonto";
+    if(p.linha) return p.linha==="odonto";
+    var t=(p.produto||"")+" "+(p.administradora||"");
+    return /odonto/i.test(t)&&!/(enfermaria|apartamento|ambulatorial|executivo|empresarial|participativo|premium|corporate|ades[aã]o)/i.test(p.produto||"");
+  }
+  function isAmb(p){ if(!p||isOdonto(p)) return false; if(p.cobertura) return p.cobertura==="amb"; return /ambulatorial|·\s*AMB\b/i.test(p.produto||""); }
+  function mesProp(p){ return ((p&&p.datas&&p.datas.enviada)||(p&&p.criadoEm)||"").slice(0,7); }
+  window.CMES={
+    atual:atual,
+    get:function(){return cur||atual},
+    on:function(f){ fns.push(f); if(cur) try{f(cur)}catch(e){} },
+    set:function(m){ if(!m||m===cur) return; cur=m; fire(); try{ if(window.parent!==window) parent.postMessage({type:"central:setmes",mes:m},location.origin); }catch(e){} },
+    label:function(m){ m=m||cur||atual; var p=m.split("-"); return MESES[+p[1]-1]+" "+p[0]; },
+    nome:function(m){ m=m||cur||atual; return MESES[+m.split("-")[1]-1].toLowerCase(); },
+    isOdonto:isOdonto, isAmb:isAmb, mesProp:mesProp,
+    // Premiação pelas campanhas do sistema da administradora (collection "campanhas"): devolve {porVida,total,regra,campanha} ou null
+    premCamp:function(camps,p,mes){
+      if(!camps||!p) return null;
+      var adm=String(p.administradora||"").toLowerCase(), prod=String(p.produto||"").toLowerCase(), tudo=adm+" "+prod;
+      var OP={bluzz:/bluzz/,unimed:/unimed|participativo|perfil regional|personal smart|premium nacional|vitoriamed/,sbs:/s[aã]o bernardo|samp|sbs|athena/,meridional:/meridional/,"sempre odonto":/sempre odonto/,nova:/nova sa[uú]de/};
+      var vidas=Number(p.vidas)||0, total=/copart(\.|icipa[cç][aã]o)? total/.test(prod);
+      var cs=camps.filter(function(c){ return c.mes===mes&&new RegExp(c.canal,"i").test(adm)&&(!OP[c.op]||OP[c.op].test(tudo)); });
+      for(var i=0;i<cs.length;i++){ var rs=cs[i].regras||[];
+        for(var j=0;j<rs.length;j++){ var r=rs[j]; if((r.unid!=="vida"&&r.unid!=="pct")||!r.m) continue;
+          if(!new RegExp(r.m,"i").test(prod)) continue;
+          if(r.c&&(r.c==="total")!==total) continue;
+          if(r.unid==="pct"){ var m=Number(p.mensalidade)||0; return {porVida:null,total:Math.round(m*r.valor)/100,regra:r.item,campanha:cs[i].titulo,adm:cs[i].adm}; }
+          return {porVida:r.valor,total:r.valor*vidas,regra:r.grupo+" · "+r.item,campanha:cs[i].titulo,adm:cs[i].adm};
+        } }
+      return null;
+    },
+    // Faixa padrão: vendas do mês na Esteira, saúde e odonto separados
+    strip:function(el){
+      if(!el) return; var P=null;
+      function draw(){
+        if(!P){ el.textContent="Carregando vendas de "+window.CMES.label()+"…"; return; }
+        var m=window.CMES.get(), ps=P.filter(function(p){return mesProp(p)===m&&p.etapa!=="recusada"&&p.etapa!=="rascunho"});
+        var s=0,o=0,ns=0,no=0; ps.forEach(function(p){ var v=Number(p.vidas)||0; if(isOdonto(p)){o+=v;no++}else{s+=v;ns++} });
+        var imp=ps.filter(function(p){return p.etapa==="implantada"}).length;
+        el.innerHTML='<b>'+window.CMES.label(m)+'</b><span>Vendas na Esteira: <b>'+s+'</b> vida'+(s===1?"":"s")+' saúde ('+ns+') · <b>'+o+'</b> odonto ('+no+')</span><span>'+imp+' implantada'+(imp===1?"":"s")+' de '+ps.length+'</span>';
+      }
+      draw(); window.CMES.on(draw);
+      var cl=(window.__C||window.claude); if(!cl||!cl.use) return;
+      cl.use("db").then(function(db){ if(!db) return; db.collection("propostas").onSnapshot(function(s){ P=s.docs.map(function(d){return Object.assign({},d.data())}); draw(); },function(){}); });
+    }
+  };
+  try{ var st=document.createElement("style"); st.textContent=".mes-strip{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:10px;padding:9px 14px;font-size:.9rem;color:var(--muted)}.mes-strip b{color:var(--fg)}.mes-strip>b:first-child{font-size:1rem}"; (document.head||document.documentElement).appendChild(st); }catch(e){}
+  window.addEventListener("message",function(e){
+    if(e.origin!==location.origin) return; var d=e.data||{};
+    if(d.type==="central:mes"&&d.mes&&d.mes!==cur){ cur=d.mes; fire(); }
+  });
+  if(window.parent!==window){ try{ parent.postMessage({type:"central:mes?"},location.origin); }catch(e){} }
+  setTimeout(function(){ if(!cur){ cur=atual; fire(); } }, window.parent!==window?1200:0);
+})();</script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.cod{display:inline-block;font:600 .72em/1.6 ui-monospace,Menlo,monospace;letter-spacing:.04em;padding:0 6px;border-radius:6px;background:var(--gold-soft,#f3e7c6);color:var(--fg,#1b2333);vertical-align:2px;margin-right:4px}
+</style></head><body><title>Clientes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: carteira de clientes — resumo do mês no topo, busca, um cartão por cliente com todos os dados */
+:root{
+  --navy:#0e2a52; --gold:#b08a3e; --gold-soft:#f3ead6;
+  --bg:#f7f4ec; --surface:#fffdf8; --line:#e5dfd0; --fg:#0e1f3d; --muted:#5d6579;
+  --warn:#b2452f; --warn-soft:#f8e3dc; --ok:#1d7a4f; --ok-soft:#dcf1e5; --pend:#a26a00; --pend-soft:#fbefd6;
+  --display:"Sora","Segoe UI",system-ui,sans-serif; --body:"Figtree","Segoe UI",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --navy:#081a33; --gold:#d6b46a; --gold-soft:#2f2a1c; --bg:#0a1426; --surface:#112039; --line:#243453; --fg:#f4efe3; --muted:#a3abbe;
+  --warn:#f09a85; --warn-soft:#3a1f1a; --ok:#6fd3a0; --ok-soft:#173327; --pend:#f0b64a; --pend-soft:#3a2c12; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --navy:#081a33; --gold:#d6b46a; --gold-soft:#2f2a1c; --bg:#0a1426; --surface:#112039; --line:#243453; --fg:#f4efe3; --muted:#a3abbe;
+  --warn:#f09a85; --warn-soft:#3a1f1a; --ok:#6fd3a0; --ok-soft:#173327; --pend:#f0b64a; --pend-soft:#3a2c12; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:1.6rem}
+.sub{color:var(--muted);margin:2px 0 0;font-size:.88rem;max-width:62ch}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px}
+button,select,input,textarea{font:inherit;color:inherit}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600;text-decoration:none;color:var(--fg);display:inline-flex;align-items:center;gap:6px;font-size:.9rem}
+.btn:hover{border-color:var(--gold)}
+.btn.primary{background:var(--gold);border-color:var(--gold);color:#0e1f3d}
+.btn.ok{border-color:var(--ok);color:var(--ok)}
+.btn.no{color:var(--warn)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted);font-weight:500}
+.btn:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,.tab:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi .k{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.kpi .v{font:700 1.35rem var(--display)}
+.kpi .s{font-size:.8rem;color:var(--muted)}
+.kpi.hot{border-color:var(--gold);background:var(--gold-soft)}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.tab{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;cursor:pointer;font-weight:600;font-size:.9rem;display:flex;gap:8px;align-items:center;white-space:nowrap}
+.tab b{font-family:var(--mono);font-weight:500;font-size:.8rem;background:var(--bg);border-radius:999px;padding:0 7px}
+.tab[aria-selected="true"]{background:var(--navy);border-color:var(--navy);color:#f4efe3}
+.tab[aria-selected="true"] b{background:var(--gold);color:#0e1f3d}
+.hint{font-size:.85rem;color:var(--muted);margin:0}
+.list{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card.late{border-left-color:var(--warn)}
+.card.done{border-left-color:var(--ok)}
+.card.muted{border-left-color:var(--line)}
+.ch{font:600 1rem var(--display,inherit);margin:18px 0 4px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}.ch small{font:400 .82rem var(--body,inherit);color:var(--muted)}
+.top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start}
+.nm{font:600 1.02rem var(--display);overflow-wrap:anywhere}
+.meta{font-size:.84rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px}
+.chip{font-size:.74rem;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.chip.d2{background:var(--gold-soft);color:var(--fg)}
+.chip.d7{background:var(--navy);color:#f4efe3}
+.chip.w{background:var(--warn-soft);color:var(--warn)}
+.chip.o{background:var(--ok-soft);color:var(--ok)}
+.chip.p{background:var(--pend-soft);color:var(--pend)}
+.plan{font-size:.86rem;background:var(--bg);border-radius:8px;padding:6px 10px;overflow-wrap:anywhere}
+.msg{width:100%;min-height:96px;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;resize:vertical;font-size:.9rem;line-height:1.45}
+.tel{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:.84rem;color:var(--muted)}
+.tel input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 10px;width:12rem;max-width:100%;font-family:var(--mono);font-size:.85rem}
+.tel b{font-family:var(--mono);color:var(--fg);font-weight:500;user-select:text}
+.note{font-size:.82rem;color:var(--muted)}
+.empty{padding:28px;text-align:center;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:12px}
+details.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+details.box summary{cursor:pointer;font:600 1rem var(--display)}
+details.box[open] summary{margin-bottom:10px}
+.form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.form label,.tpl label{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted);font-weight:600}
+.form input,.tpl textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;font-weight:400;color:var(--fg)}
+.form .actions{grid-column:1/-1}
+.tpl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tpl textarea{min-height:120px;resize:vertical}
+.tpl .actions{grid-column:1/-1}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:max(16px,env(safe-area-inset-bottom,0px));background:var(--navy);color:#f4efe3;border:1px solid var(--gold);border-radius:10px;padding:10px 14px;display:flex;gap:12px;align-items:center;z-index:20;max-width:calc(100% - 32px);font-size:.9rem}
+.toast button{all:unset;cursor:pointer;color:var(--gold);font-weight:700}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.bar input{flex:1;min-width:200px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 16px}
+.f{display:flex;flex-direction:column;min-width:0}
+.f span{font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.f b{font-weight:500;overflow-wrap:anywhere;user-select:text}
+.f b.mono{font-family:var(--mono);font-size:.9rem}
+.nmb{all:unset;cursor:pointer;font:inherit;color:var(--fg);text-decoration:underline;text-decoration-color:var(--gold);text-underline-offset:3px;overflow-wrap:anywhere}
+.nmb:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media (max-width:720px){
+  .grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .form,.tpl{grid-template-columns:minmax(0,1fr)}
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div><h1>Clientes o consultor</h1><p class="sub">Todos os clientes do ano, vindos da Esteira. Cada cliente mostra o mês da venda, o mesmo da Esteira. Os perdidos aparecem, mas não entram nas contas. Toque no nome para abrir e editar na Esteira.</p></div>
+  </header>
+
+  <section class="kpis" aria-label="Resumo do ano">
+    <div class="kpi hot"><span class="k">Vendas no ano</span><span class="v" id="k1">—</span><span class="s" id="k1s">—</span></div>
+    <div class="kpi"><span class="k">Vidas</span><span class="v" id="k2">—</span><span class="s" id="k2s">—</span></div>
+    <div class="kpi"><span class="k">Mensalidade</span><span class="v" id="k3">—</span><span class="s" id="k3s">—</span></div>
+    <div class="kpi"><span class="k">Premiação</span><span class="v" id="k4">—</span><span class="s" id="k4s">—</span></div>
+  </section>
+
+  <div class="bar"><input type="search" id="q" placeholder="Buscar cliente, documento, telefone ou operadora" aria-label="Buscar cliente"><span class="note" id="tot"></span></div>
+  <div class="list" id="list"><div class="empty">Carregando…</div></div>
+  <div class="list" id="cart"></div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  function pad(n){return (n<10?"0":"")+n}
+  var hj=new Date(), today=hj.getFullYear()+"-"+pad(hj.getMonth()+1)+"-"+pad(hj.getDate());
+  var esc=function(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
+  var brl=function(v){return v==null||v===""||isNaN(+v)?"—":Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})};
+  var br=function(s){if(!s)return "";var p=s.split("-");return p[2]+"/"+p[1]+"/"+p[0]};
+  function mesVig(d){ if(!d) return ""; var y=+d.slice(0,4), m=+d.slice(5,7), dia=+d.slice(8,10); if(dia<=10){ m--; if(m<1){m=12;y--;} } return y+"-"+pad(m); }
+  function isOd(p){ return window.CMES?CMES.isOdonto(p):false; }
+  function fone(t){ var n=String(t||"").replace(/\D/g,""); if(!n) return ""; return n.length<=11?"55"+n:n; }
+  function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"")}
+  var ETAPA={cadastrada:"Cadastrada",pendencia:"Pendência",aguardando:"Aguardando digitação",digitada:"Digitada no portal",aprovada:"Aprovada",implantada:"Implantada",recusada:"Perdido · fora da conta"};
+  var PASSOS=[["bv","Boas-vindas"],["cart","Carteirinha e app"],["d30","30 dias · indicação"]];
+  var S={p:[],pv:{},ind:{},loaded:false,cart:[]};
+  function posTxt(p){
+    var f=(S.pv[p._id]||{}).feitos||{}, n=PASSOS.filter(function(x){return !f[x[0]]})[0];
+    return n?"próximo: "+n[1]:"pós-venda concluído";
+  }
+  function f(lbl,val,mono){ return '<div class="f"><span>'+lbl+'</span><b'+(mono?' class="mono"':'')+'>'+(val?esc(val):"—")+'</b></div>'; }
+  var MESES=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  function mesNome(m){ if(!m) return "sem mês"; var n=+m.slice(5,7); return MESES[n-1]?MESES[n-1].charAt(0).toUpperCase()+MESES[n-1].slice(1)+" "+m.slice(0,4):m; }
+  function mesDe(p){ return window.CMES?CMES.mesProp(p):String((p.datas&&p.datas.enviada)||"").slice(0,7); }
+  function card(p){
+    var od=isOd(p), m=mesDe(p), perd=p.etapa==="recusada", v=Number(p.vidas)||0;
+    var pr=(p.premiacao!=null&&p.premiacao!==""&&!isNaN(+p.premiacao))?brl(p.premiacao)+(p.premEstimada?" (estimada)":""):"";
+    var cls=perd?" muted":(p.etapa==="implantada"?" done":"");
+    return '<article class="card'+cls+'"><div class="top"><div style="min-width:0"><div class="nm"><button class="nmb" type="button" data-prop="'+esc(p._id)+'">'+(p.codigo?'<span class="cod">Nº '+String(p.codigo).padStart(2,"0")+'</span>':'')+esc(p.cliente||"Sem nome")+'</button></div>'+
+      '<div class="meta"><span class="chip d7">'+esc(mesNome(m))+'</span><span class="chip '+(od?"o":"d2")+'">'+(od?"Odonto":"Saúde")+'</span><span>'+v+' vida'+(v===1?"":"s")+'</span><span class="chip '+(perd?"w":(p.etapa==="implantada"?"o":"p"))+'">'+esc(ETAPA[p.etapa]||p.etapa||"")+'</span>'+(p.cancelado?'<span class="chip w">Cancelado no sistema da administradora</span>':'')+'</div></div></div>'+
+      '<div class="grid">'+f("Mês da venda",mesNome(m))+f("Administradora · operadora",p.administradora)+f("Plano",p.produto)+f("Mensalidade",Number(p.mensalidade)>0?brl(p.mensalidade):"")+f("Premiação",pr)+f("Vigência",p.vigencia?br(p.vigencia):"")+f("Telefone",p.telefone,true)+f("Contrato / protocolo",p.protocolo,true)+f("Documento",p.documento,true)+'</div>'+((p.beneficiarios||[]).length?'<div class="plan"><b>Beneficiários:</b> '+p.beneficiarios.map(function(b){return esc(b.nome||"sem nome")+' <span class="note">('+esc(b.parentesco||"")+(b.idade!=null?", "+esc(b.idade)+" anos":"")+(b.cpf?" · CPF "+esc(b.cpf):"")+(b.nascimento?" · nasc. "+br(b.nascimento):"")+')</span>'}).join(" · ")+'</div>':'')+(/^https?:\/\//.test(p.drive||"")?'<div class="actions"><a class="btn" href="'+esc(p.drive)+'" target="_blank" rel="noopener">Abrir pasta no Drive ↗</a></div>':'')+'</article>';
+  }
+  function render(){
+    if(!S.loaded) return;
+    var Y=(window.CMES?CMES.get():today).slice(0,4);
+    var q=norm($("q").value.trim());
+    var doAno=S.p.filter(function(p){return p.etapa!=="rascunho"&&mesDe(p).slice(0,4)===Y});
+    var cli=doAno.filter(function(p){return p.etapa!=="recusada"});
+    var imp=cli.filter(function(p){return p.etapa==="implantada"}).length, perdN=doAno.length-cli.length;
+    var vs=0,vo=0,ns=0,no=0,mens=0,pr=0,nm=0,np=0;
+    cli.forEach(function(p){ var v=Number(p.vidas)||0; if(isOd(p)){vo+=v;no++}else{vs+=v;ns++} if(Number(p.mensalidade)>0){mens+=+p.mensalidade;nm++} if(p.premiacao!=null&&p.premiacao!==""&&!isNaN(+p.premiacao)){pr+=+p.premiacao;np++} });
+    $("k1").textContent=cli.length; $("k1s").textContent=ns+" saúde · "+no+" odonto · "+imp+" implantada"+(imp===1?"":"s")+(perdN?" · "+perdN+" perdido"+(perdN>1?"s":"")+" fora da conta":"");
+    $("k2").textContent=vs+vo; $("k2s").textContent=vs+" saúde · "+vo+" odonto";
+    $("k3").textContent=brl(mens); $("k3s").textContent=nm+" de "+cli.length+" com mensalidade informada";
+    $("k4").textContent=brl(pr); $("k4s").textContent=np+" de "+cli.length+" com premiação";
+    var list=q?S.p.filter(function(p){return p.etapa!=="rascunho"}):doAno.slice();
+    if(q) list=list.filter(function(p){ return norm([p.cliente,p.documento,p.telefone,p.administradora,p.produto,p.email,p.protocolo,(p.codigo?"n"+String(p.codigo).padStart(2,"0")+" "+String(p.codigo).padStart(2,"0"):"")].join(" ")).indexOf(q)>=0 || (q.replace(/\D/g,"").length>=3 && String(p.documento||"").replace(/\D/g,"").indexOf(q.replace(/\D/g,""))>=0); });
+    list.sort(function(a,b){ return mesDe(b).localeCompare(mesDe(a))||((a.etapa==="recusada")-(b.etapa==="recusada"))||String(a.cliente).localeCompare(String(b.cliente),"pt-BR"); });
+    $("tot").textContent=q?list.length+" encontrado"+(list.length===1?"":"s")+" em todos os anos":"";
+    if(!list.length){ $("list").innerHTML='<div class="empty">'+(q?"Nenhum cliente encontrado.":"Nenhuma venda em "+Y+".")+'</div>'; $("cart").innerHTML=""; return; }
+    var h="", cur=null;
+    list.forEach(function(p){ var m=mesDe(p); if(m!==cur){ cur=m; var g=list.filter(function(x){return mesDe(x)===m&&x.etapa!=="recusada"}), gs=0,go=0; g.forEach(function(x){ if(isOd(x)) go+=Number(x.vidas)||0; else gs+=Number(x.vidas)||0; }); h+='<h2 class="ch">'+esc(mesNome(m))+' <small>'+g.length+' venda'+(g.length===1?"":"s")+' · '+gs+' vidas saúde · '+go+' odonto</small></h2>'; } h+=card(p); });
+    $("list").innerHTML=h; $("cart").innerHTML="";
+  }
+  function cartCard(c){
+    var od=/odonto/i.test((c.operadora||"")+" "+(c.plano||""));
+    return '<article class="card'+(c.situacao==="A conferir"?" late":" done")+'"><div class="top"><div style="min-width:0"><div class="nm">'+esc(c.nome)+'</div><div class="meta"><span class="chip d2">'+esc(c.tipo||"")+'</span><span class="chip '+(od?"o":"d7")+'">'+(od?"Odonto":"Saúde")+'</span><span>'+(c.vidas||0)+' vida'+(c.vidas==1?"":"s")+'</span><span class="chip '+(c.situacao==="A conferir"?"w":"o")+'">'+esc(c.situacao||"Ativo")+'</span></div></div></div>'+
+      '<div class="grid">'+f("Contrato",c.numero,true)+f("Administradora · operadora",[c.administradora,c.operadora].filter(Boolean).join(" · "))+f("Plano",c.plano)+f("Mensalidade",Number(c.mensalidade)>0?brl(c.mensalidade):"")+f("Vigência",c.vigencia?br(c.vigencia):"")+'</div></article>';
+  }
+  $("q").addEventListener("input",render);
+  window.addEventListener("message",function(e){ if(e.origin!==location.origin) return; var d=e.data||{}; if(d.type==="central:busca"&&d.q){ $("q").value=d.q; render(); window.scrollTo(0,0); } });
+  $("list").addEventListener("click",function(e){ var pb=e.target.closest("[data-prop]"); if(pb){ try{parent.postMessage({type:"central:proposta",id:pb.getAttribute("data-prop")},location.origin)}catch(er){} return; } var g=e.target.closest("[data-go]"); if(g){ try{parent.postMessage({type:"central:go",tab:g.getAttribute("data-go")},location.origin)}catch(er){} } });
+  if(window.CMES) CMES.on(function(){ render(); });
+  var timer=setTimeout(function(){ if(!S.loaded) $("list").innerHTML='<div class="empty">Não consegui carregar agora. Abra de novo em instantes.</div>'; },10000);
+  var cl=(window.__C||(window.__C||window.claude)); if(!cl||!cl.use) return;
+  cl.use("db").then(function(db){
+    if(!db){ clearTimeout(timer); $("list").innerHTML='<div class="empty">Entre na Central com seu e-mail e senha para ver os clientes.</div>'; return; }
+    db.collection("propostas").onSnapshot(function(s){ S.loaded=true; clearTimeout(timer); S.p=s.docs.map(function(d){var o=Object.assign({},d.data());o._id=d.id;return o}); render(); },function(){ clearTimeout(timer); $("list").innerHTML='<div class="empty">Não consegui ler os clientes.</div>'; });
+    db.collection("carteira").onSnapshot(function(s){ S.cart=s.docs.map(function(d){var o=Object.assign({},d.data());o._id=d.id;return o}); render(); },function(){});
+    db.collection("posvenda").onSnapshot(function(s){ var m={},ind={}; s.docs.forEach(function(d){ var o=Object.assign({},d.data()); m[d.id]=o; ind[d.id]=(o.indicacoes||[]).length; }); S.pv=m; S.ind=ind; render(); },function(){});
+  });
+})();
+</script>
+
+</body></html>

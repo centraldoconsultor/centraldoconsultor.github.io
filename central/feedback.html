@@ -1,0 +1,119 @@
+<!doctype html><html lang="pt-BR"><head><script src="central-db.js?v=1"></script><script>window.__C=null;try{if(window.parent!==window&&parent.claude){(function(){var P=parent,pc=P.claude;
+var toP=function(v){if(v===null||typeof v!=="object")return v;return P.JSON.parse(JSON.stringify(v))};
+var isRef=function(r){return r&&typeof r==="object"&&(typeof r.onSnapshot==="function"||typeof r.collection==="function"||typeof r.doc==="function")};
+var out=function(r){return isRef(r)?wrap(r):r};
+function wrap(o){return new Proxy({},{get:function(_,k){var v=o[k];if(typeof v!=="function")return v;return function(){var a=[].slice.call(arguments).map(function(x){return x&&typeof x==="object"?toP(x):x});var r=v.apply(o,a);if(r&&typeof r.then==="function")return r.then(out);return out(r)}},has:function(_,k){return k in o}})}
+window.__C={use:function(n){return pc.use(n).then(function(ns){return ns&&n==="db"?wrap(ns):ns})}};})()}}catch(e){}</script><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+:root{--navy:#0e2a52;--navy-2:#183a6b;--gold:#b08a3e;--gold-2:#d9bf85;--bg:#f7f4ec;--surface:#fffdf8;--line:#e5dfd0;--fg:#0e1f3d;--muted:#5d6579;--on-navy:#f4efe3;
+--ok:#2f7d4f;--ok-bg:#e5f2ea;--warn:#9a6a12;--warn-bg:#fbf0d9;--bad:#b03a2e;--bad-bg:#f8e3e0;
+--display:"Sora","Segoe UI",system-ui,sans-serif;--body:"Figtree","Segoe UI",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--navy:#081a33;--navy-2:#13294a;--gold:#d6b46a;--gold-2:#e6cf98;--bg:#0a1426;--surface:#112039;--line:#243453;--fg:#f4efe3;--muted:#a3abbe;--ok:#7fcf9d;--ok-bg:#16362a;--warn:#e8c06a;--warn-bg:#3a2f14;--bad:#f09a8f;--bad-bg:#3d1d1a;color-scheme:dark}}
+:root[data-theme="dark"]{--navy:#081a33;--navy-2:#13294a;--gold:#d6b46a;--gold-2:#e6cf98;--bg:#0a1426;--surface:#112039;--line:#243453;--fg:#f4efe3;--muted:#a3abbe;--ok:#7fcf9d;--ok-bg:#16362a;--warn:#e8c06a;--warn-bg:#3a2f14;--bad:#f09a8f;--bad-bg:#3d1d1a;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--body);padding:22px max(16px,3vw) 48px}
+.in{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{font:700 1.4rem var(--display);margin:0;text-wrap:balance}h2{font:600 1.02rem var(--display);margin:0}
+.lead{color:var(--muted);margin:0;max-width:70ch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:3px}
+.kpi.accent{border-left:3px solid var(--gold)}
+.kpi span{font-size:.76rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.kpi b{font:700 1.55rem var(--display);font-variant-numeric:tabular-nums}.kpi i{font-style:normal;font-size:.82rem;color:var(--muted)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.73rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;background:var(--bg);white-space:nowrap}
+tr:last-child td{border-bottom:0}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.78rem;font-weight:600;white-space:nowrap;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.pill.ok{background:var(--ok-bg);color:var(--ok);border-color:transparent}.pill.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}.pill.bad{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+button{font:600 .9rem var(--body);border-radius:9px;padding:9px 16px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+button.pri{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}button.pri:hover{background:var(--navy-2)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.notice{padding:10px 14px;border-radius:10px;background:var(--warn-bg);color:var(--warn);font-size:.9rem}
+.empty{color:var(--muted);padding:14px;text-align:center;font-size:.9rem}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:.85rem;font-weight:600;color:var(--muted)}
+input,textarea,select{font:500 .95rem var(--body);padding:9px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg);width:100%}
+textarea{min-height:80px;resize:vertical}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chips label{display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:var(--bg);font-weight:600;color:var(--fg);cursor:pointer}
+.chips input{width:auto}
+.chips label:has(input:checked){background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.days{display:flex;gap:4px;align-items:flex-end;height:90px}
+.days div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.7rem;color:var(--muted)}
+.days i{display:block;width:100%;max-width:28px;background:var(--gold);border-radius:4px 4px 0 0;min-height:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<title>Feedback do piloto</title>
+</head><body><div class="in">
+<div><h1>Feedback da semana</h1><p class="lead">Toda sexta-feira, conte em poucos minutos como foi usar a Central. Suas respostas vão direto para quem está melhorando o sistema.</p></div>
+<div id="st"></div>
+<form class="card" id="frm">
+  <label class="f" for="semana">Semana (sexta-feira)<input type="date" id="semana" required></label>
+  <div class="f"><label class="f" style="gap:0">Nota geral da semana, de 1 a 5</label>
+    <div class="chips" role="radiogroup" aria-label="Nota">
+      <label><input type="radio" name="nota" value="1"> 1</label><label><input type="radio" name="nota" value="2"> 2</label><label><input type="radio" name="nota" value="3"> 3</label><label><input type="radio" name="nota" value="4"> 4</label><label><input type="radio" name="nota" value="5"> 5</label>
+    </div></div>
+  <div class="f"><label class="f" style="gap:0">Telas que você mais usou</label>
+    <div class="chips" id="telas">
+      <label><input type="checkbox" value="Funil"> Funil</label><label><input type="checkbox" value="Cotador"> Cotador</label><label><input type="checkbox" value="Follow-up"> Follow-up</label><label><input type="checkbox" value="Esteira"> Esteira</label><label><input type="checkbox" value="Pós-venda"> Pós-venda</label><label><input type="checkbox" value="Clientes"> Clientes</label><label><input type="checkbox" value="Meta"> Meta</label><label><input type="checkbox" value="Comissões"> Comissões</label>
+    </div></div>
+  <label class="f" for="gostou">O que mais ajudou no seu dia<textarea id="gostou"></textarea></label>
+  <label class="f" for="melhorar">O que atrapalhou ou precisa melhorar<textarea id="melhorar"></textarea></label>
+  <label class="f" for="faltou">O que faltou no sistema<textarea id="faltou"></textarea></label>
+  <div class="f"><label class="f" style="gap:0">Você pagaria por este sistema?</label>
+    <div class="chips" role="radiogroup" aria-label="Pagaria">
+      <label><input type="radio" name="pagaria" value="Sim"> Sim</label><label><input type="radio" name="pagaria" value="Talvez"> Talvez</label><label><input type="radio" name="pagaria" value="Não"> Não</label>
+    </div></div>
+  <div class="f"><label class="f" style="gap:0">Qual plano faria mais sentido para você?</label>
+    <div class="chips" role="radiogroup" aria-label="Plano">
+      <label><input type="radio" name="plano" value="Entrada"> Entrada · mensagens sugeridas</label><label><input type="radio" name="plano" value="Médio"> Médio · envio automático</label><label><input type="radio" name="plano" value="Completo"> Completo · agente de IA</label>
+    </div></div>
+  <div style="display:flex;gap:12px;align-items:center;justify-content:flex-end"><span id="msg" class="lead"></span><button type="submit" class="pri" id="btn">Enviar feedback</button></div>
+</form>
+<div class="card"><h2>Suas respostas anteriores</h2><div id="hist"><div class="empty">Carregando…</div></div></div>
+</div>
+<script>
+(function(){
+  var esc=function(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});};
+  function pad(n){return (n<10?"0":"")+n}
+  function iso(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+  function sexta(){var d=new Date();var k=(5-d.getDay()+7)%7;if(d.getDay()===6)k=-1;if(d.getDay()===0)k=-2;d.setDate(d.getDate()+k);return iso(d);}
+  function fData(s){var p=String(s||"").split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:"—";}
+  var $=function(id){return document.getElementById(id)};
+  $("semana").value=sexta();
+  var REF=null, DOC={respostas:{}}, timer=setTimeout(function(){ if(!REF) $("st").innerHTML='<div class="notice">Não foi possível conectar ao banco de dados. Entre na Central com seu e-mail e senha.</div>'; },10000);
+  function hist(){
+    var r=DOC.respostas||{}, ks=Object.keys(r).sort().reverse();
+    $("hist").innerHTML=ks.length?'<div class="tbl"><table><thead><tr><th>Semana</th><th class="num">Nota</th><th>Ajudou</th><th>Melhorar</th><th>Pagaria</th></tr></thead><tbody>'+ks.map(function(k){var x=r[k];return '<tr><td>'+fData(k)+'</td><td class="num">'+esc(x.nota||"—")+'</td><td>'+esc(x.gostou||"—")+'</td><td>'+esc(x.melhorar||"—")+'</td><td>'+esc(x.pagaria||"—")+'</td></tr>';}).join("")+'</tbody></table></div>':'<div class="empty">Você ainda não enviou nenhum feedback.</div>';
+  }
+  function carregarSemana(){ var x=(DOC.respostas||{})[$("semana").value]; if(!x) return;
+    document.querySelectorAll('input[name="nota"]').forEach(function(i){i.checked=String(x.nota)===i.value;});
+    document.querySelectorAll('input[name="pagaria"]').forEach(function(i){i.checked=x.pagaria===i.value;});
+    document.querySelectorAll('input[name="plano"]').forEach(function(i){i.checked=x.plano===i.value;});
+    document.querySelectorAll('#telas input').forEach(function(i){i.checked=(x.telas||[]).indexOf(i.value)>=0;});
+    $("gostou").value=x.gostou||""; $("melhorar").value=x.melhorar||""; $("faltou").value=x.faltou||""; $("msg").textContent="Você já respondeu esta semana: pode corrigir e enviar de novo."; }
+  $("semana").addEventListener("change",carregarSemana);
+  var C=window.__C;
+  if(C&&C.use) Promise.all([C.use("db"),C.use("user")]).then(function(r){
+    var db=r[0],u=r[1]; if(!db||!u) return;
+    return Promise.resolve(u.id()).then(function(id){ if(!id) return;
+      REF=db.doc("feedback/"+id); clearTimeout(timer);
+      return REF.get().then(function(s){ if(s.exists) DOC=JSON.parse(JSON.stringify(s.data())); DOC.uid=id; DOC.respostas=DOC.respostas||{}; hist(); carregarSemana(); });
+    });
+  }).catch(function(){ $("st").innerHTML='<div class="notice">Não foi possível carregar o feedback.</div>'; });
+  else $("st").innerHTML='<div class="notice">Abra esta tela dentro da Central do Consultor.</div>';
+  var busy=false;
+  $("frm").addEventListener("submit",function(e){ e.preventDefault(); if(!REF||busy) return;
+    var nota=document.querySelector('input[name="nota"]:checked'); if(!nota){ $("msg").textContent="Escolha uma nota de 1 a 5."; return; }
+    var pg=document.querySelector('input[name="pagaria"]:checked'), pl=document.querySelector('input[name="plano"]:checked');
+    var x={nota:Number(nota.value),telas:[].map.call(document.querySelectorAll('#telas input:checked'),function(i){return i.value;}),gostou:$("gostou").value.trim(),melhorar:$("melhorar").value.trim(),faltou:$("faltou").value.trim(),pagaria:pg?pg.value:"",plano:pl?pl.value:"",em:new Date().toISOString()};
+    DOC.respostas[$("semana").value]=x; DOC.ultimo=x.em; busy=true; $("btn").disabled=true; $("msg").textContent="Enviando…";
+    REF.set(JSON.parse(JSON.stringify(DOC))).then(function(){ $("msg").textContent="Obrigado! Feedback enviado."; hist(); },function(){ $("msg").textContent="Não foi possível enviar. Tente de novo."; }).then(function(){ busy=false; $("btn").disabled=false; });
+  });
+})();
+</script>
+</body></html>

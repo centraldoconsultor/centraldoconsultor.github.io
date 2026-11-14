@@ -1,0 +1,467 @@
+<!doctype html><html><head><script src="central-db.js?v=1"></script><script>window.__C=null;try{if(window.parent!==window&&parent.__CC){(function(){var P=parent,pc=P.__CC;
+var toP=function(v){if(v===null||typeof v!=="object")return v;return P.JSON.parse(JSON.stringify(v))};
+var isRef=function(r){return r&&typeof r==="object"&&(typeof r.onSnapshot==="function"||typeof r.collection==="function"||typeof r.doc==="function")};
+var out=function(r){return isRef(r)?wrap(r):r};
+function wrap(o){return new Proxy({},{get:function(_,k){var v=o[k];if(typeof v!=="function")return v;return function(){var a=[].slice.call(arguments).map(function(x){return x&&typeof x==="object"?toP(x):x});var r=v.apply(o,a);if(r&&typeof r.then==="function")return r.then(out);return out(r)}},has:function(_,k){return k in o}})}
+window.__C={use:function(n){return pc.use(n).then(function(ns){return ns&&n==="db"?wrap(ns):ns})}};})()}}catch(e){}</script><script>if(!window.__C){window.__C=(function(getC){var dbp=null;return {use:function(n){var c=getC();if(!c||!c.use)return Promise.resolve(null);if(n!=="db")return c.use(n);if(!dbp)dbp=Promise.all([c.use("db"),c.use("user")]).then(function(r){var db=r[0],u=r[1];if(!db||!u||!u.id)return null;return Promise.resolve(u.id()).then(function(id){if(!id)return null;var b="data/users/"+id+"/ws/";return {collection:function(p){return db.collection(b+p)},doc:function(p){return db.doc(b+p)}};});});return dbp;}};})(function(){return window.claude});}</script><script>(function(){
+  /* Mês único da Central: a barra do topo escolhe o mês e todas as abas seguem. CMES.on(fn) recebe "AAAA-MM". */
+  var MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  function pad(n){return (n<10?"0":"")+n}
+  var d0=new Date(), atual=d0.getFullYear()+"-"+pad(d0.getMonth()+1);
+  var cur=null, fns=[];
+  function fire(){ fns.forEach(function(f){ try{f(cur)}catch(e){} }); }
+  function isOdonto(p){
+    if(!p) return false;
+    if(p.ramo) return p.ramo==="odonto";
+    if(p.linha) return p.linha==="odonto";
+    var t=(p.produto||"")+" "+(p.administradora||"");
+    return /odonto/i.test(t)&&!/(enfermaria|apartamento|ambulatorial|executivo|empresarial|participativo|premium|corporate|ades[aã]o)/i.test(p.produto||"");
+  }
+  function isAmb(p){ if(!p||isOdonto(p)) return false; if(p.cobertura) return p.cobertura==="amb"; return /ambulatorial|·\s*AMB\b/i.test(p.produto||""); }
+  function mesProp(p){ return ((p&&p.datas&&p.datas.enviada)||(p&&p.criadoEm)||"").slice(0,7); }
+  window.CMES={
+    atual:atual,
+    get:function(){return cur||atual},
+    on:function(f){ fns.push(f); if(cur) try{f(cur)}catch(e){} },
+    set:function(m){ if(!m||m===cur) return; cur=m; fire(); try{ if(window.parent!==window) parent.postMessage({type:"central:setmes",mes:m},location.origin); }catch(e){} },
+    label:function(m){ m=m||cur||atual; var p=m.split("-"); return MESES[+p[1]-1]+" "+p[0]; },
+    nome:function(m){ m=m||cur||atual; return MESES[+m.split("-")[1]-1].toLowerCase(); },
+    isOdonto:isOdonto, isAmb:isAmb, mesProp:mesProp,
+    // Premiação pelas campanhas do sistema da administradora (collection "campanhas"): devolve {porVida,total,regra,campanha} ou null
+    premCamp:function(camps,p,mes){
+      if(!camps||!p) return null;
+      var adm=String(p.administradora||"").toLowerCase(), prod=String(p.produto||"").toLowerCase(), tudo=adm+" "+prod;
+      var OP={bluzz:/bluzz/,unimed:/unimed|participativo|perfil regional|personal smart|premium nacional|vitoriamed/,sbs:/s[aã]o bernardo|samp|sbs|athena/,meridional:/meridional/,"sempre odonto":/sempre odonto/,nova:/nova sa[uú]de/};
+      var vidas=Number(p.vidas)||0, total=/copart(\.|icipa[cç][aã]o)? total/.test(prod);
+      var cs=camps.filter(function(c){ return c.mes===mes&&new RegExp(c.canal,"i").test(adm)&&(!OP[c.op]||OP[c.op].test(tudo)); });
+      for(var i=0;i<cs.length;i++){ var rs=cs[i].regras||[];
+        for(var j=0;j<rs.length;j++){ var r=rs[j]; if((r.unid!=="vida"&&r.unid!=="pct")||!r.m) continue;
+          if(!new RegExp(r.m,"i").test(prod)) continue;
+          if(r.c&&(r.c==="total")!==total) continue;
+          if(r.unid==="pct"){ var m=Number(p.mensalidade)||0; return {porVida:null,total:Math.round(m*r.valor)/100,regra:r.item,campanha:cs[i].titulo,adm:cs[i].adm}; }
+          return {porVida:r.valor,total:r.valor*vidas,regra:r.grupo+" · "+r.item,campanha:cs[i].titulo,adm:cs[i].adm};
+        } }
+      return null;
+    },
+    // Faixa padrão: vendas do mês na Esteira, saúde e odonto separados
+    strip:function(el){
+      if(!el) return; var P=null;
+      function draw(){
+        if(!P){ el.textContent="Carregando vendas de "+window.CMES.label()+"…"; return; }
+        var m=window.CMES.get(), ps=P.filter(function(p){return mesProp(p)===m&&p.etapa!=="recusada"&&p.etapa!=="rascunho"});
+        var s=0,o=0,ns=0,no=0; ps.forEach(function(p){ var v=Number(p.vidas)||0; if(isOdonto(p)){o+=v;no++}else{s+=v;ns++} });
+        var imp=ps.filter(function(p){return p.etapa==="implantada"}).length;
+        el.innerHTML='<b>'+window.CMES.label(m)+'</b><span>Vendas na Esteira: <b>'+s+'</b> vida'+(s===1?"":"s")+' saúde ('+ns+') · <b>'+o+'</b> odonto ('+no+')</span><span>'+imp+' implantada'+(imp===1?"":"s")+' de '+ps.length+'</span>';
+      }
+      draw(); window.CMES.on(draw);
+      var cl=(window.__C||window.claude); if(!cl||!cl.use) return;
+      cl.use("db").then(function(db){ if(!db) return; db.collection("propostas").onSnapshot(function(s){ P=s.docs.map(function(d){return Object.assign({},d.data())}); draw(); },function(){}); });
+    }
+  };
+  try{ var st=document.createElement("style"); st.textContent=".mes-strip{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:10px;padding:9px 14px;font-size:.9rem;color:var(--muted)}.mes-strip b{color:var(--fg)}.mes-strip>b:first-child{font-size:1rem}"; (document.head||document.documentElement).appendChild(st); }catch(e){}
+  window.addEventListener("message",function(e){
+    if(e.origin!==location.origin) return; var d=e.data||{};
+    if(d.type==="central:mes"&&d.mes&&d.mes!==cur){ cur=d.mes; fire(); }
+  });
+  if(window.parent!==window){ try{ parent.postMessage({type:"central:mes?"},location.origin); }catch(e){} }
+  setTimeout(function(){ if(!cur){ cur=atual; fire(); } }, window.parent!==window?1200:0);
+})();</script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+.camps{display:flex;flex-direction:column;gap:14px}
+.camp{border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.camp .adm{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-2);font-weight:700}
+.camp h3{margin:0;font-size:18px;line-height:1.25}
+.camp .per{font-size:12.5px;color:var(--muted)}
+.camp .grp{margin-top:10px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.camp .rows{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.camp .row{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:9px 12px;border-top:1px solid var(--line);font-size:14px}
+.camp .row:first-child{border-top:0}
+.camp .row b{white-space:nowrap;font-size:14px}
+.camp .row b small{font-weight:400;color:var(--muted);font-size:12px;margin-left:3px}
+.camp ul{margin:10px 0 0;padding-left:18px;font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.cod{display:inline-block;font:600 .72em/1.6 ui-monospace,Menlo,monospace;letter-spacing:.04em;padding:0 6px;border-radius:6px;background:var(--gold-soft,#f3e7c6);color:var(--fg,#1b2333);vertical-align:2px;margin-right:4px}
+</style></head><body>
+<title>Comissões e premiações</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: cabeçalho do consultor, seletor de mês, 4 indicadores, abas (vendas · adesão prevista · adesões recebidas) e tabela de premiação por operadora */
+:root{
+  --bg:#f7f4ec; --surface:#fffdf8; --surface-2:#f3ead6; --ink:#0e1f3d; --muted:#5d6579; --line:#e5dfd0;
+  --accent:#0e2a52; --accent-2:#8a6a2a; --money:#1d7a4f; --money-soft:#dcf1e5; --warn:#b2452f; --warn-soft:#f8e3dc;
+  --btn:#b08a3e; --on-btn:#0e1f3d;
+  --display:"Sora","Segoe UI",system-ui,sans-serif; --body:"Figtree","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0a1426; --surface:#112039; --surface-2:#0d1a30; --ink:#f4efe3; --muted:#a3abbe; --line:#243453;
+  --accent:#d6b46a; --accent-2:#d6b46a; --money:#6fd3a0; --money-soft:#173327; --warn:#f09a85; --warn-soft:#3a1f1a;
+  --btn:#d6b46a; --on-btn:#0a1426; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0a1426; --surface:#112039; --surface-2:#0d1a30; --ink:#f4efe3; --muted:#a3abbe; --line:#243453;
+  --accent:#d6b46a; --accent-2:#d6b46a; --money:#6fd3a0; --money-soft:#173327; --warn:#f09a85; --warn-soft:#3a1f1a;
+  --btn:#d6b46a; --on-btn:#0a1426; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:22px}
+.num{font-variant-numeric:tabular-nums}
+.eyebrow{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--display);font-size:clamp(26px,5vw,34px);margin:2px 0 0;font-weight:700;text-wrap:balance;line-height:1.15}
+h2{font-family:var(--display);font-size:20px;margin:0;font-weight:600}
+.sub{color:var(--muted);margin:0;font-size:14px}
+header{display:grid;gap:2px}
+
+.month{display:flex;align-items:center;gap:14px}
+.month b{font-family:var(--display);font-size:22px;font-weight:600;min-width:9.5em;text-align:center}
+.icon-btn{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:18px;cursor:pointer}
+.icon-btn:hover{border-color:var(--accent-2)}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:grid;gap:4px;min-width:0}
+.stat .label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.stat .value{font-family:var(--display);font-size:28px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+.stat .value.money{color:var(--money);font-size:24px}
+.stat .hint{font-size:13px;color:var(--muted)}
+@media (max-width:760px){.stats{grid-template-columns:1fr 1fr}}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.tab{font:inherit;font-weight:500;background:none;border:none;color:var(--muted);padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--accent-2);border-bottom-color:var(--accent-2);font-weight:600}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:14px;min-width:0}
+.card .sub b{color:var(--ink);font-weight:600}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:8px 8px 10px;border-bottom:1px solid var(--line)}
+.tbl td{padding:12px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl .r{text-align:right}
+.tbl tbody tr.row{cursor:pointer}
+.tbl tbody tr.row:hover td{background:var(--surface-2)}
+.tbl tfoot td{border-top:2px solid var(--accent-2);border-bottom:none;font-weight:700;padding-top:14px}
+.cli{font-weight:600}
+.tipo{font-size:13px;color:var(--muted)}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;margin-top:3px}
+.pill.ok{background:var(--money-soft);color:var(--money)}
+.pill.wait{background:var(--warn-soft);color:var(--warn)}
+.pill.ln{background:transparent;border:1px solid currentColor;margin:0 0 0 6px;vertical-align:1px}
+.pill.ln.saude{color:var(--accent-2)}
+.pill.ln.odonto{color:var(--money)}
+.split{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+.split small{font-size:12px;font-weight:600;color:var(--muted);margin-left:3px}
+.actions-row td{background:var(--surface-2);padding:10px 8px}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+.chipbtn{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:6px 12px;cursor:pointer}
+.chipbtn.danger{color:var(--warn)}
+.chipbtn.ok{background:var(--money-soft);color:var(--money);border-color:transparent;white-space:nowrap}
+.empty{color:var(--muted);text-align:center;padding:22px 8px}
+
+form.add{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:grid;gap:5px;min-width:0}
+.field label{font-size:13px;color:var(--muted);font-weight:500}
+input,select{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent-2);outline-offset:1px}
+.btn{font:inherit;font-weight:600;border-radius:10px;padding:11px 18px;cursor:pointer;border:none;background:var(--btn);color:var(--on-btn)}
+.btn:disabled{opacity:.5;cursor:default}
+
+.ops{display:grid;gap:12px}
+.op{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.op .nm{font-weight:600}
+.op .cnt{font-size:13px;color:var(--muted)}
+.money-in{position:relative;width:140px;flex:none}
+.money-in span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none}
+.money-in input{padding-left:38px;text-align:right}
+.newop{display:flex;gap:10px}
+.newop input{flex:1}
+.note{font-size:13px;color:var(--muted);margin:0}
+.banner{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:14px}
+.check{width:22px;height:22px;accent-color:var(--money);cursor:pointer}
+@media (max-width:520px){
+  .tbl th:nth-child(2),.tbl td.op-col{font-size:14px}
+  .tbl td,.tbl th{padding-left:5px;padding-right:5px}
+  .month b{font-size:19px;min-width:0;flex:1}
+  .card{padding:16px}
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">o consultor · Consultor autorizado</div>
+    <h1>Comissões e premiações</h1>
+    <p class="sub" id="saveState">Conectando aos dados…</p>
+  </header>
+
+  <div class="banner" id="banner" hidden></div>
+
+  <div class="month">
+    <button class="icon-btn" id="prev" type="button" aria-label="Mês anterior">‹</button>
+    <b id="monthLabel">—</b>
+    <button class="icon-btn" id="next" type="button" aria-label="Próximo mês">›</button>
+  </div>
+
+  <section class="stats" aria-label="Resumo do mês">
+    <div class="stat"><span class="label">Vendas</span><span class="value num" id="sVendas">0</span><span class="hint" id="sVendasH">0 empresarial · 0 PF · 0 CAEPF</span></div>
+    <div class="stat"><span class="label">Vidas</span><span class="value num split" id="sVidas"><span>0<small>saúde</small></span><span>0<small>odonto</small></span></span><span class="hint">sempre separadas</span></div>
+    <div class="stat"><span class="label">Premiação prevista</span><span class="value money num" id="sPrem">R$ 0,00</span><span class="hint">pago pela administradora</span></div>
+    <div class="stat"><span class="label">Adesão prevista</span><span class="value money num" id="sAdes">R$ 0,00</span><span class="hint" id="sAdesH">R$ 0,00 recebido</span></div>
+  </section>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="vendas" aria-selected="true" type="button">Vendas e premiação</button>
+    <button class="tab" role="tab" data-tab="adesao" aria-selected="false" type="button">Adesão prevista</button>
+    <button class="tab" role="tab" data-tab="recebidas" aria-selected="false" type="button">Adesões recebidas</button>
+  </div>
+
+  <!-- ABA: VENDAS -->
+  <div id="tab-vendas" style="display:grid;gap:22px">
+    <section class="card">
+      <h2>Vendas do mês</h2>
+      <p class="sub" id="recebidoLine">Recebido: R$ 0,00 de R$ 0,00</p>
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr><th>Cliente</th><th>Operadora</th><th class="r">Vidas</th><th class="r">Premiação</th></tr></thead>
+          <tbody id="vendasBody"></tbody>
+          <tfoot><tr><td>Total</td><td></td><td class="r num" id="tVidas">0 saúde · 0 odonto</td><td class="r num" id="tPrem">R$ 0,00</td></tr></tfoot>
+        </table>
+      </div>
+      <p class="note">Toque numa venda para marcar a premiação como recebida ou remover.</p>
+      <form class="add" id="addForm" autocomplete="off">
+        <div class="field"><label for="fCliente">Cliente</label><input id="fCliente" placeholder="Nome da empresa ou cliente" required></div>
+        <div class="field"><label for="fAdes">Adesão (R$)</label><input id="fAdes" inputmode="decimal" placeholder="0,00"></div>
+        <div class="field"><label for="fOp">Operadora</label><select id="fOp" required></select></div>
+        <div class="field"><label for="fVidas">Vidas</label><select id="fVidas"></select></div>
+        <div class="field"><label for="fTipo">Tipo</label><select id="fTipo"><option>Empresarial</option><option>PF</option><option>CAEPF</option></select></div>
+        <div class="field"><label for="fLinha">Linha</label><select id="fLinha"><option value="saude">Saúde</option><option value="odonto">Odonto</option></select></div>
+        <div class="field" style="align-content:end;grid-column:1/-1"><button class="btn" id="addBtn" type="submit">Adicionar</button></div>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Premiação por plano · campanhas do sistema da administradora</h2>
+      <p class="sub" id="campSub">Valores por plano lidos em sistema da administradora › Campanhas. A Central usa estes valores sozinha em cada proposta, pelo plano, pela administradora e pelo mês.</p>
+      <div id="campList"></div>
+      <details id="opsBox"><summary class="sub" style="cursor:pointer">Valores por operadora (usados só em meses sem campanha)</summary>
+      <div class="ops" id="opsList"></div>
+      <form class="newop" id="opForm" autocomplete="off">
+        <input id="fNewOp" placeholder="Nova operadora" aria-label="Nome da nova operadora" required>
+        <button class="btn" type="submit">Incluir</button>
+      </form></details>
+    </section>
+  </div>
+
+  <!-- ABA: ADESÃO PREVISTA -->
+  <section class="card" id="tab-adesao" hidden>
+    <h2>Adesão prevista</h2>
+    <p class="sub" id="adesLine">Total previsto: R$ 0,00</p>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th>Cliente</th><th>Operadora</th><th class="r">Adesão</th><th class="r"></th></tr></thead>
+        <tbody id="adesBody"></tbody>
+      </table>
+    </div>
+    <p class="note">Ajuste o valor se precisar e toque em “Recebida” para enviar a adesão para Adesões recebidas.</p>
+  </section>
+
+  <!-- ABA: ADESÕES RECEBIDAS -->
+  <section class="card" id="tab-recebidas" hidden>
+    <h2>Adesões recebidas</h2>
+    <p class="sub" id="recLine">Total recebido: R$ 0,00</p>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th>Cliente</th><th>Operadora</th><th class="r">Adesão</th><th class="r"></th></tr></thead>
+        <tbody id="recBody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const brl=v=>(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const parseMoney=s=>{s=String(s??"").trim();if(!s)return null;if(s.includes(","))s=s.replace(/\./g,"").replace(",",".");const n=parseFloat(s);return isNaN(n)?null:n};
+const fmtIn=v=>v===null||v===undefined?"":String(v).replace(".",",");
+const now=new Date();
+const thisMonth=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
+const shift=(m,d)=>{let[y,mm]=m.split("-").map(Number);mm+=d;while(mm>12){mm-=12;y++}while(mm<1){mm+=12;y--}return y+"-"+String(mm).padStart(2,"0")};
+
+const S={vendas:[],ops:[],cur:thisMonth,userPicked:false,open:null,tab:"vendas",db:null,gotV:false,gotO:false};
+const $=id=>document.getElementById(id);
+
+function premPorVida(op,mes){
+  if(!op||!op.valores)return null;
+  let best=null,bk="";
+  for(const k in op.valores){if(k<=mes&&k>=bk&&op.valores[k]!==null&&op.valores[k]!==undefined){bk=k;best=op.valores[k]}}
+  return best;
+}
+const opById=id=>S.ops.find(o=>o.id===id);
+const premVenda=v=>{if(v.premiacao!=null&&v.premiacao!==""&&!isNaN(+v.premiacao))return +v.premiacao;const p=premPorVida(opById(v.operadora),v.mes);return p===null?0:p*(v.vidas||0)};
+const linhaDe=v=>((v.linha||v.ramo)==="odonto"||(!v.linha&&!v.ramo&&/odonto/i.test((v.operadora||"")+" "+(v.operadoraNome||""))))?"odonto":"saude";
+const LN={saude:"Saúde",odonto:"Odonto"};
+const somaL=(arr,l)=>arr.filter(v=>linhaDe(v)===l).reduce((s,v)=>s+(v.vidas||0),0);
+const lnPill=v=>`<span class="pill ln ${linhaDe(v)}">${LN[linhaDe(v)]}</span>`;
+const opName=v=>(opById(v.operadora)||{}).nome||v.operadoraNome||"—";
+
+function renderCamps(){
+  const el=$("campList"); if(!el) return;
+  const cs=(S.camps||[]).filter(c=>c.mes===S.cur).sort((a,b)=>a.adm.localeCompare(b.adm,"pt-BR")||a.titulo.localeCompare(b.titulo,"pt-BR"));
+  const box=$("opsBox"); if(box) box.open=!cs.length;
+  if(!cs.length){ el.innerHTML='<p class="empty">Sem campanhas do sistema da administradora cadastradas para este mês. Para este mês valem os valores por operadora abaixo.</p>'; return; }
+  const val=r=>r.unid==="vida"?brl(r.valor)+" <small>por vida</small>":r.unid==="pct"?r.valor+"% da 1ª mensalidade":r.unid==="pct-info"?r.valor+"% cashback":r.unid==="bonus"?"+ "+brl(r.valor):r.unid==="vida-faixa"?brl(r.valor)+" <small>por vida</small>":r.item.match(/kit|ficha|bal/i)?"brinde":"brinde";
+  el.innerHTML='<div class="camps">'+cs.map(c=>{let g=null,h="";(c.regras||[]).forEach(r=>{ if(r.grupo!==g){ if(g!==null) h+='</div>'; g=r.grupo; h+='<div class="grp">'+esc(g)+'</div><div class="rows">'; } h+='<div class="row"><span>'+esc(r.item)+'</span><b>'+val(r)+'</b></div>'; }); if(g!==null) h+='</div>';
+    return '<article class="camp"><span class="adm">'+esc(c.adm)+'</span><h3>'+esc(c.titulo)+'</h3><span class="per">'+esc(c.periodo||"")+'</span>'+h+((c.obs||[]).length?'<ul>'+c.obs.map(o=>'<li>'+esc(o)+'</li>').join("")+'</ul>':'')+'</article>'; }).join("")+'</div>';
+}
+function render(){
+  renderCamps();
+  const [y,m]=S.cur.split("-").map(Number);
+  $("monthLabel").textContent=MESES[m-1]+" "+y;
+  const vs=S.vendas.filter(v=>v.mes===S.cur&&!v.cancelada).sort((a,b)=>(a.criado||0)-(b.criado||0));
+  const vS=somaL(vs,"saude"),vO=somaL(vs,"odonto");
+  const prem=vs.reduce((s,v)=>s+premVenda(v),0);
+  const premRec=vs.filter(v=>v.premRecebida).reduce((s,v)=>s+premVenda(v),0);
+  const ades=vs.reduce((s,v)=>s+(v.adesao||0),0);
+  const adesRec=vs.filter(v=>v.adesaoRecebida).reduce((s,v)=>s+(v.adesao||0),0);
+  const pf=vs.filter(v=>v.tipo==="PF").length,caepf=vs.filter(v=>v.tipo==="CAEPF").length,emp=vs.length-pf-caepf;
+  $("sVendas").textContent=vs.length;
+  $("sVendasH").textContent=emp+" empresarial · "+pf+" PF · "+caepf+" CAEPF";
+  $("sVidas").innerHTML=`<span>${vS}<small>saúde</small></span><span>${vO}<small>odonto</small></span>`;
+  $("sPrem").textContent=brl(prem);
+  $("sAdes").textContent=brl(ades);
+  $("sAdesH").textContent=brl(adesRec)+" recebido";
+  $("recebidoLine").innerHTML="Recebido: <b>"+brl(premRec)+"</b> de "+brl(prem);
+  $("tVidas").textContent=vS+" saúde · "+vO+" odonto";$("tPrem").textContent=brl(prem);
+
+  // vendas
+  $("vendasBody").innerHTML=vs.length?vs.map(v=>{
+    const semValor=(v.premiacao==null||v.premiacao===""||isNaN(+v.premiacao))&&premPorVida(opById(v.operadora),v.mes)===null;
+    let h=`<tr class="row" data-id="${v.id}" tabindex="0">
+      <td><div class="cli">${v.codigo?`<span class="cod">Nº ${String(v.codigo).padStart(2,"0")}</span>`:""}${esc(v.cliente)}</div><div class="tipo">${esc(v.tipo||"Empresarial")}${lnPill(v)}</div></td>
+      <td class="op-col">${esc(opName(v))}</td>
+      <td class="r num">${v.vidas||0} <span class="tipo">${linhaDe(v)==="odonto"?"odonto":"saúde"}</span></td>
+      <td class="r num">${semValor?'<span class="pill wait">definir valor</span>':brl(premVenda(v))}<br><span class="pill ${v.premRecebida?"ok":"wait"}">${v.premRecebida?"recebido":"a receber"}</span></td></tr>`;
+    if(S.open===v.id)h+=`<tr class="actions-row"><td colspan="4"><div class="acts">
+      <button class="chipbtn" type="button" data-act="linha" data-id="${v.id}">${linhaDe(v)==="odonto"?"Mudar para Saúde":"Mudar para Odonto"}</button>
+      <button class="chipbtn" type="button" data-act="prem" data-id="${v.id}">${v.premRecebida?"Marcar premiação a receber":"Marcar premiação recebida"}</button>
+      <button class="chipbtn danger" type="button" data-act="${S.confirmDel===v.id?"delok":"del"}" data-id="${v.id}">${S.confirmDel===v.id?"Confirmar remoção":"Remover venda"}</button>
+      </div></td></tr>`;
+    return h;
+  }).join(""):`<tr><td colspan="4" class="empty">${S.gotV?"Nenhuma venda neste mês. Adicione a primeira abaixo.":"Carregando vendas…"}</td></tr>`;
+
+  // select operadoras
+  const sel=$("fOp"),keep=sel.value;
+  sel.innerHTML=S.ops.map(o=>`<option value="${o.id}">${esc(o.nome)}</option>`).join("");
+  if(keep&&S.ops.some(o=>o.id===keep))sel.value=keep;
+
+  // operadoras
+  const act=document.activeElement&&document.activeElement.dataset&&document.activeElement.dataset.op;
+  if(!act){
+    $("opsList").innerHTML=S.ops.length?S.ops.map(o=>{
+      const vo=vs.filter(v=>v.operadora===o.id),nS=somaL(vo,"saude"),nO=somaL(vo,"odonto");
+      const p=premPorVida(o,S.cur);
+      return `<div class="op"><div><div class="nm">${esc(o.nome)}</div><div class="cnt">${nS} saúde · ${nO} odonto neste mês</div></div>
+        <div class="money-in"><span>R$</span><input id="op-${o.id}" data-op="${o.id}" inputmode="decimal" value="${fmtIn(p)}" placeholder="—" aria-label="Premiação por vida ${esc(o.nome)}"></div></div>`;
+    }).join(""):`<p class="empty">${S.gotO?"Nenhuma operadora cadastrada.":"Carregando operadoras…"}</p>`;
+  }
+
+  // adesão prevista
+  const adesActive=document.activeElement&&document.activeElement.dataset&&document.activeElement.dataset.ades;
+  const pend=vs.filter(v=>!v.adesaoRecebida);
+  $("adesLine").innerHTML="A receber: <b>"+brl(ades-adesRec)+"</b> · já recebido "+brl(adesRec);
+  if(!adesActive)$("adesBody").innerHTML=pend.length?pend.map(v=>`<tr>
+      <td><div class="cli">${v.codigo?`<span class="cod">Nº ${String(v.codigo).padStart(2,"0")}</span>`:""}${esc(v.cliente)}</div><div class="tipo">${v.vidas||0} ${v.vidas===1?"vida":"vidas"} ${linhaDe(v)==="odonto"?"odonto":"saúde"}</div></td>
+      <td>${esc(opName(v))}</td>
+      <td class="r"><div class="money-in" style="margin-left:auto;width:130px"><span>R$</span><input id="ad-${v.id}" data-ades="${v.id}" inputmode="decimal" value="${fmtIn(v.adesao)}" placeholder="0,00" aria-label="Adesão de ${esc(v.cliente)}"></div></td>
+      <td class="r"><button class="chipbtn ok" type="button" data-adrec="${v.id}" data-val="1">Recebida →</button></td></tr>`).join("")
+    :`<tr><td colspan="4" class="empty">${vs.length?"Todas as adesões deste mês já foram recebidas.":"Nenhuma venda neste mês."}</td></tr>`;
+
+  const rec=vs.filter(v=>v.adesaoRecebida);
+  $("recLine").innerHTML="Total recebido: <b>"+brl(adesRec)+"</b>";
+  $("recBody").innerHTML=rec.length?rec.map(v=>`<tr><td><div class="cli">${v.codigo?`<span class="cod">Nº ${String(v.codigo).padStart(2,"0")}</span>`:""}${esc(v.cliente)}</div><div class="tipo">${esc(v.tipo||"Empresarial")}</div></td><td>${esc(opName(v))}</td><td class="r num">${brl(v.adesao)}</td><td class="r"><button class="chipbtn" type="button" data-adrec="${v.id}" data-val="0">Desfazer</button></td></tr>`).join("")
+    :`<tr><td colspan="4" class="empty">Nenhuma adesão marcada como recebida neste mês.</td></tr>`;
+}
+
+function showError(msg){$("banner").textContent=msg;$("banner").hidden=false}
+async function write(fn){
+  if(!S.db){showError("Os dados não estão disponíveis nesta visualização.");return}
+  try{$("saveState").textContent="Salvando…";await fn(S.db);$("saveState").textContent="Dados salvos automaticamente"}
+  catch(e){$("saveState").textContent="Não foi possível salvar";showError(e&&e.code==="invalid_argument"?"Você não tem permissão para alterar estes dados.":"Não foi possível salvar. Tente de novo em instantes.")}
+}
+
+// eventos
+$("prev").onclick=()=>{S.cur=shift(S.cur,-1);S.userPicked=true;S.open=null;if(window.CMES)CMES.set(S.cur);render()};
+$("next").onclick=()=>{S.cur=shift(S.cur,1);S.userPicked=true;S.open=null;if(window.CMES)CMES.set(S.cur);render()};
+if(window.CMES)CMES.on(m=>{if(S.cur===m&&S.userPicked)return;S.cur=m;S.userPicked=true;S.open=null;render()});
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  S.tab=t.dataset.tab;
+  document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===t));
+  $("tab-vendas").hidden=S.tab!=="vendas";$("tab-vendas").style.display=S.tab==="vendas"?"grid":"none";
+  $("tab-adesao").hidden=S.tab!=="adesao";$("tab-recebidas").hidden=S.tab!=="recebidas";
+});
+$("vendasBody").addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]");
+  if(b){const id=b.dataset.id,v=S.vendas.find(x=>x.id===id);
+    if(b.dataset.act==="linha")write(db=>{const n=linhaDe(v)==="odonto"?"saude":"odonto";return db.doc("vendas/"+id).update({linha:n,ramo:n})});
+    else if(b.dataset.act==="prem")write(db=>db.doc("vendas/"+id).update({premRecebida:!v.premRecebida}));
+    else if(b.dataset.act==="del"){S.confirmDel=id;render()}
+    else if(b.dataset.act==="delok"){S.open=null;S.confirmDel=null;write(db=>db.doc("vendas/"+id).delete())}
+    return}
+  const r=e.target.closest("tr.row");if(!r)return;
+  S.open=S.open===r.dataset.id?null:r.dataset.id;S.confirmDel=null;render();
+});
+$("vendasBody").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("tr.row"))e.target.click()});
+$("addForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const cliente=$("fCliente").value.trim(),op=$("fOp").value,vidas=Math.max(1,parseInt($("fVidas").value)||1);
+  if(!cliente||!op)return;
+  const o=opById(op);
+  const doc={mes:S.cur,cliente,tipo:$("fTipo").value,linha:$("fLinha").value,ramo:$("fLinha").value,operadora:op,operadoraNome:o?o.nome:"",vidas,adesao:parseMoney($("fAdes").value),premRecebida:false,adesaoRecebida:false,criado:Date.now()};
+  write(db=>db.collection("vendas").add(doc));
+  $("fCliente").value="";$("fAdes").value="";$("fCliente").focus();
+});
+$("fOp").addEventListener("change",()=>{const o=opById($("fOp").value);$("fLinha").value=o&&/odonto/i.test(o.nome+" "+o.id)?"odonto":"saude"});
+$("opsList").addEventListener("change",e=>{
+  const id=e.target.dataset.op;if(!id)return;
+  const v=parseMoney(e.target.value);
+  write(db=>db.doc("operadoras/"+id).update({valores:{[S.cur]:v}})).then(render);
+});
+$("opsList").addEventListener("focusout",()=>setTimeout(render,0));
+$("opForm").addEventListener("submit",e=>{
+  e.preventDefault();const nome=$("fNewOp").value.trim();if(!nome)return;
+  const id=nome.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||("op-"+Date.now());
+  write(db=>db.doc("operadoras/"+id).set({nome,ordem:Date.now(),valores:{}}));
+  $("fNewOp").value="";
+});
+$("adesBody").addEventListener("change",e=>{
+  if(e.target.dataset.ades){const id=e.target.dataset.ades;write(db=>db.doc("vendas/"+id).update({adesao:parseMoney(e.target.value)})).then(render)}
+});
+function adRec(e){const b=e.target.closest("[data-adrec]");if(!b)return;const id=b.dataset.adrec,val=b.dataset.val==="1",v=S.vendas.find(x=>x.id===id)||{};b.disabled=true;const hj=new Date(),dt=hj.getFullYear()+"-"+String(hj.getMonth()+1).padStart(2,"0")+"-"+String(hj.getDate()).padStart(2,"0");write(db=>Promise.all([db.doc("vendas/"+id).update({adesaoRecebida:val})].concat(v.propostaId?[db.doc("propostas/"+v.propostaId).update({adesao:{status:"sim",valor:v.adesao||0,recebida:val?dt:""}})]:[])))}
+$("adesBody").addEventListener("click",adRec);
+$("recBody").addEventListener("click",adRec);
+$("adesBody").addEventListener("focusout",()=>setTimeout(render,0));
+
+function pickMonth(){
+  if(S.userPicked)return;
+  if(S.vendas.some(v=>v.mes===thisMonth)){S.cur=thisMonth;return}
+  const ms=S.vendas.map(v=>v.mes).filter(Boolean).sort();
+  if(ms.length)S.cur=ms[ms.length-1];
+}
+
+$("fVidas").innerHTML=Array.from({length:50},(_,i)=>`<option value="${i+1}">${i+1} ${i?"vidas":"vida"}</option>`).join("");
+render();
+(async()=>{
+  const db=await (window.__C||window.claude)?.use?.("db");
+  if(!db){$("saveState").textContent="Dados indisponíveis";showError("Não foi possível acessar os dados salvos nesta visualização. Entre na Central com seu e-mail e senha.");S.gotV=S.gotO=true;render();return}
+  S.db=db;
+  const timer=setTimeout(()=>{if(!S.gotV||!S.gotO)showError("Os dados ainda não carregaram. Verifique sua conexão.")},10000);
+  const done=()=>{if(S.gotV&&S.gotO){clearTimeout(timer);$("banner").hidden=true;$("saveState").textContent="Dados salvos automaticamente"}};
+  db.collection("campanhas").onSnapshot(snap=>{S.camps=snap.docs.map(d=>Object.assign({id:d.id},d.data()));renderCamps()},()=>{});
+  db.collection("vendas").onSnapshot(snap=>{
+    S.vendas=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(!snap.metadata.fromCache){S.gotV=true;done()}
+    pickMonth();render();
+  },err=>{S.gotV=true;clearTimeout(timer);showError("Não foi possível carregar as vendas.");render()});
+  db.collection("operadoras").onSnapshot(snap=>{
+    S.ops=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordem||0)-(b.ordem||0));
+    if(!snap.metadata.fromCache){S.gotO=true;done()}
+    render();
+  },err=>{S.gotO=true;clearTimeout(timer);showError("Não foi possível carregar as operadoras.");render()});
+})();
+</script>
+
+</body></html>

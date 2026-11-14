@@ -1,0 +1,602 @@
+<!doctype html><html><head><script src="central-db.js?v=1"></script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Central do Consultor</title>
+<script>/* piloto: cada consultor grava seus dados na área privada data/users/<id>/ws/ */window.__SCOPE=function(getC){var dbp=null;return {use:function(n){var c=getC();if(!c||!c.use)return Promise.resolve(null);if(n!=="db")return c.use(n);if(!dbp)dbp=Promise.all([c.use("db"),c.use("user")]).then(function(r){var db=r[0],u=r[1];if(!db||!u||!u.id)return null;return Promise.resolve(u.id()).then(function(id){if(!id)return null;var b="data/users/"+id+"/ws/";return {collection:function(p){return db.collection(b+p)},doc:function(p){return db.doc(b+p)}};});});return dbp;}};};window.__CC=window.__SCOPE(function(){return window.claude});</script>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: barra da corretora no topo (abas no desktop), ferramenta ocupando o resto da tela; no celular as abas descem para uma barra inferior */
+:root{
+  --navy:#0e2a52; --navy-2:#183a6b; --gold:#b08a3e; --gold-2:#d9bf85;
+  --bg:#f7f4ec; --surface:#fffdf8; --line:#e5dfd0; --fg:#0e1f3d; --muted:#5d6579; --on-navy:#f4efe3; --tab-off:#b9c4d8;
+  --display:"Sora","Segoe UI",system-ui,sans-serif; --body:"Figtree","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --navy:#081a33; --navy-2:#13294a; --gold:#d6b46a; --gold-2:#e6cf98;
+  --bg:#0a1426; --surface:#112039; --line:#243453; --fg:#f4efe3; --muted:#a3abbe; --on-navy:#f4efe3; --tab-off:#8f9ab0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --navy:#081a33; --navy-2:#13294a; --gold:#d6b46a; --gold-2:#e6cf98;
+  --bg:#0a1426; --surface:#112039; --line:#243453; --fg:#f4efe3; --muted:#a3abbe; --on-navy:#f4efe3; --tab-off:#8f9ab0; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);display:flex;flex-direction:column;overflow:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--navy)}
+.top{background:var(--navy);color:var(--on-navy);border-bottom:2px solid var(--gold);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex:none}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mark{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--gold-2);color:var(--gold-2);display:grid;place-items:center;font:700 13px var(--display);flex:none}
+.brand b{font:700 1.05rem var(--display);display:block;line-height:1.1}
+.brand small{color:var(--gold-2);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase}
+.today{font-size:.8rem;color:var(--tab-off);white-space:nowrap}
+.gmes{display:flex;align-items:center;gap:6px;color:var(--gold-2);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;flex:none}
+.gmes select{font:600 .9rem var(--body);letter-spacing:0;text-transform:none;color:#0e1f3d;background:var(--gold);border:0;border-radius:8px;padding:7px 8px;cursor:pointer}
+.gmes select:focus-visible{outline:2px solid var(--gold-2);outline-offset:2px}
+@media (max-width:420px){.gmes span{display:none}.brand small{display:none}}
+.gbusca{position:relative;flex:0 1 220px;min-width:0;margin-left:auto}
+.gbusca input{width:100%;font:500 .9rem var(--body);color:#0e1f3d;background:#f4efe3;border:0;border-radius:8px;padding:7px 10px}
+.gbusca input:focus-visible{outline:2px solid var(--gold-2);outline-offset:2px}
+.gres{position:absolute;right:0;top:calc(100% + 6px);width:min(340px,calc(100vw - 32px));background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:30;max-height:60vh;overflow:auto;padding:4px}
+.gres button{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;gap:10px;width:100%;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:.9rem}
+.gres button:hover,.gres button:focus-visible{background:var(--bg)}
+.gres b{font-weight:600}
+.gres small{color:var(--muted);white-space:nowrap}
+.gres p{margin:0;padding:10px;color:var(--muted);font-size:.88rem}
+@media (max-width:820px){.gbusca{flex:1 1 auto;position:static}.brand div{min-width:0}.brand b{font-size:.9rem}.gres{position:fixed;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 62px);width:auto}}
+@media (max-width:520px){.brand div{display:none}}
+@media (min-width:821px) and (max-width:1320px){.brand div{display:none}}
+
+nav.tabs{display:flex;gap:4px;background:var(--navy-2);border-radius:12px;padding:5px;min-width:0;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar,.bottom::-webkit-scrollbar{display:none}
+@media (max-width:1240px){.today{display:none}}
+nav.tabs a{color:#e8edf6;text-decoration:none;font-weight:600;font-size:.92rem;padding:9px 12px;border-radius:9px;display:flex;align-items:center;gap:8px;white-space:nowrap}
+nav.tabs a:hover{background:rgba(255,255,255,.08)}
+nav.tabs a svg{width:20px;height:20px;flex:none}
+nav.tabs a[aria-current="page"]{background:var(--gold);color:#0e1f3d}
+nav.tabs a:focus-visible{outline:2px solid var(--gold-2);outline-offset:2px}
+main{flex:1;min-height:0;position:relative}
+.metabar{background:var(--surface);border-bottom:1px solid var(--line);padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));overflow-x:auto;scrollbar-width:none}
+.metabar>div{display:flex;gap:6px;max-width:1100px;margin:0 auto}
+.metabar a{flex:none;color:var(--fg);text-decoration:none;font-weight:600;font-size:.88rem;padding:7px 14px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.metabar a[aria-current="page"]{background:var(--navy);border-color:var(--navy);color:var(--on-navy)}
+.metabar a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg)}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:.9rem}
+.rotina{position:absolute;inset:0;overflow-y:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 40px}
+.rotina .in{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.rotina h1{font:700 1.4rem var(--display);margin:0;text-wrap:balance}
+.rotina p{margin:0;color:var(--muted);max-width:62ch}
+.doc{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:10px;padding:16px 18px;text-decoration:none;color:var(--fg)}
+.doc:hover{border-color:var(--gold)}
+.doc b{display:block;font:600 1.02rem var(--display)}
+.doc span{font-size:.85rem;color:var(--muted)}
+.doc i{font-style:normal;font-weight:600;color:var(--gold);white-space:nowrap}
+.eyebrow{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-top:10px}
+@media (max-width:820px){
+  .top nav.tabs{display:none}
+  .bottom{display:flex}
+}
+.bottom{display:none;flex:none;background:var(--navy);border-top:2px solid var(--gold);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.bottom{overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity}
+.bottom a span{white-space:nowrap}
+.bottom a{flex:1 0 68px;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 9px;color:#e8edf6;text-decoration:none;font-size:.78rem;font-weight:600;min-width:0}
+.bottom a svg{width:26px;height:26px;padding:3px 10px;box-sizing:content-box;border-radius:999px}
+.bottom a[aria-current="page"]{color:var(--gold-2)}
+.bottom a[aria-current="page"] svg{background:var(--gold);color:#0e1f3d}
+.bottom a:focus-visible{outline:2px solid var(--gold-2);outline-offset:-2px}
+@media (max-width:820px){:root{padding-bottom:0}.bottom{display:flex}.top nav.tabs,.today{display:none}.top{padding-block:8px}}
+</style>
+
+<script>(function(){
+  /* Mês único da Central: a barra do topo escolhe o mês e todas as abas seguem. CMES.on(fn) recebe "AAAA-MM". */
+  var MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  function pad(n){return (n<10?"0":"")+n}
+  var d0=new Date(), atual=d0.getFullYear()+"-"+pad(d0.getMonth()+1);
+  var cur=null, fns=[];
+  function fire(){ fns.forEach(function(f){ try{f(cur)}catch(e){} }); }
+  function isOdonto(p){
+    if(!p) return false;
+    if(p.ramo) return p.ramo==="odonto";
+    if(p.linha) return p.linha==="odonto";
+    var t=(p.produto||"")+" "+(p.administradora||"");
+    return /odonto/i.test(t)&&!/(enfermaria|apartamento|ambulatorial|executivo|empresarial|participativo|premium|corporate|ades[aã]o)/i.test(p.produto||"");
+  }
+  function isAmb(p){ if(!p||isOdonto(p)) return false; if(p.cobertura) return p.cobertura==="amb"; return /ambulatorial|·\s*AMB\b/i.test(p.produto||""); }
+  function mesProp(p){ return ((p&&p.datas&&p.datas.enviada)||(p&&p.criadoEm)||"").slice(0,7); }
+  window.CMES={
+    atual:atual,
+    get:function(){return cur||atual},
+    on:function(f){ fns.push(f); if(cur) try{f(cur)}catch(e){} },
+    set:function(m){ if(!m||m===cur) return; cur=m; fire(); try{ if(window.parent!==window) parent.postMessage({type:"central:setmes",mes:m},location.origin); }catch(e){} },
+    label:function(m){ m=m||cur||atual; var p=m.split("-"); return MESES[+p[1]-1]+" "+p[0]; },
+    nome:function(m){ m=m||cur||atual; return MESES[+m.split("-")[1]-1].toLowerCase(); },
+    isOdonto:isOdonto, isAmb:isAmb, mesProp:mesProp,
+    // Premiação pelas campanhas do sistema da administradora (collection "campanhas"): devolve {porVida,total,regra,campanha} ou null
+    premCamp:function(camps,p,mes){
+      if(!camps||!p) return null;
+      var adm=String(p.administradora||"").toLowerCase(), prod=String(p.produto||"").toLowerCase(), tudo=adm+" "+prod;
+      var OP={bluzz:/bluzz/,unimed:/unimed|participativo|perfil regional|personal smart|premium nacional|vitoriamed/,sbs:/s[aã]o bernardo|samp|sbs|athena/,meridional:/meridional/,"sempre odonto":/sempre odonto/,nova:/nova sa[uú]de/};
+      var vidas=Number(p.vidas)||0, total=/copart(\.|icipa[cç][aã]o)? total/.test(prod);
+      var cs=camps.filter(function(c){ return c.mes===mes&&new RegExp(c.canal,"i").test(adm)&&(!OP[c.op]||OP[c.op].test(tudo)); });
+      for(var i=0;i<cs.length;i++){ var rs=cs[i].regras||[];
+        for(var j=0;j<rs.length;j++){ var r=rs[j]; if((r.unid!=="vida"&&r.unid!=="pct")||!r.m) continue;
+          if(!new RegExp(r.m,"i").test(prod)) continue;
+          if(r.c&&(r.c==="total")!==total) continue;
+          if(r.unid==="pct"){ var m=Number(p.mensalidade)||0; return {porVida:null,total:Math.round(m*r.valor)/100,regra:r.item,campanha:cs[i].titulo,adm:cs[i].adm}; }
+          return {porVida:r.valor,total:r.valor*vidas,regra:r.grupo+" · "+r.item,campanha:cs[i].titulo,adm:cs[i].adm};
+        } }
+      return null;
+    },
+    // Faixa padrão: vendas do mês na Esteira, saúde e odonto separados
+    strip:function(el){
+      if(!el) return; var P=null;
+      function draw(){
+        if(!P){ el.textContent="Carregando vendas de "+window.CMES.label()+"…"; return; }
+        var m=window.CMES.get(), ps=P.filter(function(p){return mesProp(p)===m&&p.etapa!=="recusada"&&p.etapa!=="rascunho"});
+        var s=0,o=0,ns=0,no=0; ps.forEach(function(p){ var v=Number(p.vidas)||0; if(isOdonto(p)){o+=v;no++}else{s+=v;ns++} });
+        var imp=ps.filter(function(p){return p.etapa==="implantada"}).length;
+        el.innerHTML='<b>'+window.CMES.label(m)+'</b><span>Vendas na Esteira: <b>'+s+'</b> vida'+(s===1?"":"s")+' saúde ('+ns+') · <b>'+o+'</b> odonto ('+no+')</span><span>'+imp+' implantada'+(imp===1?"":"s")+' de '+ps.length+'</span>';
+      }
+      draw(); window.CMES.on(draw);
+      var cl=(window.__C||window.claude); if(!cl||!cl.use) return;
+      cl.use("db").then(function(db){ if(!db) return; db.collection("propostas").onSnapshot(function(s){ P=s.docs.map(function(d){return Object.assign({},d.data())}); draw(); },function(){}); });
+    }
+  };
+  try{ var st=document.createElement("style"); st.textContent=".mes-strip{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:10px;padding:9px 14px;font-size:.9rem;color:var(--muted)}.mes-strip b{color:var(--fg)}.mes-strip>b:first-child{font-size:1rem}"; (document.head||document.documentElement).appendChild(st); }catch(e){}
+  window.addEventListener("message",function(e){
+    if(e.origin!==location.origin) return; var d=e.data||{};
+    if(d.type==="central:mes"&&d.mes&&d.mes!==cur){ cur=d.mes; fire(); }
+  });
+  if(window.parent!==window){ try{ parent.postMessage({type:"central:mes?"},location.origin); }catch(e){} }
+  setTimeout(function(){ if(!cur){ cur=atual; fire(); } }, window.parent!==window?1200:0);
+})();</script>
+<header class="top">
+  <div class="brand"><span class="mark">CC</span><div><b>CENTRAL DO CONSULTOR</b><small><span id="ccNome">Central do Consultor</span> · <a href="#" id="ccSair" style="color:inherit;text-decoration:underline">Sair</a></small></div></div>
+  <nav class="tabs" aria-label="Ferramentas" id="topnav"></nav>
+  <div class="gbusca" role="search"><input id="gbusca" type="search" placeholder="Buscar cliente" aria-label="Buscar cliente em todos os meses" autocomplete="off"><div class="gres" id="gres" hidden role="listbox"></div></div>
+  <label class="gmes"><span>Mês</span><select id="gmes" aria-label="Mês das vendas em todas as abas"></select></label>
+  <span class="today" id="today"></span>
+</header>
+<div class="metabar" id="metabar" hidden><div role="tablist" aria-label="Meta"><a href="#hoje" data-mb="hoje">Hoje</a><a href="#hoje" id="mbMetas">Minhas metas</a><a href="#cronograma" data-mb="cronograma">Cronograma do dia</a></div></div>
+<main id="main"><div class="loading" id="loading">Abrindo…</div></main>
+<nav class="bottom" aria-label="Ferramentas" id="botnav"></nav>
+
+
+<script>
+(function(){
+  var ICON={
+    hoje:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8 14h3"/></svg>',
+    prospeccao:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>',
+    cotador:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 6h6M9 11h1M14 11h1M9 15h1M14 15h1M9 19h6"/></svg>',
+    comissoes:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1-3 2.3c0 3.2 6 1.8 6 5 0 1.4-1.3 2.7-3 2.7s-3-1.1-3-2.5M12 5v2M12 17v2"/></svg>',
+    esteira:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="11" rx="1"/><rect x="17" y="4" width="4" height="7" rx="1"/></svg>',
+    followup:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5M12 7v5l3 2"/></svg>',
+    posvenda:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>',
+    clientes:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.8c1.7.8 2.8 2.6 3 5.2"/></svg>',
+    rotina:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l4 4v16H6z"/><path d="M14 2v5h5M9 12h7M9 16h7"/></svg>'
+  };
+  var TABS=[
+    {id:"prospeccao",label:"Funil",file:"funil.html"},
+    {id:"followup",label:"Follow-up",file:"followup.html"},
+    {id:"esteira",label:"Esteira",file:"esteira.html"},
+    {id:"posvenda",label:"Pós-venda",file:"posvenda.html"},
+    {id:"clientes",label:"Clientes",file:"clientes.html"},
+    {id:"hoje",label:"Meta",file:"painel.html"},
+    {id:"cotador",label:"Cotador",file:"cotador.html"},
+    {id:"comissoes",label:"Comissões",file:"comissoes.html"},
+    {id:"cronograma",label:"Cronograma",file:"cronograma.html",parent:"hoje",hide:true},
+    {id:"rotina",label:"Rotina",hide:true}, /* consultor, 10/11: Rotina foi para dentro de META */
+    {id:"feedback",label:"Feedback",file:"feedback.html"},
+    {id:"monitor",label:"Monitor",file:"monitor.html",hide:true}, /* piloto: só o dono vê */
+    {id:"layout",label:"Layout consultores",hide:true,dono:true},
+    {id:"fbadm",label:"Feedback",file:"monitor.html#feedback",hide:true,dono:true}
+  ];
+  var DONO_TABS=["layout","fbadm","monitor"];
+  /* dono, 13/11: atalho para a Caixa de Entrada do WhatsApp (abre em aba nova; só o dono vê) */
+  var CAIXA_URL="https://centraldoconsultor.github.io/caixa/";
+  ICON.whatsapp='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/><path d="M9 9.5c.3 1.8 2 3.6 4 4.2l1.2-1.1 1.8.9"/></svg>';
+  function caixaLink(){ return '<a href="'+CAIXA_URL+'" target="_blank" rel="noopener" data-ext="whatsapp" title="Abre a Caixa de Entrada do WhatsApp em uma aba nova">'+ICON.whatsapp+'<span>WhatsApp ↗</span></a>'; }
+  ICON.layout='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
+  ICON.painel='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
+  ICON.feedback='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>';
+  ICON.monitor='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>';
+  window.__mostrarMonitor=function(){ window.__souDono=true; fromHash(); };
+  var DOCS=[
+    {t:"Cronograma Diário de Estratégias",d:"O roteiro de cada dia: horários, blocos de prospecção e follow-up",u:"#cronograma",inner:true}
+  ];
+  var main=document.getElementById("main"), frames={}, cur=null;
+  /* Mês único: o seletor do topo vale para todas as abas */
+  var MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  var nowD=new Date(), MES=nowD.getFullYear()+"-"+(nowD.getMonth()<9?"0":"")+(nowD.getMonth()+1);
+  function fillMes(){
+    var list=[], d=new Date(2026,2,1), end=new Date(nowD.getFullYear(),nowD.getMonth()+1,1);
+    while(d<=end){ list.push(d.getFullYear()+"-"+(d.getMonth()<9?"0":"")+(d.getMonth()+1)); d.setMonth(d.getMonth()+1); }
+    if(list.indexOf(MES)<0) list.push(MES);
+    list.sort().reverse();
+    document.getElementById("gmes").innerHTML=list.map(function(k){var p=k.split("-");return '<option value="'+k+'"'+(k===MES?" selected":"")+'>'+MESES[+p[1]-1]+" "+p[0]+'</option>'}).join("");
+  }
+  function sendMes(w){ try{ w.postMessage({type:"central:mes",mes:MES},location.origin); }catch(e){} }
+  function broadcast(){ Object.keys(frames).forEach(function(k){ var f=frames[k]; if(f.contentWindow) sendMes(f.contentWindow); }); }
+  fillMes();
+  document.getElementById("gmes").addEventListener("change",function(){ MES=this.value; broadcast(); });
+  /* Busca de cliente: procura em todos os meses; ao escolher, o mês de referência muda para o do cliente e abre a aba Clientes já filtrada */
+  var BP=[], gb=document.getElementById("gbusca"), gr=document.getElementById("gres"), pendBusca=null;
+  var ETQ={pendencia:"Pendência",aguardando:"Aguardando",digitada:"Digitada",aprovada:"Aprovada",implantada:"Implantada",recusada:"Recusada",rascunho:"Rascunho"};
+  function nrm(x){return String(x||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")}
+  function escH(x){return String(x==null?"":x).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function mesDeP(p){ return ((p.datas&&p.datas.enviada)||p.criadoEm||"").slice(0,7); }
+  function buscar(){
+    var q=nrm(gb.value.trim()), qd=q.replace(/\D/g,"");
+    if(q.length<2){ gr.hidden=true; return; }
+    var r=BP.filter(function(p){ return nrm(p.cliente).indexOf(q)>=0||nrm(p.telefone).replace(/\D/g,"").indexOf(qd||"#")>=0&&qd.length>=4||String(p.documento||"").replace(/\D/g,"").indexOf(qd||"#")>=0&&qd.length>=4; }).slice(0,8);
+    gr.innerHTML=r.length?r.map(function(p){ var m=mesDeP(p), k=m.split("-"); return '<button type="button" role="option" data-id="'+escH(p.id)+'"><b>'+escH(p.cliente)+'</b><small>'+(ETQ[p.etapa]||p.etapa||"")+' · '+(k[1]?MESES[+k[1]-1].slice(0,3)+"/"+k[0].slice(2):"")+' · '+(p.vidas||0)+' vida'+(p.vidas==1?"":"s")+'</small></button>'; }).join(""):'<p>Nenhum cliente encontrado.</p>';
+    gr.hidden=false;
+  }
+  gb.addEventListener("input",buscar); gb.addEventListener("focus",buscar);
+  gb.addEventListener("keydown",function(e){ if(e.key==="Escape"){ gr.hidden=true; gb.blur(); } if(e.key==="Enter"){ var b=gr.querySelector("button"); if(b) b.click(); } });
+  document.addEventListener("click",function(e){ if(!e.target.closest(".gbusca")) gr.hidden=true; });
+  gr.addEventListener("click",function(e){
+    var b=e.target.closest("[data-id]"); if(!b) return; var p=BP.filter(function(x){return x.id===b.getAttribute("data-id")})[0]; if(!p) return;
+    gr.hidden=true; gb.value=""; irParaProposta(p.id);
+  });
+  /* Leva até a proposta na Esteira: mês dela, aba da etapa dela, cartão aberto para editar */
+  function irParaProposta(id){
+    var p=BP.filter(function(x){return x.id===id})[0]; if(!p) return;
+    var m=mesDeP(p); if(m&&m!==MES){ MES=m; fillMes(); broadcast(); }
+    window.__pendAbrir=id; location.hash="esteira";
+    var f=frames.esteira; if(f&&f.contentWindow) setTimeout(function(){ try{ f.contentWindow.postMessage({type:"central:abrir",id:id},location.origin); window.__pendAbrir=null; }catch(e){} },150);
+  }
+  window.__abrirProposta=irParaProposta;
+  function enviaBusca(){ var f=frames.clientes; if(!pendBusca||!f||!f.contentWindow) return; try{ f.contentWindow.postMessage({type:"central:busca",q:pendBusca},location.origin); }catch(e){} }
+  window.__CC.use("db").then(function(db){ if(!db) return; db.collection("propostas").onSnapshot(function(s){ BP=s.docs.map(function(d){var o=Object.assign({},d.data());o.id=d.id;return o}); },function(){}); });
+  function navHtml(){
+    if(window.__souDono){
+      var h=(location.hash||"").replace("#","")||"monitor";
+      if(DONO_TABS.indexOf(h)>=0) return DONO_TABS.map(function(id){ var t=TABS.filter(function(x){return x.id===id})[0]; return '<a href="#'+t.id+'" data-tab="'+t.id+'">'+ICON[t.id]+'<span>'+t.label+'</span></a>'; }).join("")+caixaLink();
+      return '<a href="#monitor" data-tab="painel">'+ICON.painel+'<span>Painel</span></a>'+navLista()+caixaLink();
+    }
+    return navLista();
+  }
+  function navLista(){return TABS.filter(function(t){return !t.hide}).map(function(t){return t.url?'<a href="'+t.url+'" target="_blank" rel="noopener" data-ext="'+t.id+'" title="Abre em uma aba nova">'+ICON[t.id]+'<span>'+t.label+' ↗</span></a>':'<a href="#'+t.id+'" data-tab="'+t.id+'">'+ICON[t.id]+'<span>'+t.label+'</span></a>'}).join("")}
+  document.getElementById("topnav").innerHTML=navHtml();
+  document.getElementById("botnav").innerHTML=navHtml();
+  var d=new Date(); document.getElementById("today").textContent=d.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"});
+
+  function rotina(){
+    var el=document.createElement("div"); el.className="rotina";
+    el.innerHTML='<div class="in"><h1>Rotina e documentos</h1><p>Seus planos de rotina e de metas, cada um na sua página. Toque para abrir.</p>'+
+      DOCS.map(function(x,i){return '<a class="doc" href="'+x.u+'"'+(x.inner?'':' target="_blank" rel="noopener"')+'><div><b>'+x.t+'</b><span>'+x.d+'</span></div><i>'+(x.inner?'Abrir →':'Abrir ↗')+'</i></a>'}).join("")+'</div>';
+    return el;
+  }
+  function show(id){
+    var tab=TABS.filter(function(t){return t.id===id})[0]||TABS[0]; id=tab.id;
+    document.querySelectorAll("[data-tab]").forEach(function(a){ if(a.getAttribute("data-tab")===(tab.parent||id))a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+    if(!frames[id]){
+      var el;
+      if(tab.file){ el=document.createElement("iframe"); el.title=tab.label; el.src=tab.file; el.addEventListener("load",function(){var l=document.getElementById("loading"); if(l)l.remove(); if(el.contentWindow) sendMes(el.contentWindow); if(id==="clientes") setTimeout(enviaBusca,300); if(id==="esteira"&&window.__pendAbrir) setTimeout(function(){ try{ el.contentWindow.postMessage({type:"central:abrir",id:window.__pendAbrir},location.origin); window.__pendAbrir=null; }catch(e){} },400);}); }
+      else if(tab.url){ el=document.createElement("div"); el.className="rotina"; el.innerHTML='<div class="in"><h1>'+tab.label+'</h1><p>O Cotador abre em uma aba nova, sempre na versão mais atual (com PDF e link curto).</p><a class="doc" href="'+tab.url+'" target="_blank" rel="noopener"><div><b>Abrir o Cotador</b><span>Cotações, histórico e PDF da proposta</span></div><i>Abrir ↗</i></a></div>'; var l2=document.getElementById("loading"); if(l2)l2.remove(); }
+      else if(id==="layout"){ el=layoutPage(); var l0=document.getElementById("loading"); if(l0)l0.remove(); }
+      else { el=rotina(); var l=document.getElementById("loading"); if(l)l.remove(); }
+      frames[id]=el; main.appendChild(el);
+    }
+    Object.keys(frames).forEach(function(k){ frames[k].hidden = k!==id; });
+    cur=id;
+    var MB=["hoje","crescimento","cronograma"], mb=document.getElementById("metabar"); if(mb){ mb.hidden=MB.indexOf(id)<0; mb.querySelectorAll("[data-mb]").forEach(function(a){ if(a.getAttribute("data-mb")===id) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); }); }
+    var act=document.querySelector('#botnav [aria-current="page"]'); if(act&&act.scrollIntoView) try{act.scrollIntoView({block:"nearest",inline:"nearest"})}catch(e){}
+  }
+  function layoutPage(){
+    var DESC={prospeccao:"Leads PME pontuados e próximos passos",cotador:"Cotação, seus dados e PDF da proposta",followup:"Cotações em aberto com mensagem pronta",esteira:"Propostas por etapa até a implantação",posvenda:"Lembretes de 30 dias e pedidos de indicação",clientes:"Carteira de clientes ativos",hoje:"Meta do mês, ritmo e cronograma do dia",comissoes:"Comissões e premiações por operadora",feedback:"Formulário semanal que o consultor responde"};
+    var el=document.createElement("div"); el.className="rotina";
+    var cards=TABS.filter(function(t){return !t.hide&&t.file;}).map(function(t){ return '<a class="doc" href="#'+t.id+'"><div><b>'+t.label+'</b><span>'+(DESC[t.id]||"")+'</span></div><span aria-hidden="true">›</span></a>'; }).join("");
+    el.innerHTML='<div class="in"><h1>Layout dos consultores</h1><p>Estas são as telas que cada consultor usa. Abra qualquer uma para ver o layout como eles veem. Aqui aparecem só os seus dados de teste: os dados dos consultores ficam na área de cada um. Para voltar, use <b>Painel</b> no menu.</p>'+cards+'</div>';
+    return el;
+  }
+  function proposta(){ window.__modoProposta=true; document.body.classList.add("modo-proposta"); main.innerHTML=""; var f=document.createElement("iframe"); f.title="Proposta"; f.src="cotador.html"+location.hash; main.appendChild(f); }
+  function fromHash(){ if(/^#(p[a-z0-9]{8}$|q-)/.test(location.hash||"")){ proposta(); return; } var h=(location.hash||"").replace("#",""); if(h==="rotina") h="hoje";
+    if(window.__souDono){ document.getElementById("topnav").innerHTML=navHtml(); document.getElementById("botnav").innerHTML=navHtml(); if(!h) h="monitor"; }
+    show(h||"prospeccao"); }
+  window.addEventListener("hashchange",fromHash);
+  window.addEventListener("message",function(e){ if(e.origin!==location.origin)return; var m=e.data||{};
+    if(m&&m.type==="central:go"&&m.tab){ location.hash=(m.tab==="rotina"?"hoje":m.tab); }
+    if(m&&m.type==="central:mes?"&&e.source){ sendMes(e.source); }
+    if(m&&m.type==="central:setmes"&&m.mes&&m.mes!==MES){ MES=m.mes; fillMes(); broadcast(); }
+    if(m&&m.type==="central:proposta"&&m.id&&window.__abrirProposta){ window.__abrirProposta(m.id); }
+  });
+  fromHash();
+})();
+</script>
+<script>
+(function(){
+  /* Sincronização automática (base: Funil/Esteira): cada proposta vira cliente no Funil e venda em Comissões,
+     com o mesmo mês, vidas, linha (saúde/odonto), adesão e premiação. Roda só para o dono da Central. */
+  function pad(n){return (n<10?"0":"")+n}
+  var hj=new Date(), today=hj.getFullYear()+"-"+pad(hj.getMonth()+1)+"-"+pad(hj.getDate());
+  var MN="";
+  /* Base: ESTEIRA (decisão do consultor em 08/11, 09h). Funil e Comissões se alimentam dela em todos os meses.
+     (Até 08/11 às 09h outubro seguia Comissões; os dados de outubro já foram copiados para a Esteira.)
+     TRAVA vazio = nenhum mês travado. Proposta com semVenda:true não gera venda (ex.: Filipe, setembro, pedido do consultor). */
+  var TRAVA="";
+  var D={p:null,v:null,l:null,o:[],r:null,c:[]}, busy=false, again=false, t=null, db=null;
+  function isOd(p){ if(p.ramo) return p.ramo==="odonto"; if(p.linha) return p.linha==="odonto"; var x=(p.produto||"")+" "+(p.administradora||""); return /odonto/i.test(x)&&!/(enfermaria|apartamento|ambulatorial|executivo|empresarial|participativo|premium|corporate|ades[aã]o)/i.test(p.produto||""); }
+  function mesP(p){ return ((p.datas&&p.datas.enviada)||p.criadoEm||"").slice(0,7); }
+  function guessOp(p){ var a=((p.administradora||"")+" "+(p.produto||"")).toLowerCase();
+    if(/sempre odonto/.test(a)) return ["sempre-odonto","Sempre Odonto"]; if(/samp odonto/.test(a)) return ["samp-odonto","Samp Odonto"];
+    if(/bluzz/.test(a)) return ["bluzz","Bluzz"]; if(/meds[eê]nior/.test(a)) return ["medsenior","MedSênior"];
+    if(/unimed|mediatorie/.test(a)) return ["mediatorie","Mediatorie"]; if(/amplo/.test(a)) return ["sbs-amplo","SBS Amplo"];
+    if(/way|s[aã]o bernardo|sbs/.test(a)) return ["sbs","SBS"]; return ["",""]; }
+  function premOf(v){
+    if(v.premiacao!=null&&v.premiacao!==""&&!isNaN(+v.premiacao)) return +v.premiacao;
+    var o=D.o.filter(function(x){return x.id===v.operadora})[0]; if(!o||!o.valores) return null;
+    var best=null,bk=""; for(var k in o.valores){ if(k<=v.mes&&k>=bk&&o.valores[k]!=null){bk=k;best=+o.valores[k]} }
+    return best==null?null:best*(Number(v.vidas)||0);
+  }
+  function same(a,b){ return JSON.stringify(a)===JSON.stringify(b); }
+  function slug(s){ return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40); }
+  function schedule(){ clearTimeout(t); t=setTimeout(run,1500); }
+  function run(){
+    if(!db||!D.p||!D.v||!D.l) return; if(busy){ again=true; return; } busy=true;
+    var V={}, VbyP={}; D.v.forEach(function(v){ V[v.id]=v; if(v.propostaId) VbyP[v.propostaId]=v; });
+    var L={}; D.l.forEach(function(l){ L[l.id]=l; });
+    var W=[];
+    // Cliente recuperado: o Funil segue a proposta mais recente de cada cliente
+    var LAT={}; D.p.forEach(function(p){ if(!p.leadId) return; var k=((p.datas&&p.datas.enviada)||p.criadoEm||"")+"|"+(p.criadoEm||""), c=LAT[p.leadId]; if(!c||k>c.k) LAT[p.leadId]={k:k,p:p}; });
+    D.p.forEach(function(p){
+      if(p.etapa==="rascunho") return;
+      var recus=p.etapa==="recusada";
+      // Esteira é a base de todas as abas (decisão do consultor em 08/11, 12h30): contratos do sistema da administradora também alimentam Comissões e Painel.
+      // 1) Funil é independente (decisão do consultor em 08/11, 10h): a Esteira não cria nem altera leads.
+      var lid=p.leadId||"";
+      // 2) venda em Comissões
+      if((p.semVenda&&!p.legado)||(TRAVA&&(mesP(p)||today.slice(0,7))<=TRAVA)) return;
+      var v=(p.vendaId&&V[p.vendaId])||VbyP[p.id], ad=p.adesao||{}, od=isOd(p), linha=od?"odonto":"saude";
+      var want={mes:mesP(p)||today.slice(0,7),vidas:Number(p.vidas)||0,linha:linha,ramo:linha,cancelada:recus,propostaId:p.id};
+      if(p.codigo) want.codigo=+p.codigo;
+      if(p.premiacao!=null&&p.premiacao!==""&&!isNaN(+p.premiacao)) want.premiacao=+p.premiacao;
+      if(ad.status==="sim"&&ad.valor!=null) want.adesao=+ad.valor; else if(ad.status==="nao") want.adesao=0;
+      var recebida=!!(ad.recebida&&ad.recebida<=today);
+      if(!v){
+        var op=guessOp(p), vid="v-"+p.id;
+        if(V[vid]) return;
+        var nv=Object.assign({cliente:p.cliente,tipo:p.tipo==="CNPJ"?"Empresarial":(p.tipo||""),operadora:op[0],operadoraNome:op[1],adesao:want.adesao!=null?want.adesao:0,adesaoRecebida:recebida,premRecebida:false,criado:Date.now(),sincronizado:true},want);
+        W.push(["set","vendas",vid,nv]); W.push(["update","propostas",p.id,{vendaId:vid}]);
+      } else {
+        var up={}; Object.keys(want).forEach(function(k){ if(!same(v[k],want[k])&&!(k==="cancelada"&&!want[k]&&!v[k])) up[k]=want[k]; });
+        if(recebida&&!v.adesaoRecebida) up.adesaoRecebida=true;
+        if(!v.operadora){ var g=guessOp(p); if(g[0]){ up.operadora=g[0]; up.operadoraNome=g[1]; } }
+        if(Object.keys(up).length) W.push(["update","vendas",v.id,up]);
+        if(p.vendaId!==v.id) W.push(["update","propostas",p.id,{vendaId:v.id}]);
+      }
+    });
+    // 3) meses travados: toda venda de Comissões vira cliente no Funil
+    var Pid={}; D.p.forEach(function(p){ Pid[p.id]=p; });
+    D.v.forEach(function(v){
+      if(!TRAVA||!v.mes||v.mes>TRAVA) return;
+      // 3a) Esteira com os dados de Comissões
+      var pr0=(v.propostaId&&Pid[v.propostaId])||null;
+      var adV=Number(v.adesao)||0, adW=adV>0?{status:"sim",valor:adV,recebida:v.adesaoRecebida?((pr0&&pr0.adesao&&pr0.adesao.recebida)||today):""}:(v.adesao===0&&!v.sincronizado?{status:"nao"}:null);
+      if(!pr0){
+        var pid="venda-"+v.id;
+        if(!Pid[pid]){
+          var np={cliente:v.cliente,tipo:v.tipo==="Empresarial"?"CNPJ":(v.tipo||""),documento:"",email:"",telefone:"",endereco:"",administradora:v.operadoraNome||"",produto:"",vidas:Number(v.vidas)||0,mensalidade:null,vigencia:"",protocolo:"",carencia:"",
+            premiacao:premOf(v),pendencia:"",obs:"Veio de Comissões: confira a etapa e complete os dados.",etapa:v.cancelada?"recusada":"digitada",
+            datas:{enviada:v.mes+"-01"},adesao:adW||{status:""},ultimaMov:today,detalheCompleto:false,fonte:"Comissões",linha:v.linha||"saude",ramo:v.linha||"saude",vendaId:v.id,notas:"",sincronizadoEm:today};
+          if(v.leadId) np.leadId=v.leadId;
+          W.push(["set","propostas",pid,np]); W.push(["update","vendas",v.id,{propostaId:pid}]);
+        }
+      } else {
+        var upP={};
+        if((Number(pr0.vidas)||0)!==(Number(v.vidas)||0)) upP.vidas=Number(v.vidas)||0;
+        var pv=premOf(v); if(pv!=null&&pv!==pr0.premiacao) upP.premiacao=pv;
+        if(adW&&!same(adW,pr0.adesao)) upP.adesao=adW;
+        if((v.linha||"saude")!==(isOd(pr0)?"odonto":"saude")){ upP.linha=v.linha||"saude"; upP.ramo=v.linha||"saude"; }
+        if(v.cancelada&&pr0.etapa!=="recusada"){ upP.etapa="recusada"; upP.ultimaMov=today; }
+        if(pr0.vendaId!==v.id) upP.vendaId=v.id;
+        if(Object.keys(upP).length) W.push(["update","propostas",pr0.id,upP]);
+      }
+      // Funil independente: nada de leads aqui
+    });
+    // 3b) Premiação automática pelas campanhas do sistema da administradora (a partir de nov/2026). Valor digitado à mão (premAuto false) é mantido.
+    if(D.c.length&&window.CMES){
+      D.p.forEach(function(p){
+        var m=mesP(p); if(!m||m<"2026-11"||p.etapa==="rascunho") return;
+        if(p.premiacao!=null&&p.premiacao!==""&&!p.premAuto) return;
+        var r=CMES.premCamp(D.c,p,m); if(!r) return;
+        var tot=Math.round(r.total*100)/100;
+        if(p.premiacao!==tot||p.premRegra!==r.adm+" · "+r.regra) W.push(["update","propostas",p.id,{premiacao:tot,premAuto:true,premRegra:r.adm+" · "+r.regra,premPorVida:r.porVida}]);
+      });
+    }
+    // 4) Painel Diário: vidas de cada dia = propostas cadastradas naquele dia na Esteira (saúde e odonto separados)
+    if(D.r){
+      var dia={};
+      D.p.forEach(function(p){ if(p.etapa==="recusada"||p.etapa==="rascunho") return; var d=(p.datas&&p.datas.enviada)||""; if(!/^\d{4}-\d{2}-\d{2}$/.test(d)) return; var x=dia[d]||(dia[d]={s:0,o:0,a:0}); var v=Number(p.vidas)||0; if(isOd(p)) x.o+=v; else if(CMES.isAmb(p)) x.a+=v; else x.s+=v; }); /* consultor, 10/11: ambulatorial e odonto são bônus; a meta conta só planos completos */
+      var R={}; D.r.forEach(function(r){ R[r.id]=r; });
+      Object.keys(dia).forEach(function(d){ var x=dia[d], r=R[d];
+        if(!r) W.push(["set","registros",d,{data:d,vidasSaude:x.s,vidasOdonto:x.o,odonto:x.o,vidasAmb:x.a,vidas:x.s+x.o+x.a,vidasFonte:"Esteira",atualizadoEm:new Date().toISOString()}]);
+        else if(Number(r.vidasSaude)!==x.s||Number(r.vidasOdonto)!==x.o||Number(r.vidasAmb||0)!==x.a||Number(r.vidas)!==x.s+x.o+x.a||Number(r.odonto||0)!==x.o) W.push(["update","registros",d,{vidasSaude:x.s,vidasOdonto:x.o,odonto:x.o,vidasAmb:x.a,vidas:x.s+x.o+x.a,vidasFonte:"Esteira"}]);
+      });
+      D.r.forEach(function(r){ if(dia[r.id]||!/^\d{4}-\d{2}-\d{2}$/.test(r.id)) return; if((Number(r.vidas)||0)||(Number(r.vidasSaude)||0)||(Number(r.vidasOdonto)||0)||(Number(r.odonto)||0)||(Number(r.vidasAmb)||0)) W.push(["update","registros",r.id,{vidasSaude:0,vidasOdonto:0,odonto:0,vidasAmb:0,vidas:0,vidasFonte:"Esteira"}]); });
+    }
+    if(!W.length){ busy=false; if(again){again=false;schedule();} return; }
+    var chain=Promise.resolve();
+    W.forEach(function(w){ chain=chain.then(function(){ var ref=db.collection(w[1]).doc(w[2]); return (w[0]==="set"?ref.set(w[3]):ref.update(w[3])).catch(function(){}); }); });
+    chain.then(function(){ busy=false; if(again){again=false;schedule();} });
+  }
+  if(!window.claude||!window.claude.use) return;
+  Promise.all([window.__CC.use("db"),window.claude.use("user")]).then(function(r){
+    var d=r[0], u=r[1]; if(!d||!u||!u.isOwner||!u.isOwner()) return; db=d;
+    function sub(col,key){ db.collection(col).onSnapshot(function(s){ D[key]=s.docs.map(function(x){ var o=Object.assign({},x.data()); o.id=x.id; return o; }); schedule(); },function(){}); }
+    sub("propostas","p"); sub("vendas","v"); sub("leads","l"); sub("operadoras","o"); sub("registros","r"); sub("campanhas","c");
+  });
+})();
+</script>
+<script>/* consultor, 09/11: as abas (iframes) pedem para a página principal abrir o WhatsApp Web numa aba nova */window.__abrirLink=function(u){ if(!/^https:\/\/web\.whatsapp\.com\//.test(String(u))) return false; var a=document.createElement("a"); a.href=u; a.target="_blank"; a.rel="noopener"; a.style.display="none"; document.body.appendChild(a); a.click(); setTimeout(function(){a.remove()},1000); return true; };</script><style>
+.termo{position:fixed;inset:0;background:rgba(5,12,26,.6);display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:80;overflow-y:auto}
+.termo[hidden]{display:none}
+.termo .box{background:var(--surface);color:var(--fg);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:14px;max-width:560px;width:100%;padding:22px;display:flex;flex-direction:column;gap:12px;font:15px/1.5 var(--body)}
+.termo h2{font:700 1.15rem var(--display);margin:0}
+.termo ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.termo label{display:flex;gap:8px;align-items:flex-start;font-weight:600}
+.termo button{font:600 .95rem var(--body);padding:10px 16px;border-radius:9px;border:0;background:var(--navy);color:var(--on-navy);cursor:pointer;align-self:flex-end}
+.termo button:disabled{opacity:.5;cursor:not-allowed}
+.termo .msg{color:var(--muted);font-size:.85rem}
+.modo-proposta header.top,.modo-proposta #metabar,.modo-proposta #botnav{display:none!important}
+</style>
+<div class="termo" id="termo" hidden role="dialog" aria-modal="true" aria-labelledby="termoT"><div class="box">
+  <h2 id="termoT">Termo de participação no piloto</h2>
+  <p>Você foi convidado para testar a Central do Consultor durante dezembro de 2026, sem custo.</p>
+  <ul>
+    <li>Seus clientes, propostas, leads e follow-ups ficam numa área só sua. Nenhum outro consultor vê esses dados, e o administrador do piloto também não.</li>
+    <li>O administrador vê apenas números de uso: dias e horários de acesso, telas usadas e a quantidade de propostas, leads, follow-ups e clientes cadastrados.</li>
+    <li>As respostas do formulário de feedback são lidas pelo administrador para melhorar o sistema.</li>
+    <li>Cadastre só dados de clientes que você já atende, para fins de atendimento. Ao fim do piloto, você pode pedir a exclusão dos seus dados.</li>
+    <li>Esta é uma versão de teste: pode ter erros e mudar durante o mês.</li>
+  </ul>
+  <label for="termoOk"><input type="checkbox" id="termoOk"> Li e aceito participar do piloto nessas condições.</label>
+  <span class="msg" id="termoMsg"></span>
+  <button type="button" id="termoBtn" disabled>Começar a usar</button>
+</div></div>
+<div id="semEscrita" hidden role="alert" style="position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:90;max-width:min(560px,calc(100vw - 32px));background:#fbf0d9;color:#6b4a0c;border:1px solid #e8c06a;border-radius:10px;padding:12px 16px;font:500 14px/1.45 var(--body);box-shadow:0 10px 30px rgba(0,0,0,.2)"><b>Seu acesso está só para leitura.</b> Nada do que você lançar será salvo. Peça ao administrador do piloto para mudar o seu acesso a esta página.</div>
+<script>window.__semEscrita=function(){ var b=document.getElementById("semEscrita"); if(b) b.hidden=false; };</script>
+<script>
+/* piloto: registra o uso (sem dados de clientes) em atividade/<id>, que só o dono lê */
+(function(){
+  if(window.__modoProposta||!window.claude||!window.claude.use) return;
+  function pad(n){return (n<10?"0":"")+n}
+  function hoje(){var d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+  var REF=null, ST=null, pend=false, busy=false, t=null;
+  function tela(){ var h=(location.hash||"").replace("#",""); return h||"prospeccao"; }
+  function marcar(nome){ if(!ST) return; ST.telas=ST.telas||{}; ST.telas[nome]=(ST.telas[nome]||0)+1; ST.ultimo=new Date().toISOString(); agendar(); }
+  function agendar(){ pend=true; clearTimeout(t); t=setTimeout(gravar,2500); }
+  function gravar(){ if(!REF||!pend) return; if(busy){ agendar(); return; } busy=true; pend=false;
+    REF.set(JSON.parse(JSON.stringify(ST))).catch(function(e){ if(e&&e.code==="invalid_argument"&&window.__semEscrita) window.__semEscrita(); }).then(function(){ busy=false; if(pend) agendar(); }); }
+  function contar(){
+    window.__CC.use("db").then(function(db){ if(!db) return;
+      var cols={propostas:"propostas",leads:"leads",followups:"followups",posvenda:"posvenda",clientes:"carteira",vendas:"vendas"}, out={}; if(ST&&ST.uid) cols.cotacoes="data/users/"+ST.uid; var ks=Object.keys(cols);
+      return Promise.all(ks.map(function(k){ return db.collection(cols[k]).get().then(function(s){ out[k]=s.size; },function(){ out[k]=null; }); })).then(function(){
+        if(!ST||JSON.stringify(out)===JSON.stringify(ST.contagens)) return; ST.contagens=out; ST.contagensEm=new Date().toISOString(); agendar(); });
+    }).catch(function(){});
+  }
+  Promise.all([window.claude.use("db"),window.claude.use("user")]).then(function(r){
+    var db=r[0], u=r[1]; if(!db||!u) return;
+    return Promise.all([u.isOwner(),u.id()]).then(function(v){ var id=v[1];
+      if(v[0]){ /* dono: só acompanha pelo Monitor; sem termo, sem metas, sem registro de uso */
+        window.__souDono=true; window.__termoDecidido=true;
+        if(window.__mostrarMonitor) window.__mostrarMonitor();
+        if(!location.hash) location.hash="monitor";
+        return; }
+      if(!id) return;
+      REF=db.doc("atividade/"+id);
+      return REF.get().then(function(s){
+        var d=s.exists?JSON.parse(JSON.stringify(s.data())):{};
+        var agora=new Date().toISOString(), dia=hoje();
+        d.uid=id; d.primeiro=d.primeiro||agora; d.ultimo=agora; d.acessos=(d.acessos||0)+1;
+        d.dias=d.dias||{}; d.dias[dia]=(d.dias[dia]||0)+1; d.telas=d.telas||{};
+        ST=d; marcar(tela()); contar(); if(d.termoAceitoEm) window.__termoDecidido=true;
+        if(!d.termoAceitoEm){
+          var box=document.getElementById("termo"), ok=document.getElementById("termoOk"), btn=document.getElementById("termoBtn");
+          box.hidden=false; ok.onchange=function(){ btn.disabled=!ok.checked; };
+          btn.onclick=function(){ ST.termoAceitoEm=new Date().toISOString(); box.hidden=true; window.__termoDecidido=true; agendar(); };
+        }
+      });
+    });
+  }).catch(function(){});
+  window.addEventListener("hashchange",function(){ marcar(tela()); });
+  setInterval(contar,10*60*1000);
+})();
+</script>
+<div class="termo" id="metasDlg" hidden role="dialog" aria-modal="true" aria-labelledby="metasT"><div class="box">
+  <h2 id="metasT">Suas metas</h2>
+  <p>Conte quantas vidas de planos completos você quer vender por mês. A tela Meta usa esses números para mostrar seu ritmo e quanto falta. Você pode mudar quando quiser em <b>Meta › Minhas metas</b>.</p>
+  <label for="mBase" style="flex-direction:column;gap:6px">Meta de vidas para este mês
+    <input id="mBase" type="number" min="1" step="1" inputmode="numeric" style="font:500 1rem var(--body);padding:9px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg)"></label>
+  <label for="mInc" style="flex-direction:column;gap:6px">Quantas vidas a mais por mês você quer crescer (0 para manter)
+    <input id="mInc" type="number" min="0" step="0.5" value="0" inputmode="decimal" style="font:500 1rem var(--body);padding:9px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg)"></label>
+  <label for="mDes" style="flex-direction:column;gap:6px">Desafio: quantas vidas acima da meta (opcional)
+    <input id="mDes" type="number" min="0" step="1" value="0" inputmode="numeric" style="font:500 1rem var(--body);padding:9px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg)"></label>
+  <span class="msg" id="metasPrev"></span>
+  <button type="button" id="metasBtn">Salvar metas</button>
+</div></div>
+<script>
+/* piloto: metas de cada consultor em config/metas (área privada); a tela Meta lê parent.__METAS */
+(function(){
+  var MES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  function key(d){return d.getFullYear()+"-"+(d.getMonth()<9?"0":"")+(d.getMonth()+1);}
+  function mapa(base,inc,des){ var m={}, d0=new Date(), d=new Date(d0.getFullYear(),d0.getMonth()-6,1);
+    for(var k=-6;k<=18;k++){ var v=Math.max(1,Math.round(base+inc*Math.max(0,k))), o={vidas:v}; if(des>0) o.desafio=v+des; m[key(d)]=o; d.setMonth(d.getMonth()+1); } return m; }
+  function aplicar(cfg){ window.__METAS=cfg&&cfg.mapa?cfg.mapa:{}; window.__METAFB=cfg&&cfg.base?cfg.base:1;
+    document.querySelectorAll("iframe").forEach(function(f){ if(/painel\.html/.test(f.getAttribute("src")||"")) try{ f.contentWindow.location.reload(); }catch(e){} }); }
+  var $=function(id){return document.getElementById(id)}, CFG=null, DB=null;
+  function prev(){ var b=Number($("mBase").value)||0, i=Number($("mInc").value)||0, s=Number($("mDes").value)||0;
+    if(b<1){ $("metasPrev").textContent=""; return; } var m=mapa(b,i,s), d=new Date(), out=[];
+    [0,3,6,12].forEach(function(k){ var x=new Date(d.getFullYear(),d.getMonth()+k,1), v=m[key(x)]; if(v) out.push(MES[x.getMonth()]+"/"+String(x.getFullYear()).slice(2)+": "+v.vidas+(v.desafio?" (desafio "+v.desafio+")":"")); });
+    $("metasPrev").textContent="Prévia · "+out.join(" · "); }
+  ["mBase","mInc","mDes"].forEach(function(id){ $(id).addEventListener("input",prev); });
+  function abrir(){ if(CFG){ $("mBase").value=CFG.base||""; $("mInc").value=CFG.incremento||0; $("mDes").value=CFG.desafio||0; } prev(); $("metasDlg").hidden=false; $("mBase").focus(); }
+  window.__abrirMetas=abrir;
+  var lk=$("mbMetas"); if(lk) lk.addEventListener("click",function(e){ e.preventDefault(); abrir(); });
+  $("metasBtn").addEventListener("click",function(){ var b=Number($("mBase").value)||0, i=Number($("mInc").value)||0, s=Number($("mDes").value)||0;
+    if(b<1){ $("metasPrev").textContent="Informe a meta de vidas deste mês."; $("mBase").focus(); return; }
+    var c={base:b,incremento:i,desafio:s,mapa:mapa(b,i,s),definidoEm:new Date().toISOString()};
+    if(!DB){ $("metasPrev").textContent="Sem conexão com o banco de dados: tente de novo em instantes."; return; }
+    $("metasBtn").disabled=true;
+    DB.doc("config/metas").set(c).then(function(){ CFG=c; aplicar(c); $("metasDlg").hidden=true; },function(e){
+      if(e&&e.code==="invalid_argument"){ $("metasPrev").textContent="Seu acesso a esta página não permite salvar. Peça ao administrador do piloto para liberar seu acesso de edição."; if(window.__semEscrita) window.__semEscrita(); }
+      else $("metasPrev").textContent="Não foi possível salvar ("+((e&&e.code)||"erro")+"). Tente de novo em instantes."; }).then(function(){ $("metasBtn").disabled=false; }); });
+  if(!window.__CC||window.__modoProposta) return;
+  window.__CC.use("db").then(function(db){ if(!db) return; DB=db;
+    return db.doc("config/metas").get().then(function(s){ CFG=s.exists?JSON.parse(JSON.stringify(s.data())):null;
+      if(CFG&&CFG.base){ var m=mapa(CFG.base,CFG.incremento||0,CFG.desafio||0); CFG.mapa=Object.assign(m,CFG.mapa||{}); aplicar(CFG); return; }
+      aplicar(null);
+      var t0=Date.now(); (function esperar(){ if((!window.__termoDecidido&&Date.now()-t0<15000)||!document.getElementById("termo").hidden){ setTimeout(esperar,600); return; } if(!window.__souDono) abrir(); })();
+    });
+  }).catch(function(){});
+})();
+</script>
+
+<style>
+.cclogin{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto}
+.cclogin[hidden]{display:none}
+.cclogin .box{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:12px;font:15px/1.5 var(--body);color:var(--fg)}
+.cclogin .mk{width:44px;height:44px;border-radius:50%;background:var(--navy);color:var(--gold-2);display:grid;place-items:center;font:700 15px var(--display)}
+.cclogin h2{font:700 1.2rem var(--display);margin:0}
+.cclogin p{margin:0;color:var(--muted);font-size:.92rem}
+.cclogin label{display:flex;flex-direction:column;gap:5px;font-size:.85rem;font-weight:600;color:var(--muted)}
+.cclogin input{font:500 1rem var(--body);padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.cclogin button{font:600 1rem var(--body);padding:11px;border-radius:9px;border:0;background:var(--navy);color:var(--on-navy);cursor:pointer}
+.cclogin button:disabled{opacity:.6}
+.cclogin a{color:var(--fg);font-size:.88rem}
+.cclogin .msg{min-height:1.2em;font-size:.88rem;color:var(--muted)}
+</style>
+<div class="cclogin" id="cclogin" hidden><form class="box" id="ccForm">
+  <span class="mk">CC</span>
+  <h2>Central do Consultor</h2>
+  <p id="ccSub">Entre com o e-mail e a senha do seu convite. É o mesmo acesso da Caixa do WhatsApp.</p>
+  <label>E-mail<input id="ccEmail" type="email" autocomplete="username" required></label>
+  <label>Senha<input id="ccSenha" type="password" autocomplete="current-password" required></label>
+  <button id="ccBtn" type="submit">Entrar</button>
+  <a href="#" id="ccEsqueci">Esqueci minha senha</a>
+  <span class="msg" id="ccMsg" role="status"></span>
+</form></div>
+<script>
+(function(){
+  var A=window.CentralAuth; if(!A) return;
+  var $=function(i){return document.getElementById(i)};
+  var sair=$("ccSair"); if(sair) sair.onclick=function(e){ e.preventDefault(); if(confirm("Sair da Central neste aparelho?")) A.sair(); };
+  if(/^#(p[a-z0-9]{8}$|q-)/.test(location.hash||"")) return; /* link de proposta do cliente: sem login */
+  A.sessao().then(function(s){
+    if(s){ return A.eu().then(function(eu){
+      if(!eu||eu.ativo===false){ $("cclogin").hidden=false; $("ccForm").innerHTML='<span class="mk">CC</span><h2>Acesso não liberado</h2><p>Seu login existe, mas ainda não foi liberado como consultor. Fale com o administrador da Central.</p><a href="#" onclick="CentralAuth.sair();return false">Sair</a>'; return; }
+      var n=$("ccNome"); if(n) n.textContent=(eu.nome||"Consultor")+" · "+(eu.plano==="ia"?"Com IA":"Essencial");
+    }); }
+    $("cclogin").hidden=false; $("ccEmail").focus();
+  });
+  $("ccForm").onsubmit=function(e){ e.preventDefault(); var b=$("ccBtn"); b.disabled=true; $("ccMsg").textContent="Entrando…";
+    A.entrar($("ccEmail").value.trim(),$("ccSenha").value).then(function(){ location.reload(); },function(err){ b.disabled=false; $("ccMsg").textContent=/invalid/i.test(err&&err.message||"")?"E-mail ou senha incorretos.":"Não foi possível entrar agora. Tente de novo."; });
+  };
+  $("ccEsqueci").onclick=function(e){ e.preventDefault(); var em=$("ccEmail").value.trim(); if(!em){ $("ccMsg").textContent="Digite seu e-mail acima e toque de novo em Esqueci minha senha."; return; }
+    A.esqueci(em).then(function(){ $("ccMsg").textContent="Enviamos um link para criar uma senha nova. Confira seu e-mail."; },function(){ $("ccMsg").textContent="Não foi possível enviar agora. Tente de novo."; });
+  };
+})();
+</script>
+</body></html>

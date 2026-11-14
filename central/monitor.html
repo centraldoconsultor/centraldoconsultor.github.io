@@ -1,0 +1,124 @@
+<!doctype html><html lang="pt-BR"><head><script src="central-db.js?v=1"></script><script>window.__C=null;try{if(window.parent!==window&&parent.claude){(function(){var P=parent,pc=P.claude;
+var toP=function(v){if(v===null||typeof v!=="object")return v;return P.JSON.parse(JSON.stringify(v))};
+var isRef=function(r){return r&&typeof r==="object"&&(typeof r.onSnapshot==="function"||typeof r.collection==="function"||typeof r.doc==="function")};
+var out=function(r){return isRef(r)?wrap(r):r};
+function wrap(o){return new Proxy({},{get:function(_,k){var v=o[k];if(typeof v!=="function")return v;return function(){var a=[].slice.call(arguments).map(function(x){return x&&typeof x==="object"?toP(x):x});var r=v.apply(o,a);if(r&&typeof r.then==="function")return r.then(out);return out(r)}},has:function(_,k){return k in o}})}
+window.__C={use:function(n){return pc.use(n).then(function(ns){return ns&&n==="db"?wrap(ns):ns})}};})()}}catch(e){}</script><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+:root{--navy:#0e2a52;--navy-2:#183a6b;--gold:#b08a3e;--gold-2:#d9bf85;--bg:#f7f4ec;--surface:#fffdf8;--line:#e5dfd0;--fg:#0e1f3d;--muted:#5d6579;--on-navy:#f4efe3;
+--ok:#2f7d4f;--ok-bg:#e5f2ea;--warn:#9a6a12;--warn-bg:#fbf0d9;--bad:#b03a2e;--bad-bg:#f8e3e0;
+--display:"Sora","Segoe UI",system-ui,sans-serif;--body:"Figtree","Segoe UI",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--navy:#081a33;--navy-2:#13294a;--gold:#d6b46a;--gold-2:#e6cf98;--bg:#0a1426;--surface:#112039;--line:#243453;--fg:#f4efe3;--muted:#a3abbe;--ok:#7fcf9d;--ok-bg:#16362a;--warn:#e8c06a;--warn-bg:#3a2f14;--bad:#f09a8f;--bad-bg:#3d1d1a;color-scheme:dark}}
+:root[data-theme="dark"]{--navy:#081a33;--navy-2:#13294a;--gold:#d6b46a;--gold-2:#e6cf98;--bg:#0a1426;--surface:#112039;--line:#243453;--fg:#f4efe3;--muted:#a3abbe;--ok:#7fcf9d;--ok-bg:#16362a;--warn:#e8c06a;--warn-bg:#3a2f14;--bad:#f09a8f;--bad-bg:#3d1d1a;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--body);padding:22px max(16px,3vw) 48px}
+.in{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{font:700 1.4rem var(--display);margin:0;text-wrap:balance}h2{font:600 1.02rem var(--display);margin:0}
+.lead{color:var(--muted);margin:0;max-width:70ch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:3px}
+.kpi.accent{border-left:3px solid var(--gold)}
+.kpi span{font-size:.76rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.kpi b{font:700 1.55rem var(--display);font-variant-numeric:tabular-nums}.kpi i{font-style:normal;font-size:.82rem;color:var(--muted)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.73rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;background:var(--bg);white-space:nowrap}
+tr:last-child td{border-bottom:0}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.78rem;font-weight:600;white-space:nowrap;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.pill.ok{background:var(--ok-bg);color:var(--ok);border-color:transparent}.pill.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}.pill.bad{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+button{font:600 .9rem var(--body);border-radius:9px;padding:9px 16px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+button.pri{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}button.pri:hover{background:var(--navy-2)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.notice{padding:10px 14px;border-radius:10px;background:var(--warn-bg);color:var(--warn);font-size:.9rem}
+.empty{color:var(--muted);padding:14px;text-align:center;font-size:.9rem}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:.85rem;font-weight:600;color:var(--muted)}
+input,textarea,select{font:500 .95rem var(--body);padding:9px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg);width:100%}
+textarea{min-height:80px;resize:vertical}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chips label{display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:var(--bg);font-weight:600;color:var(--fg);cursor:pointer}
+.chips input{width:auto}
+.chips label:has(input:checked){background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.days{display:flex;gap:4px;align-items:flex-end;height:90px}
+.days div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.7rem;color:var(--muted)}
+.days i{display:block;width:100%;max-width:28px;background:var(--gold);border-radius:4px 4px 0 0;min-height:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<title>Monitor do piloto</title>
+</head><body><div class="in">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap"><div><h1 id="titulo">Monitor do piloto</h1><p class="lead" id="sub">Quem está usando a Central, com que frequência e o que acharam. Você vê só números de uso e o feedback: os clientes de cada consultor continuam privados.</p></div><button type="button" id="copiar">Copiar resumo</button></div>
+<div id="st"></div>
+<div class="kpis" id="kpis"></div>
+<div class="card" id="cDias"><h2>Consultores ativos por dia · últimos 14 dias</h2><div class="days" id="dias"></div></div>
+<div class="card" id="cTab"><h2>Por consultor</h2><div id="tab"><div class="empty">Carregando…</div></div></div>
+<div class="card" id="cResFb" hidden><h2>Resumo por consultor</h2><div id="resfb"><div class="empty">Carregando…</div></div></div>
+<div class="card"><h2 id="tFb">Feedback recente</h2><div id="fb"><div class="empty">Carregando…</div></div></div>
+</div>
+<script>
+(function(){
+  var esc=function(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});};
+  function pad(n){return (n<10?"0":"")+n}
+  function iso(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+  function fData(s){var p=String(s||"").slice(0,10).split("-");return p.length===3?p[2]+"/"+p[1]:"—";}
+  function quando(s){ if(!s) return "—"; var m=Math.round((Date.now()-Date.parse(s))/60000); if(m<2) return "agora"; if(m<60) return "há "+m+" min"; var h=Math.round(m/60); if(h<24) return "há "+h+" h"; var d=Math.round(h/24); return "há "+d+" dia"+(d>1?"s":""); }
+  var NOMES_TELA={prospeccao:"Funil",cotador:"Cotador",followup:"Follow-up",esteira:"Esteira",posvenda:"Pós-venda",clientes:"Clientes",hoje:"Meta",comissoes:"Comissões",crescimento:"Crescimento",cronograma:"Cronograma",feedback:"Feedback",monitor:"Monitor"};
+  var $=function(id){return document.getElementById(id)};
+  var SO_FB=location.hash==="#feedback";
+  if(SO_FB){ $("titulo").textContent="Feedback dos consultores"; $("sub").textContent="Todas as respostas do formulário de sexta-feira, com o resumo de cada consultor."; $("cDias").hidden=true; $("cTab").hidden=true; $("cResFb").hidden=false; $("tFb").textContent="Todas as respostas"; $("copiar").hidden=true; }
+  var A=[], F={}, P={}, ME=null, U=null, ok={a:false,f:false};
+  var timer=setTimeout(function(){ if(!ok.a) $("st").innerHTML='<div class="notice">O banco de dados não respondeu ainda. Os números podem estar desatualizados.</div>'; },10000);
+  function nome(id){ var p=P[id]; return (p&&p.name)||(id===ME?"Você":"Consultor sem nome"); }
+  function topTela(t){ var k=Object.keys(t||{}).filter(function(x){return x!=="monitor"&&x!=="feedback";}).sort(function(a,b){return t[b]-t[a];})[0]; return k?(NOMES_TELA[k]||k):"—"; }
+  function notas(id){ var r=(F[id]&&F[id].respostas)||{}, ks=Object.keys(r).sort(); var ns=ks.map(function(k){return Number(r[k].nota)}).filter(function(n){return n>0}); return {med:ns.length?ns.reduce(function(a,b){return a+b},0)/ns.length:null,n:ks.length,ult:ks.length?r[ks[ks.length-1]]:null}; }
+  function ativoDias(a,n){ var c=0,d=new Date(); for(var i=0;i<n;i++){ if(a.dias&&a.dias[iso(d)]) c=1; d.setDate(d.getDate()-1);} return c; }
+  function render(){
+    var hoje=iso(new Date()), lista=A.slice().sort(function(a,b){return String(b.ultimo||"").localeCompare(String(a.ultimo||""));});
+    var cons=lista.filter(function(a){return a.uid!==ME;});
+    var at7=cons.filter(function(a){return ativoDias(a,7);}).length, atHoje=cons.filter(function(a){return a.dias&&a.dias[hoje];}).length;
+    var acessos=cons.reduce(function(s,a){return s+(a.acessos||0)},0), termo=cons.filter(function(a){return a.termoAceitoEm}).length;
+    var todas=[]; cons.forEach(function(a){var r=(F[a.uid]&&F[a.uid].respostas)||{};Object.keys(r).forEach(function(k){if(r[k].nota)todas.push(Number(r[k].nota));});});
+    var media=todas.length?(todas.reduce(function(a,b){return a+b},0)/todas.length).toFixed(1).replace(".",","):"—";
+    $("kpis").innerHTML=[["Consultores no piloto",cons.length,termo+" aceitaram o termo",1],["Ativos nos últimos 7 dias",at7,"de "+cons.length],["Ativos hoje",atHoje,"acessaram hoje"],["Acessos no total",acessos,"desde o início"],["Nota média",media,todas.length+" resposta(s)"]].map(function(k){return '<div class="kpi'+(k[3]?" accent":"")+'"><span>'+k[0]+'</span><b>'+k[1]+'</b><i>'+k[2]+'</i></div>';}).join("");
+    var d=new Date(); d.setDate(d.getDate()-13); var cols=[],mx=1;
+    for(var i=0;i<14;i++){ var k=iso(d), n=cons.filter(function(a){return a.dias&&a.dias[k];}).length; cols.push([k,n]); if(n>mx)mx=n; d.setDate(d.getDate()+1); }
+    $("dias").innerHTML=cols.map(function(c){return '<div title="'+fData(c[0])+': '+c[1]+' consultor(es)"><span>'+(c[1]||"")+'</span><i style="height:'+Math.round(c[1]/mx*60)+'px"></i>'+fData(c[0])+'</div>';}).join("");
+    $("tab").innerHTML=lista.length?'<div class="tbl"><table><thead><tr><th>Consultor</th><th>Situação</th><th>Último acesso</th><th class="num">Dias ativos</th><th class="num">Acessos</th><th>Tela mais usada</th><th class="num">Cotações</th><th class="num">Propostas</th><th class="num">Leads</th><th class="num">Follow-ups</th><th class="num">Clientes</th><th class="num">Nota</th><th>Pagaria?</th></tr></thead><tbody>'+
+      lista.map(function(a){ var c=a.contagens||{}, nt=notas(a.uid), act=ativoDias(a,7), dd=Object.keys(a.dias||{}).length;
+        var sit=a.uid===ME?'<span class="pill">Você</span>':!a.termoAceitoEm?'<span class="pill warn">Termo pendente</span>':act?'<span class="pill ok">Ativo</span>':'<span class="pill bad">Parado há 7+ dias</span>';
+        var pg=nt.ult&&nt.ult.pagaria?'<span class="pill '+(nt.ult.pagaria==="Sim"?"ok":nt.ult.pagaria==="Não"?"bad":"warn")+'">'+esc(nt.ult.pagaria)+'</span>':"—";
+        return '<tr><td><b>'+esc(nome(a.uid))+'</b><br><small style="color:var(--muted)">desde '+fData(a.primeiro)+'</small></td><td>'+sit+'</td><td>'+quando(a.ultimo)+'</td><td class="num">'+dd+'</td><td class="num">'+(a.acessos||0)+'</td><td>'+esc(topTela(a.telas))+'</td><td class="num">'+(c.cotacoes==null?"—":c.cotacoes)+'</td><td class="num">'+(c.propostas==null?"—":c.propostas)+'</td><td class="num">'+(c.leads==null?"—":c.leads)+'</td><td class="num">'+(c.followups==null?"—":c.followups)+'</td><td class="num">'+(c.clientes==null?"—":c.clientes)+'</td><td class="num">'+(nt.med==null?"—":nt.med.toFixed(1).replace(".",","))+'</td><td>'+pg+'</td></tr>';}).join("")+'</tbody></table></div>':'<div class="empty">Ninguém acessou a versão piloto ainda. Convide os consultores pela Caixa, no botão Consultores.</div>';
+    if(SO_FB){
+      var ids=Object.keys(F).filter(function(id){return id!==ME;});
+      $("kpis").innerHTML=[["Consultores que responderam",ids.length,"de "+cons.length+" no piloto",1],["Respostas",ids.reduce(function(s,id){return s+notas(id).n},0),"no total"],["Nota média",media,todas.length+" nota(s)"],["Pagariam",ids.filter(function(id){var u=notas(id).ult;return u&&u.pagaria==="Sim"}).length,"responderam Sim na última semana"]].map(function(k){return '<div class="kpi'+(k[3]?" accent":"")+'"><span>'+k[0]+'</span><b>'+k[1]+'</b><i>'+k[2]+'</i></div>';}).join("");
+      $("resfb").innerHTML=ids.length?'<div class="tbl"><table><thead><tr><th>Consultor</th><th class="num">Respostas</th><th class="num">Nota média</th><th>Última semana</th><th>Pagaria?</th><th>Plano preferido</th></tr></thead><tbody>'+ids.map(function(id){var nt=notas(id),u=nt.ult||{};var r=(F[id]&&F[id].respostas)||{},ks=Object.keys(r).sort();
+        return '<tr><td><b>'+esc(nome(id))+'</b></td><td class="num">'+nt.n+'</td><td class="num">'+(nt.med==null?"—":nt.med.toFixed(1).replace(".",","))+'</td><td>'+(ks.length?fData(ks[ks.length-1]):"—")+'</td><td>'+(u.pagaria?'<span class="pill '+(u.pagaria==="Sim"?"ok":u.pagaria==="Não"?"bad":"warn")+'">'+esc(u.pagaria)+'</span>':"—")+'</td><td>'+esc(u.plano||"—")+'</td></tr>';}).join("")+'</tbody></table></div>':'<div class="empty">Nenhum consultor respondeu o formulário ainda.</div>';
+    }
+    var fbs=[]; Object.keys(F).forEach(function(id){var r=F[id].respostas||{};Object.keys(r).forEach(function(k){fbs.push({id:id,sem:k,x:r[k]});});});
+    fbs.sort(function(a,b){return b.sem.localeCompare(a.sem)||String(b.x.em).localeCompare(String(a.x.em));});
+    $("fb").innerHTML=fbs.length?'<div class="tbl"><table><thead><tr><th>Semana</th><th>Consultor</th><th class="num">Nota</th><th>Ajudou</th><th>Melhorar</th><th>Faltou</th><th>Plano</th></tr></thead><tbody>'+fbs.slice(0,SO_FB?200:40).map(function(f){return '<tr><td>'+fData(f.sem)+'</td><td>'+esc(nome(f.id))+'</td><td class="num">'+esc(f.x.nota||"—")+'</td><td>'+esc(f.x.gostou||"—")+'</td><td>'+esc(f.x.melhorar||"—")+'</td><td>'+esc(f.x.faltou||"—")+'</td><td>'+esc(f.x.plano||"—")+'</td></tr>';}).join("")+'</tbody></table></div>':'<div class="empty">Nenhum feedback enviado ainda. O formulário fica na aba Feedback de cada consultor.</div>';
+  }
+  function resolver(){ if(!U) return; var ids=A.map(function(a){return a.uid}).concat(Object.keys(F)).filter(function(v,i,s){return v&&s.indexOf(v)===i;}); if(!ids.length) return;
+    U.profiles(ids).then(function(p){ P=JSON.parse(JSON.stringify(p||{})); render(); }); }
+  $("copiar").addEventListener("click",function(){
+    var linhas=["Piloto Central do Consultor · "+new Date().toLocaleDateString("pt-BR")];
+    A.filter(function(a){return a.uid!==ME;}).forEach(function(a){var c=a.contagens||{},nt=notas(a.uid);linhas.push(nome(a.uid)+": "+Object.keys(a.dias||{}).length+" dias ativos, "+(a.acessos||0)+" acessos, último "+quando(a.ultimo)+", cotações "+(c.cotacoes||0)+", propostas "+(c.propostas||0)+", leads "+(c.leads||0)+", follow-ups "+(c.followups||0)+", clientes "+(c.clientes||0)+", nota "+(nt.med==null?"—":nt.med.toFixed(1)));});
+    var b=this; navigator.clipboard.writeText(linhas.join("\n")).then(function(){b.textContent="Resumo copiado";setTimeout(function(){b.textContent="Copiar resumo"},2000);},function(){b.textContent="Não foi possível copiar";});
+  });
+  var C=window.__C;
+  if(!C||!C.use){ $("st").innerHTML='<div class="notice">Abra o Monitor dentro da Central do Consultor.</div>'; return; }
+  Promise.all([C.use("db"),C.use("user")]).then(function(r){
+    var db=r[0],u=r[1]; if(!db||!u) return; U=u;
+    return Promise.all([u.isOwner(),u.id()]).then(function(v){
+      if(!v[0]){ $("st").innerHTML='<div class="notice">O Monitor é só para o administrador do piloto.</div>'; return; }
+      ME=v[1];
+      db.collection("atividade").onSnapshot(function(s){ A=s.docs.map(function(d){var o=JSON.parse(JSON.stringify(d.data()));o.uid=o.uid||d.id;return o;}); ok.a=true; if(!s.metadata.fromCache){clearTimeout(timer);$("st").innerHTML="";} render(); resolver(); },function(){ $("st").innerHTML='<div class="notice">Não foi possível ler os acessos.</div>'; });
+      db.collection("feedback").onSnapshot(function(s){ F={}; s.docs.forEach(function(d){F[d.id]=JSON.parse(JSON.stringify(d.data()));}); ok.f=true; render(); resolver(); },function(){});
+    });
+  }).catch(function(){ $("st").innerHTML='<div class="notice">Não foi possível conectar ao banco de dados.</div>'; });
+  setInterval(render,60000);
+})();
+</script>
+</body></html>

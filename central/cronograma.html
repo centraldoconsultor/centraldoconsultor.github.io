@@ -1,0 +1,299 @@
+<!doctype html><html><head><script src="central-db.js?v=1"></script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Cronograma Diário de Estratégias</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: faixa da corretora no topo (igual à Central), coluna de leitura de 860px com seções em cartões claros; a linha do tempo do dia destaca o bloco atual */
+:root{
+  --navy:#0e2a52; --navy-2:#183a6b; --gold:#b08a3e; --gold-2:#d9bf85; --gold-soft:rgba(176,138,62,.12);
+  --bg:#f7f4ec; --surface:#fffdf8; --line:#e5dfd0; --fg:#0e1f3d; --muted:#5d6579; --on-navy:#f4efe3; --tab-off:#b9c4d8;
+  --ok:#2f7a4f;
+  --display:"Sora","Segoe UI",system-ui,sans-serif; --body:"Figtree","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --navy:#081a33; --navy-2:#13294a; --gold:#d6b46a; --gold-2:#e6cf98; --gold-soft:rgba(214,180,106,.12);
+  --bg:#0a1426; --surface:#112039; --line:#243453; --fg:#f4efe3; --muted:#a3abbe; --on-navy:#f4efe3; --tab-off:#8f9ab0; --ok:#6cc08f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --navy:#081a33; --navy-2:#13294a; --gold:#d6b46a; --gold-2:#e6cf98; --gold-soft:rgba(214,180,106,.12);
+  --bg:#0a1426; --surface:#112039; --line:#243453; --fg:#f4efe3; --muted:#a3abbe; --on-navy:#f4efe3; --tab-off:#8f9ab0; --ok:#6cc08f; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--navy)}
+.top{background:var(--navy);color:var(--on-navy);border-bottom:2px solid var(--gold);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px}
+.top .in{max-width:860px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mark{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--gold-2);color:var(--gold-2);display:grid;place-items:center;font:700 13px var(--display);flex:none}
+.brand b{font:700 1rem var(--display);display:block;line-height:1.1}
+.brand small{color:var(--gold-2);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase}
+.back{color:var(--gold-2);text-decoration:none;font-weight:600;font-size:.88rem;white-space:nowrap}
+.back:hover{text-decoration:underline}
+.wrap{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px;display:flex;flex-direction:column;gap:22px}
+.hero{display:flex;flex-direction:column;gap:8px}
+.eyebrow{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:700}
+h1{font:700 clamp(1.5rem,4vw,2.1rem)/1.15 var(--display);margin:0;text-wrap:balance}
+h2{font:700 1.18rem/1.25 var(--display);margin:0;text-wrap:balance}
+h3{font:600 .98rem var(--display);margin:0}
+p{margin:0;max-width:66ch}
+.muted{color:var(--muted)}
+.lead{color:var(--muted);font-size:1.02rem}
+section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px clamp(16px,3vw,26px);display:flex;flex-direction:column;gap:14px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.tag{font-size:.75rem;color:var(--muted)}
+/* meta */
+.goal{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;background:var(--navy);color:var(--on-navy);border-radius:12px;padding:20px 22px}
+.goal .big{font:700 clamp(2.4rem,7vw,3.2rem)/1 var(--display);color:var(--gold-2);font-variant-numeric:tabular-nums}
+.goal .big small{font-size:.9rem;color:var(--tab-off);font-weight:600;margin-left:4px}
+.goal p{color:#d5dbe7}
+.goal b{color:var(--on-navy)}
+/* funil */
+.funnel{display:flex;flex-direction:column;gap:8px}
+.f-row{display:grid;grid-template-columns:minmax(0,1fr) 64px 64px;gap:10px;align-items:center}
+.f-row.head{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.f-row.head span:not(:first-child){text-align:right}
+.f-bar{position:relative;min-width:0;padding:9px 12px;border-radius:8px;background:var(--gold-soft);overflow:hidden}
+.f-bar::before{content:"";position:absolute;inset:0 auto 0 0;width:var(--w);background:var(--gold);opacity:.22}
+.f-bar span{position:relative;font-weight:600}
+.f-bar em{position:relative;font-style:normal;color:var(--muted);font-size:.82rem;display:block}
+.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;font-family:var(--display)}
+.num.day{color:var(--gold)}
+.note{font-size:.86rem;color:var(--muted);border-left:2px solid var(--line);padding-left:12px}
+/* escada */
+.ladder{display:flex;gap:8px;align-items:flex-end;height:150px;padding-top:8px}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%;min-width:0}
+.step .bar{width:100%;border-radius:6px 6px 0 0;background:var(--navy-2);height:var(--h);display:flex;align-items:flex-start;justify-content:center;padding-top:6px;color:var(--on-navy);font:700 .95rem var(--display);font-variant-numeric:tabular-nums}
+.step.goal-step .bar{background:var(--gold);color:#0e1f3d}
+.step.now .bar{background:transparent;border:1.5px dashed var(--muted);color:var(--muted)}
+.step small{font-size:.75rem;color:var(--muted);white-space:nowrap}
+/* timeline */
+.timeline{display:flex;flex-direction:column}
+.blk{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;padding:12px 0;border-top:1px solid var(--line)}
+.blk:first-child{border-top:0}
+.blk time{font-variant-numeric:tabular-nums;font-weight:700;font-size:.88rem;color:var(--muted);padding-top:2px}
+.blk .body{display:flex;flex-direction:column;gap:4px;min-width:0}
+.blk .rem{font-size:.85rem;color:var(--gold);font-weight:600}
+.blk.lunch{opacity:.7}
+.blk.cur{background:var(--gold-soft);margin-inline:-12px;padding-inline:12px;border-radius:10px;border-top-color:transparent}
+.blk.cur + .blk{border-top-color:transparent}
+.blk.cur time{color:var(--gold)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--gold);color:#0e1f3d;padding:2px 8px;border-radius:999px;width:max-content}
+.rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.rule{border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:.9rem}
+.rule b{display:block;font-family:var(--display);font-size:.78rem;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+/* semana */
+.days{display:flex;gap:6px;flex-wrap:wrap}
+.days button{font:600 .9rem var(--body);color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer}
+.days button[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:var(--on-navy)}
+.days button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.days button .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin-left:6px;vertical-align:middle}
+.dayview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.dv{border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.dv span{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+/* estratégias */
+.strat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.st{border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.st.wide{grid-column:1/-1}
+ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+li::marker{color:var(--gold)}
+/* indicadores */
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;min-width:360px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.n,th.n{text-align:right}
+td.n{font-weight:700;font-family:var(--display)}
+/* checklists */
+.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ck{border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.ck label{display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-size:.92rem}
+.ck input{accent-color:var(--gold);width:18px;height:18px;margin-top:2px;flex:none}
+.ck input:checked + span{color:var(--muted);text-decoration:line-through}
+.ck .reset{align-self:flex-start;font:600 .8rem var(--body);color:var(--muted);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+footer{font-size:.8rem;color:var(--muted);text-align:center}
+@media (max-width:640px){
+  .goal{grid-template-columns:1fr;gap:10px}
+  .rules,.dayview,.strat,.checks{grid-template-columns:1fr}
+  .blk{grid-template-columns:1fr;gap:4px}
+  .f-row{grid-template-columns:minmax(0,1fr) 48px 48px;gap:8px}
+}
+@media (prefers-reduced-motion:no-preference){.days button{transition:background .15s,color .15s}}
+</style>
+
+<header class="top"><div class="in">
+  <div class="brand"><span class="mark">CC</span><div><b>CONSULTOR</b><small>Corretora de planos de saúde</small></div></div>
+  <a class="back" href="#" id="backBtn">← Meta</a>
+</div></header>
+
+<div class="wrap">
+  <div class="hero">
+    <span class="eyebrow">Rotina · atualizado em 05/11/2026</span>
+    <h1>Cronograma Diário de Estratégias</h1>
+    <p class="lead">O roteiro de cada dia útil: horários, blocos de prospecção, follow-up e as rotinas que levam de ~35 a 70 vidas de planos completos por mês, a meta de melhor consultor do ES.</p>
+  </div>
+
+  <div class="goal">
+    <div class="big">70<small>vidas/mês</small></div>
+    <p>Meta de <b>melhor consultor do ES</b>: sair de ~35 para <b>70 vidas de planos completos por mês em novembro/2027</b> (ambulatorial e odonto são bônus). De trás para frente, isso pede <b>~29 contatos, 9 conversas qualificadas e 4 a 5 cotações por dia útil</b>.</p>
+  </div>
+
+  <section>
+    <div class="sec-head"><h2>Meta e números</h2><span class="tag">~21 dias úteis por mês</span></div>
+    <div class="funnel">
+      <div class="f-row head"><span>Etapa do funil</span><span>Mês</span><span>Dia</span></div>
+      <div class="f-row"><div class="f-bar" style="--w:100%"><span>Contatos e abordagens</span><em>ligação, WhatsApp, visita</em></div><div class="num">600</div><div class="num day">~29</div></div>
+      <div class="f-row"><div class="f-bar" style="--w:32%"><span>Conversas qualificadas</span><em>50% viram cotação</em></div><div class="num">190</div><div class="num day">~9</div></div>
+      <div class="f-row"><div class="f-bar" style="--w:16%"><span>Cotações enviadas</span><em>fechamento de 30%</em></div><div class="num">95</div><div class="num day">~4,5</div></div>
+      <div class="f-row"><div class="f-bar" style="--w:5%"><span>Contratos fechados</span><em>média de 2,5 vidas/contrato</em></div><div class="num">28</div><div class="num day">~1,3</div></div>
+      <div class="f-row"><div class="f-bar" style="--w:12%"><span>Vidas vendidas (planos completos)</span></div><div class="num">70</div><div class="num day">~3,3</div></div>
+    </div>
+    <p class="note">As taxas são hipóteses de partida. Depois de 4 semanas registrando os números reais, ajuste a tabela.</p>
+    <h3>Escada de metas (vidas/mês)</h3>
+    <div class="ladder" aria-label="Escada de metas">
+      <div class="step now"><div class="bar" style="--h:50%">35</div><small>out/26</small></div>
+      <div class="step"><div class="bar" style="--h:54%">38</div><small>nov/26</small></div>
+      <div class="step"><div class="bar" style="--h:66%">46</div><small>fev/27</small></div>
+      <div class="step"><div class="bar" style="--h:77%">54</div><small>mai</small></div>
+      <div class="step"><div class="bar" style="--h:89%">62</div><small>ago</small></div>
+      <div class="step goal-step"><div class="bar" style="--h:100%">70</div><small>nov/27</small></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Rotina-base diária</h2><span class="tag">seg–sex · 8:30–17:30</span></div>
+    <p class="muted">Manhã para prospectar e responder, começo da tarde para cotações e reuniões, fim de tarde para follow-up e autoridade. O lembrete de cada bloco é a frase que deve aparecer no celular.</p>
+    <div class="timeline" id="timeline"></div>
+    <div class="rules">
+      <div class="rule"><b>Leads</b>Nenhum lead fica sem resposta no mesmo dia.</div>
+      <div class="rule"><b>Cotações</b>Toda cotação sai com data de retorno marcada.</div>
+      <div class="rule"><b>Fechamentos</b>Todo cliente fechado recebe pedido de avaliação no Google e de indicação.</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Foco de cada dia da semana</h2><span class="tag">ocupa o bloco 9:10–11:00 e o post do dia</span></div>
+    <div class="days" id="days" role="group" aria-label="Dia da semana"></div>
+    <div class="dayview" id="dayview"></div>
+  </section>
+
+  <section>
+    <h2>Estratégias para virar referência no ES</h2>
+    <p class="muted">Reconhecimento vem de três coisas repetidas toda semana: avaliações no Google, conteúdo útil e uma rede de parceiros que indica você.</p>
+    <div class="strat">
+      <div class="st wide"><h3>Perfil do Google “o consultor Planos de Saúde”</h3><ul>
+        <li>Pedir avaliação a todo cliente no dia da assinatura, com o link direto por WhatsApp. Meta: 8 avaliações novas por mês.</li>
+        <li>Responder toda avaliação em até 24 h, citando a cidade e o tipo de plano (ex.: “plano empresarial em Serra”).</li>
+        <li>Publicar 1 post por dia útil (tema do dia acima) e 10 fotos novas por mês: atendimentos, reuniões, eventos.</li>
+        <li>Manter a área de atendimento com as principais cidades do ES e os serviços: individual, familiar, empresarial PME, MEI, odontológico.</li>
+        <li>Cadastrar perguntas frequentes no perfil: carência, coparticipação, portabilidade, reajuste.</li>
+      </ul></div>
+      <div class="st"><h3>Conteúdo e presença</h3><ul>
+        <li>1 vídeo curto por semana (quarta) respondendo uma dúvida real; reaproveitar em Instagram, Status e Google.</li>
+        <li>Lista de transmissão no WhatsApp com 1 dica útil por semana para clientes e parceiros.</li>
+      </ul></div>
+      <div class="st"><h3>Parcerias que geram indicação</h3><ul>
+        <li>Contadores e escritórios contábeis: plano empresarial para os clientes deles.</li>
+        <li>RHs e associações comerciais da sua região.</li>
+        <li>Imobiliárias, corretores de outros ramos e clínicas.</li>
+        <li>Meta: 2 contatos com parceiros por semana (quinta) e 1 café ou visita por mês.</li>
+      </ul></div>
+      <div class="st wide"><h3>Dentro da Corretora</h3><ul>
+        <li>Acompanhar o ranking interno e pedir à liderança as metas de destaque e premiações.</li>
+        <li>Compartilhar no grupo da equipe 1 caso de sucesso por mês: visibilidade conta para reconhecimento.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Indicadores do dia</h2><span class="tag">lançar todo dia às 17:10</span></div>
+    <div class="tbl"><table>
+      <thead><tr><th>Indicador</th><th class="n">Meta diária</th><th class="n">Meta semanal</th></tr></thead>
+      <tbody>
+        <tr><td>Contatos e abordagens</td><td class="n">25</td><td class="n">125</td></tr>
+        <tr><td>Conversas qualificadas</td><td class="n">8</td><td class="n">40</td></tr>
+        <tr><td>Cotações enviadas</td><td class="n">4</td><td class="n">20</td></tr>
+        <tr><td>Contratos fechados</td><td class="n">~1</td><td class="n">6</td></tr>
+        <tr><td>Vidas vendidas</td><td class="n">~3</td><td class="n">15</td></tr>
+        <tr><td>Avaliações novas no Google</td><td class="n">—</td><td class="n">2</td></tr>
+        <tr><td>Indicações recebidas</td><td class="n">—</td><td class="n">5</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Rotinas semanais e mensais</h2>
+    <p class="muted">Toda sexta às 16:30 você compara a semana com a meta; no primeiro dia útil do mês, ajusta o plano. As marcações ficam salvas neste navegador.</p>
+    <div class="checks">
+      <div class="ck" data-list="sexta"><h3>Toda sexta (16:30–17:30)</h3></div>
+      <div class="ck" data-list="mes"><h3>Primeiro dia útil do mês</h3></div>
+    </div>
+  </section>
+
+  <footer>Versão visual do documento “Cronograma Diário de Estratégias — o consultor”.</footer>
+</div>
+
+<script>
+(function(){
+  var BLOCKS=[
+    ["8:30","8:50","Planejamento","Revisar CRM, agenda e as 3 prioridades do dia; responder WhatsApp da noite","Quais 3 negócios eu fecho ou avanço hoje?"],
+    ["8:50","9:10","Google e avaliações","Responder avaliações e mensagens do Perfil do Google; publicar 1 post","Perfil do Google: respondi tudo?"],
+    ["9:10","11:00","Prospecção ativa","25 contatos: ligações e WhatsApp para leads, indicações, empresas (PME/MEI) e carteira antiga","Bloco de ouro: 25 contatos, sem distrações"],
+    ["11:00","12:00","Retorno de leads","Responder leads em até 15 min; qualificar (vidas, idades, cidade, operadora atual, orçamento)","Lead novo = resposta em 15 minutos"],
+    ["12:00","13:30","Almoço","Pausa; WhatsApp só para urgências",""],
+    ["13:30","15:00","Cotações e propostas","Montar e enviar 4 cotações comparativas, com 2–3 opções e recomendação clara","4 cotações enviadas hoje?"],
+    ["15:00","16:30","Reuniões e fechamentos","Apresentações por vídeo ou presencial; coleta de documentos; contratos","Pedir a decisão e marcar a próxima data"],
+    ["16:30","17:10","Follow-up","Retornar cotações de 2, 5 e 10 dias; pós-venda de clientes recentes; pedir indicação","Quem recebeu cotação e não respondeu?"],
+    ["17:10","17:30","Fechamento do dia","Registrar números no CRM; preparar a lista de contatos de amanhã","Números do dia lançados? Lista de amanhã pronta?"]
+  ];
+  var DAYS=[
+    ["Segunda","Carteira e indicações: clientes atuais, pedir 2 nomes a cada um","Dica: como escolher entre enfermaria e apartamento","Planejar a semana e revisar metas (8:30–9:00)"],
+    ["Terça","Empresas: PME e MEI da sua região (Vila Velha, Vitória, Serra, Cariacica)","Vantagens do plano empresarial para pequenas empresas","1 visita presencial a empresa ou contador"],
+    ["Quarta","Famílias e pessoa física: leads do Google, site e redes","Depoimento de cliente (com autorização)","Gravar 1 vídeo curto respondendo uma dúvida comum"],
+    ["Quinta","Interior do ES: Linhares, Colatina, Cachoeiro, Guarapari, São Mateus","Atendimento em todo o sua região","Contato com 2 parceiros (contadores, RH, imobiliárias)"],
+    ["Sexta","Reativação: cotações perdidas, leads frios e aniversários de contrato","Resumo da semana ou bastidores","Revisão semanal dos números (16:30–17:30)"]
+  ];
+  var CHECKS={
+    sexta:["Somar os números da semana e comparar com a meta semanal","Identificar a etapa do funil que mais travou e escolher 1 ajuste","Listar as cotações em aberto e marcar o follow-up de segunda","Verificar avaliações e posts da semana no Perfil do Google"],
+    mes:["Fechar o total de vidas do mês anterior e atualizar a escada de metas","Revisar as taxas de conversão reais e corrigir a tabela do funil","Ligar para clientes com aniversário de contrato no mês (reajuste e retenção)","Agendar 1 visita presencial a parceiro"]
+  };
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function mins(t){var p=t.split(":");return +p[0]*60+ +p[1]}
+  var now=new Date(), wd=now.getDay(), m=now.getHours()*60+now.getMinutes();
+  var weekday=wd>=1&&wd<=5;
+
+  var tl=document.getElementById("timeline");
+  tl.innerHTML=BLOCKS.map(function(b){
+    var cur=weekday&&m>=mins(b[0])&&m<mins(b[1]);
+    return '<div class="blk'+(b[2]==="Almoço"?" lunch":"")+(cur?" cur":"")+'"><time>'+b[0]+'–'+b[1]+'</time><div class="body">'+
+      (cur?'<span class="pill">Agora</span>':'')+'<h3>'+esc(b[2])+'</h3><p>'+esc(b[3])+'</p>'+(b[4]?'<span class="rem">“'+esc(b[4])+'”</span>':'')+'</div></div>';
+  }).join("");
+
+  var daysEl=document.getElementById("days"), view=document.getElementById("dayview");
+  var sel=weekday?wd-1:0;
+  function renderDay(){
+    daysEl.innerHTML=DAYS.map(function(d,i){return '<button type="button" id="day-'+i+'" aria-pressed="'+(i===sel)+'" data-i="'+i+'">'+d[0]+(weekday&&i===wd-1?'<span class="dot" title="Hoje"></span>':'')+'</button>'}).join("");
+    var d=DAYS[sel];
+    view.innerHTML='<div class="dv"><span>Tema da prospecção</span><p>'+esc(d[1])+'</p></div><div class="dv"><span>Post no Google / redes</span><p>'+esc(d[2])+'</p></div><div class="dv"><span>Ação extra</span><p>'+esc(d[3])+'</p></div>';
+  }
+  daysEl.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;sel=+b.getAttribute("data-i");renderDay();var f=document.getElementById("day-"+sel);if(f)f.focus()});
+  renderDay();
+
+  var KEY="cronograma-checks-v1", state={};
+  try{state=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){state={}}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+  document.querySelectorAll(".ck").forEach(function(box){
+    var list=box.getAttribute("data-list");
+    CHECKS[list].forEach(function(t,i){
+      var id="ck-"+list+"-"+i, l=document.createElement("label");
+      l.innerHTML='<input type="checkbox" id="'+id+'"><span>'+esc(t)+'</span>';
+      var inp=l.querySelector("input"); inp.checked=!!state[id];
+      inp.addEventListener("change",function(){state[id]=inp.checked;save()});
+      box.appendChild(l);
+    });
+    var r=document.createElement("button");r.type="button";r.className="reset";r.textContent="Desmarcar tudo";
+    r.addEventListener("click",function(){box.querySelectorAll("input").forEach(function(i){i.checked=false;state[i.id]=false});save()});
+    box.appendChild(r);
+  });
+})();
+</script>
+
+<script>document.getElementById("backBtn").addEventListener("click",function(e){e.preventDefault();try{if(window.parent!==window){window.parent.postMessage({type:"central:go",tab:"rotina"},location.origin)}}catch(x){}});</script></body></html>
