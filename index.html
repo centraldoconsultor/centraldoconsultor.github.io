@@ -29,7 +29,7 @@ h1{font:700 clamp(1.7rem,4.4vw,2.6rem)/1.15 var(--display);margin:0 0 14px;text-
 h2{font:700 1.4rem var(--display);margin:0 0 6px;text-wrap:balance}
 .sec{padding:48px 0 8px}
 .lead{color:var(--muted);margin:0 0 22px;max-width:64ch}
-.planos{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px;margin-top:-34px}
+.planos{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px}
 .plano{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:14px}
 .plano.ia{border:2px solid var(--gold)}
 .plano .tag{align-self:flex-start;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:999px;background:var(--bg);color:var(--muted)}
@@ -64,10 +64,49 @@ tr:last-child td{border-bottom:0}
 .faq p{margin:10px 0 0;color:var(--muted)}
 .cta{background:var(--navy);color:var(--on-navy);border-radius:16px;padding:28px;margin:40px 0;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .cta p{margin:4px 0 0;color:#c9d2e3}
-.hero-btn{display:inline-block;margin-top:22px;background:var(--gold)!important;color:#0e1f3d!important;border-color:var(--gold)!important;padding:13px 22px}
+.hero-btn{display:inline-block;margin-top:22px;background:var(--gold)!important;color:#0e1f3d!important;border-color:var(--gold)!important;padding:16px 30px;font-size:1.12rem!important;font-weight:700!important;border-radius:12px;box-shadow:0 8px 24px rgba(176,138,62,.45);transition:transform .15s}
+.hero-btn:hover{transform:translateY(-2px);filter:none}
+.hero-nota{display:block;margin-top:10px;font-size:.85rem;color:var(--gold-2)}
+.cta-faixa{margin:34px 0 0;background:linear-gradient(135deg,var(--gold) 0%,#c9a45a 100%);border-radius:18px;padding:26px 28px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap;color:#0e1f3d}
+.cta-faixa h3{font:700 1.35rem var(--display);margin:0}
+.cta-faixa p{margin:4px 0 0;font-weight:500}
+.cta-faixa a{background:#0e2a52;color:#f4efe3;text-decoration:none;font:700 1.08rem var(--body);padding:16px 28px;border-radius:12px;box-shadow:0 8px 20px rgba(14,42,82,.35);white-space:nowrap}
+.cta-faixa a:hover{background:#183a6b}
 .cta .btn{background:var(--gold);color:#0e1f3d;border-color:var(--gold);margin:0}
 footer{color:var(--muted);font-size:.85rem;padding:20px 0 40px;border-top:1px solid var(--line)}
 footer a{color:var(--muted)}
+/* apresentação */
+.hero-acoes{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.hero-acoes .hero-btn{margin-top:0}
+.btn-claro{display:inline-block;padding:13px 22px;border-radius:10px;border:1px solid var(--gold-2);color:var(--gold-2);text-decoration:none;font-weight:600}
+.btn-claro:hover{background:rgba(217,191,133,.12)}
+.antes{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:-34px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;position:relative}
+.antes>div{padding:22px 24px}
+.antes>div+div{border-left:1px solid var(--line);background:color-mix(in srgb,var(--gold) 7%,var(--surface))}
+.antes h3{font:700 1rem var(--display);margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.antes ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:.95rem}
+.antes .com ul{color:var(--fg)}
+.kicker{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.recursos{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.recurso{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:8px}
+.recurso .ic{width:40px;height:40px;border-radius:10px;background:var(--navy);color:var(--gold-2);display:grid;place-items:center}
+.recurso .ic svg{width:22px;height:22px}
+.recurso h3{font:700 1.02rem var(--display);margin:0}
+.recurso p{margin:0;color:var(--muted);font-size:.93rem}
+.recurso .ganho{margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);font-size:.86rem;font-weight:600;color:var(--ok)}
+.recurso.ia{border:2px solid var(--gold)}
+.recurso.ia .ic{background:var(--gold);color:#0e1f3d}
+.ia-bloco{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center;background:var(--navy);color:var(--on-navy);border-radius:18px;padding:30px}
+.ia-bloco h2{color:var(--on-navy)}
+.ia-bloco p{color:#c9d2e3;margin:0 0 12px}
+.ia-bloco ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px;color:#e4e8f0}
+.chat{background:#0b1f3d;border:1px solid rgba(217,191,133,.35);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px;font-size:.88rem}
+.chat .rot{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-2);margin-bottom:2px}
+.msg-c{align-self:flex-start;background:#1c3358;color:#eef2f8;padding:8px 11px;border-radius:12px 12px 12px 4px;max-width:85%}
+.msg-i{align-self:flex-end;background:#d9bf85;color:#0e1f3d;padding:8px 11px;border-radius:12px 12px 4px 12px;max-width:85%}
+.msg-i small{display:block;font-size:.68rem;opacity:.75;margin-top:3px}
+.chat .fim{align-self:center;font-size:.75rem;color:#9fb0cc;border:1px dashed rgba(217,191,133,.4);border-radius:999px;padding:4px 10px;margin-top:4px}
+@media (max-width:760px){.antes{grid-template-columns:1fr}.antes>div+div{border-left:0;border-top:1px solid var(--line)}.ia-bloco{grid-template-columns:1fr;padding:22px}}
 #msg{display:none;margin-top:10px;font-size:.92rem;color:var(--gold-2)}
 </style>
 </head>
@@ -78,12 +117,57 @@ footer a{color:var(--muted)}
     <div class="txt">
       <h1>Seu funil, seu pós-venda e seu WhatsApp no mesmo lugar.</h1>
       <p>Feita por um consultor de plano de saúde para consultores: organize leads, cotações, propostas e clientes, e responda o WhatsApp com a ajuda de uma IA que fala do seu jeito.</p>
-      <a class="btn hero-btn" href="assinar/">Começar 7 dias grátis</a>
+      <div class="hero-acoes"><a class="btn hero-btn" href="assinar/">Comece seu teste grátis →</a><a class="btn-claro" href="#recursos">Conheça a Central</a></div>
+      <span class="hero-nota">7 dias grátis · sem cartão · cancele quando quiser</span>
     </div>
   </div>
 </header>
 
 <main class="wrap">
+  <section class="antes" aria-label="Antes e depois">
+    <div><h3>Sem a Central</h3><ul><li>Leads espalhados em planilha, papel e WhatsApp</li><li>Cotação que esfria porque ninguém lembrou de retomar</li><li>Proposta parada sem saber qual documento falta</li><li>Lead chega à noite e só é respondido no dia seguinte</li><li>Reajuste e aniversário do cliente passam batido</li></ul></div>
+    <div class="com"><h3>Com a Central</h3><ul><li>Todos os leads e clientes organizados em um lugar</li><li>Lembrete diário de quem retomar, com a mensagem pronta</li><li>Cada proposta acompanhada até a implantação</li><li>A IA responde na hora e qualifica o lead por você</li><li>Pós-venda no tempo certo, gerando renovação e indicação</li></ul></div>
+  </section>
+
+  <section class="sec" id="recursos">
+    <span class="kicker">O que a Central faz</span>
+    <h2>Tudo o que um consultor de plano de saúde precisa, do primeiro contato ao pós-venda</h2>
+    <p class="lead">Pensada para a rotina de quem vende plano de saúde no Espírito Santo: prospectar, cotar, fechar, implantar e cuidar da carteira.</p>
+    <div class="recursos" id="lista-recursos"><article class="recurso"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg></span><h3>Funil de leads</h3><p>Importe listas de CNPJ e MEIs, cadastre quem chega pelo Instagram e veja quem abordar hoje, com prioridade A, B e C.</p><span class="ganho">Você nunca mais fica sem saber para quem ligar.</span></article><article class="recurso"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></span><h3>Follow-up de cotações</h3><p>A Central lembra de cada cotação enviada e mostra quem retomar hoje, com uma mensagem pronta para mandar no WhatsApp.</p><span class="ganho">Nenhuma cotação esfria esquecida.</span></article><article class="recurso"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></span><h3>Cotador do Espírito Santo</h3><p>Monte a cotação com as operadoras do ES, compare planos e gere um PDF ou link com a sua foto e o seu contato para o cliente.</p><span class="ganho">Cotação profissional em minutos.</span></article><article class="recurso"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/><path d="M18 14l3 3-3 3"/></svg></span><h3>Esteira de propostas</h3><p>Acompanhe cada proposta do cadastro até a implantação: pendências, documentos, digitação no portal e aprovação.</p><span class="ganho">Você sabe exatamente onde cada venda está.</span></article><article class="recurso"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-3-6.2"/><path d="M20 4v5h-5"/></svg></span><h3>Pós-venda e reajustes</h3><p>Aniversário de contrato, data de reajuste e pedido de indicação na hora certa, para cada cliente da carteira.</p><span class="ganho">Cliente bem atendido renova e indica.</span></article><article class="recurso"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><h3>Comissões e metas</h3><p>Veja quanto vai receber por operadora, as vidas vendidas no mês e a meta do dia, com o painel diário.</p><span class="ganho">Seu resultado claro, todo dia.</span></article><article class="recurso"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg></span><h3>Caixa de WhatsApp</h3><p>Todas as conversas do seu número em um só lugar, no computador e no celular como app, com envio de PDFs e documentos.</p><span class="ganho">Sem perder o WhatsApp Business do celular.</span></article><article class="recurso ia"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.6 7.1 18.2 8 12.7 4 8.8 9.5 8z"/></svg></span><h3>IA no seu WhatsApp</h3><p>A IA responde o lead na hora, do seu jeito, coleta idades, cidade e plano atual e te entrega a conversa pronta para fechar.</p><span class="ganho">Disponível no plano Com IA.</span></article></div>
+      <div class="cta-faixa"><div><h3>Comece seu teste grátis</h3><p>7 dias para usar tudo, sem cartão. Crie sua senha e comece agora.</p></div><a href="assinar/">Comece seu teste grátis →</a></div>
+  </section>
+
+  <section class="sec">
+    <div class="ia-bloco">
+      <div>
+        <span class="kicker">Plano Com IA</span>
+        <h2>Uma assistente que atende o seu WhatsApp enquanto você vende</h2>
+        <p>Quando um lead chama, a IA responde na hora com o seu jeito de falar, entende o que a pessoa precisa e organiza tudo para você fechar.</p>
+        <ul>
+          <li>Pergunta idades, cidade, plano atual e preferência de hospital</li>
+          <li>Sugere a operadora pelas regras que você define</li>
+          <li>Nunca passa preço: entrega o lead pronto para você enviar a cotação</li>
+          <li>Você escolhe: aprova cada resposta ou deixa a IA responder sozinha</li>
+        </ul>
+      </div>
+      <div class="chat" aria-label="Exemplo de conversa">
+        <span class="rot">Exemplo de atendimento</span>
+        <span class="msg-c">Oi, queria saber de plano de saúde para mim e minha esposa</span>
+        <span class="msg-i">Oi! Que bom falar com você. Para eu montar a melhor opção, quais as idades de vocês dois?<small>IA · agora</small></span>
+        <span class="msg-c">Eu tenho 34 e ela 31</span>
+        <span class="msg-i">Perfeito! E vocês moram em qual cidade? Já têm algum plano hoje?<small>IA · agora</small></span>
+        <span class="msg-c">Vila Velha, não temos plano</span>
+        <span class="fim">Lead qualificado · passa para você enviar a cotação</span>
+      </div>
+    </div>
+    <div class="cta-faixa"><div><h3>Teste a IA no seu WhatsApp</h3><p>7 dias grátis no plano Com IA, sem cartão.</p></div><a href="assinar/?plano=ia">Comece seu teste grátis →</a></div>
+  </section>
+
+  <section class="sec" id="planos">
+    <span class="kicker">Planos</span>
+    <h2>Escolha o seu plano e teste 7 dias grátis</h2>
+    <p class="lead">Sem cartão para começar. Depois do teste, a mensalidade é por Pix ou cartão.</p>
+  </section>
   <section class="planos" aria-label="Planos">
     <article class="plano">
       <span class="tag">Essencial</span>
@@ -156,7 +240,7 @@ footer a{color:var(--muted)}
 
   <section class="cta" id="interesse">
     <div><h2 style="margin:0">Teste 7 dias grátis</h2><p>Sem cartão. Crie sua senha e comece agora. Cancele quando quiser.</p></div>
-    <a class="btn" href="assinar/">Começar meu teste grátis</a>
+    <a class="btn" href="assinar/">Comece seu teste grátis →</a>
   </section>
 </main>
 
