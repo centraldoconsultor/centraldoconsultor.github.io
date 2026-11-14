@@ -64,6 +64,7 @@ tr:last-child td{border-bottom:0}
 .faq p{margin:10px 0 0;color:var(--muted)}
 .cta{background:var(--navy);color:var(--on-navy);border-radius:16px;padding:28px;margin:40px 0;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .cta p{margin:4px 0 0;color:#c9d2e3}
+.hero-btn{display:inline-block;margin-top:22px;background:var(--gold)!important;color:#0e1f3d!important;border-color:var(--gold)!important;padding:13px 22px}
 .cta .btn{background:var(--gold);color:#0e1f3d;border-color:var(--gold);margin:0}
 footer{color:var(--muted);font-size:.85rem;padding:20px 0 40px;border-top:1px solid var(--line)}
 footer a{color:var(--muted)}
@@ -77,6 +78,7 @@ footer a{color:var(--muted)}
     <div class="txt">
       <h1>Seu funil, seu pós-venda e seu WhatsApp no mesmo lugar.</h1>
       <p>Feita por um consultor de plano de saúde para consultores: organize leads, cotações, propostas e clientes, e responda o WhatsApp com a ajuda de uma IA que fala do seu jeito.</p>
+      <a class="btn hero-btn" href="../assinar/">Começar 7 dias grátis</a>
     </div>
   </div>
 </header>
@@ -87,7 +89,7 @@ footer a{color:var(--muted)}
       <span class="tag">Essencial</span>
       <h3>Essencial</h3>
       <p class="p">Para quem quer organizar a venda e o pós-venda, respondendo o WhatsApp do seu jeito.</p>
-      <div class="preco">Valor no lançamento<span>Consultores do piloto têm condição especial.</span></div>
+      <div class="preco">R$ 99 /mês<span>7 dias grátis, sem cartão. Depois, Pix ou cartão.</span></div>
       <ul class="itens">
         <li>Funil de leads, follow-up e esteira de propostas</li>
         <li>Cotador com as operadoras do Espírito Santo</li>
@@ -96,13 +98,13 @@ footer a{color:var(--muted)}
         <li>Caixa de WhatsApp no celular (app), sem perder o WhatsApp Business</li>
         <li>Envio e recebimento de documentos pela Caixa</li>
       </ul>
-      <a class="btn" href="#interesse" data-plano="Essencial">Quero o Essencial</a>
+      <a class="btn" href="../assinar/?plano=essencial">Testar o Essencial grátis</a>
     </article>
     <article class="plano ia">
       <span class="tag">Com IA</span>
       <h3>Com IA</h3>
       <p class="p">Tudo do Essencial, mais uma IA que atende os leads no WhatsApp enquanto você vende.</p>
-      <div class="preco">Valor no lançamento<span>Consultores do piloto têm condição especial.</span></div>
+      <div class="preco">R$ 199 /mês<span>7 dias grátis, sem cartão. Depois, Pix ou cartão.</span></div>
       <ul class="itens">
         <li class="mais">Tudo do plano Essencial</li>
         <li>IA que qualifica o lead: idades, cidade, plano atual e preferências</li>
@@ -111,7 +113,7 @@ footer a{color:var(--muted)}
         <li>Suas regras de operadora (por faixa de idade, cidade ou perfil)</li>
         <li>A IA nunca passa preço: entrega o lead pronto para você fechar</li>
       </ul>
-      <a class="btn" href="#interesse" data-plano="Com IA">Quero o plano Com IA</a>
+      <a class="btn" href="../assinar/?plano=ia">Testar o Com IA grátis</a>
     </article>
   </section>
 
@@ -136,7 +138,7 @@ footer a{color:var(--muted)}
     <h2>Como funciona</h2>
     <p class="lead">Você continua com o seu número e o seu WhatsApp Business no celular.</p>
     <div class="passos">
-      <div class="passo"><i>1</i><b>Convite por e-mail</b>Você recebe o acesso e cria a sua senha.</div>
+      <div class="passo"><i>1</i><b>Crie sua conta</b>Escolha o plano, crie a senha e use 7 dias grátis, sem cartão.</div>
       <div class="passo"><i>2</i><b>Conecte o seu número</b>O WhatsApp Business continua no celular; as conversas novas chegam também na Caixa.</div>
       <div class="passo"><i>3</i><b>Ajuste o perfil</b>Nome, cidade e, no plano Com IA, as suas regras de operadora.</div>
       <div class="passo"><i>4</i><b>Venda com tudo à mão</b>Lead, cotação, proposta e pós-venda no mesmo lugar.</div>
@@ -148,12 +150,13 @@ footer a{color:var(--muted)}
     <details><summary>Vou perder o meu WhatsApp Business no celular?</summary><p>Não. A conexão usa o modo de coexistência da Meta: o app continua funcionando no seu celular e a Caixa recebe as conversas novas.</p></details>
     <details><summary>A IA passa valores para o cliente?</summary><p>Nunca. Ela coleta as informações, sugere a operadora pelas suas regras e passa a conversa para você enviar a cotação e fechar.</p></details>
     <details><summary>Outros consultores veem os meus clientes?</summary><p>Não. Cada consultor vê apenas as próprias conversas, leads e clientes.</p></details>
+    <details><summary>Como funciona o pagamento?</summary><p>Depois dos 7 dias grátis, a mensalidade é por Pix ou cartão de crédito. No cartão, a cobrança é automática todo mês. Se a mensalidade atrasar mais de 3 dias, o acesso fica pausado até o pagamento.</p></details>
     <details><summary>Posso trocar de plano depois?</summary><p>Sim. Dá para começar no Essencial e passar para o Com IA quando quiser.</p></details>
   </section>
 
   <section class="cta" id="interesse">
-    <div><h2 style="margin:0">Quer entrar na lista de lançamento?</h2><p>As vagas do piloto são limitadas. Deixe o seu interesse e entramos em contato.</p><div id="msg" role="status"></div></div>
-    <a class="btn" id="bInteresse" href="#interesse">Tenho interesse</a>
+    <div><h2 style="margin:0">Teste 7 dias grátis</h2><p>Sem cartão. Crie sua senha e comece agora. Cancele quando quiser.</p></div>
+    <a class="btn" href="../assinar/">Começar meu teste grátis</a>
   </section>
 </main>
 
@@ -161,16 +164,5 @@ footer a{color:var(--muted)}
   Central do Consultor · <a href="../">Política de Privacidade</a> · <a href="../exclusao-de-dados/">Exclusão de dados</a>
 </footer>
 
-<script>
-// Contato para o botão de interesse. Deixe vazio até definir o canal (e-mail ou WhatsApp).
-var CONTATO = "";
-var plano = "";
-document.querySelectorAll("[data-plano]").forEach(function(a){ a.addEventListener("click", function(){ plano = a.dataset.plano; }); });
-document.getElementById("bInteresse").addEventListener("click", function(e){
-  var txt = "Olá! Tenho interesse na Central do Consultor" + (plano ? " (plano " + plano + ")" : "") + ".";
-  if (CONTATO) { e.preventDefault(); location.href = CONTATO.indexOf("@") > 0 ? "mailto:" + CONTATO + "?subject=" + encodeURIComponent("Central do Consultor") + "&body=" + encodeURIComponent(txt) : "https://wa.me/" + CONTATO + "?text=" + encodeURIComponent(txt); return; }
-  e.preventDefault(); var m = document.getElementById("msg"); m.style.display = "block"; m.textContent = "Inscrições abrem em breve. Fale com o consultor que te indicou a Central.";
-});
-</script>
 </body>
 </html>
