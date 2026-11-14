@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teste grátis · Central do Consultor</title>
+<meta name="description" content="Crie sua conta e use a Central do Consultor por 7 dias grátis, sem cartão.">
+<meta name="theme-color" content="#0e2a52">
+<script src="../central/central-db.js?v=3"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+:root{--navy:#0e2a52;--navy-2:#183a6b;--gold:#b08a3e;--gold-2:#d9bf85;--bg:#f7f4ec;--surface:#fffdf8;--line:#e5dfd0;--fg:#0e1f3d;--muted:#5d6579;--on-navy:#f4efe3;--ok:#2f7d4f;--bad:#b03a2e;--bad-bg:#f8e3e0;
+--display:"Sora","Segoe UI",system-ui,sans-serif;--body:"Figtree","Segoe UI",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--navy:#081a33;--navy-2:#13294a;--gold:#d6b46a;--gold-2:#e6cf98;--bg:#0a1426;--surface:#112039;--line:#243453;--fg:#f4efe3;--muted:#a3abbe;--ok:#7fcf9d;--bad:#f09a8f;--bad-bg:#3d1d1a;color-scheme:dark}}
+:root[data-theme="dark"]{--navy:#081a33;--navy-2:#13294a;--gold:#d6b46a;--gold-2:#e6cf98;--bg:#0a1426;--surface:#112039;--line:#243453;--fg:#f4efe3;--muted:#a3abbe;--ok:#7fcf9d;--bad:#f09a8f;--bad-bg:#3d1d1a;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 var(--body)}
+a{color:inherit}
+header{background:var(--navy);color:var(--on-navy);border-bottom:3px solid var(--gold)}
+.top{max-width:1040px;margin:0 auto;padding:16px;display:flex;align-items:center;gap:12px}
+.mark{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--gold-2);color:var(--gold-2);display:grid;place-items:center;font:700 14px var(--display);flex:none;text-decoration:none}
+.top b{font:700 1.05rem var(--display);display:block;line-height:1.1}
+.top small{color:var(--gold-2);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase}
+.top a.entrar{margin-left:auto;color:var(--gold-2);font-weight:600;text-decoration:none;font-size:.92rem}
+main{max-width:620px;margin:0 auto;padding:28px 16px 56px}
+h1{font:700 clamp(1.5rem,4vw,2rem)/1.2 var(--display);margin:0 0 6px;text-wrap:balance}
+.lead{color:var(--muted);margin:0 0 22px}
+form{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:16px}
+fieldset{border:0;margin:0;padding:0}
+legend{font-weight:600;font-size:.9rem;color:var(--muted);margin-bottom:8px}
+.planos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.planos label{display:flex;flex-direction:column;gap:2px;padding:14px;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;background:var(--bg)}
+.planos label:has(input:checked){border-color:var(--gold);background:var(--surface);box-shadow:0 0 0 2px color-mix(in srgb,var(--gold) 25%,transparent)}
+.planos input{position:absolute;opacity:0;pointer-events:none}
+.planos b{font:700 1.02rem var(--display)}
+.planos span{font-size:.86rem;color:var(--muted)}
+.planos em{font-style:normal;font-weight:700}
+.campo{display:flex;flex-direction:column;gap:5px;font-size:.88rem;font-weight:600;color:var(--muted)}
+.campo input{font:500 1rem var(--body);padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);width:100%}
+.campo small{font-weight:500}
+.duas{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.aceite{display:flex;gap:10px;align-items:flex-start;font-size:.9rem;color:var(--fg)}
+.aceite input{margin-top:3px;width:18px;height:18px;flex:none}
+button{font:600 1.02rem var(--body);padding:14px;border-radius:10px;border:0;background:var(--navy);color:var(--on-navy);cursor:pointer}
+button:disabled{opacity:.6;cursor:default}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.msg{font-size:.92rem;min-height:1.3em}
+.msg.erro{color:var(--bad);background:var(--bad-bg);padding:10px 12px;border-radius:10px}
+.nota{font-size:.86rem;color:var(--muted);text-align:center;margin:14px 0 0}
+.ok{display:none;text-align:center;padding:32px 16px}
+.ok h2{font:700 1.4rem var(--display);margin:0 0 8px}
+@media (max-width:540px){.planos,.duas{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="top"><a class="mark" href="../" aria-label="Início">CC</a><div><b>Central do Consultor</b><small>Plano de saúde · ES</small></div><a class="entrar" href="../central/">Já tenho conta · Entrar</a></div></header>
+<main>
+  <h1>Comece seus 7 dias grátis</h1>
+  <p class="lead">Sem cartão. Você cria sua senha agora e já entra na Central. Depois dos 7 dias, a mensalidade é por Pix ou cartão.</p>
+  <form id="f" novalidate>
+    <fieldset>
+      <legend>Plano</legend>
+      <div class="planos">
+        <label><input type="radio" name="plano" value="essencial"><b>Essencial</b><span><em>R$ 99</em>/mês após o teste</span><span>CRM, pós-venda, cotador e Caixa de WhatsApp</span></label>
+        <label><input type="radio" name="plano" value="ia" checked><b>Com IA</b><span><em>R$ 199</em>/mês após o teste</span><span>Tudo do Essencial + IA atendendo no WhatsApp</span></label>
+      </div>
+    </fieldset>
+    <label class="campo">Nome completo<input id="nome" autocomplete="name" required></label>
+    <div class="duas">
+      <label class="campo">WhatsApp<input id="telefone" inputmode="tel" autocomplete="tel" placeholder="(27) 99999-9999" required></label>
+      <label class="campo">CPF ou CNPJ<input id="documento" inputmode="numeric" placeholder="Só números" required></label>
+    </div>
+    <label class="campo">Cidade<input id="cidade" autocomplete="address-level2" placeholder="Ex.: Vitória/ES"></label>
+    <label class="campo">E-mail (será o seu login)<input id="email" type="email" autocomplete="email" required></label>
+    <div class="duas">
+      <label class="campo">Crie uma senha<input id="senha" type="password" autocomplete="new-password" minlength="8" required><small>Pelo menos 8 caracteres</small></label>
+      <label class="campo">Repita a senha<input id="senha2" type="password" autocomplete="new-password" required></label>
+    </div>
+    <label class="aceite"><input type="checkbox" id="aceite"><span>Li e aceito a <a href="../privacidade/" target="_blank" rel="noopener">Política de Privacidade</a> e os termos de uso da Central do Consultor.</span></label>
+    <div class="msg" id="msg" role="status" aria-live="polite"></div>
+    <button type="submit" id="btn">Criar conta e começar o teste</button>
+  </form>
+  <p class="nota">O CPF ou CNPJ é usado só para emitir a cobrança depois do teste. Um teste grátis por CPF/CNPJ.</p>
+  <div class="ok" id="ok"><h2>Conta criada!</h2><p class="lead" id="okTxt">Abrindo a sua Central…</p></div>
+</main>
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var FN="https://tqhrjivlfpexmhkwakwl.supabase.co/functions/v1/cadastro";
+  try{ var p=new URLSearchParams(location.search).get("plano"); if(p==="essencial"||p==="ia") document.querySelector('input[name="plano"][value="'+p+'"]').checked=true; }catch(e){}
+  function erro(t){ var m=$("msg"); m.className="msg erro"; m.textContent=t; }
+  function fone(v){ var d=v.replace(/\D/g,"").slice(0,11); if(d.length<3) return d; if(d.length<8) return "("+d.slice(0,2)+") "+d.slice(2); return "("+d.slice(0,2)+") "+d.slice(2,d.length-4)+"-"+d.slice(-4); }
+  $("telefone").addEventListener("input",function(e){ e.target.value=fone(e.target.value); });
+  $("f").addEventListener("submit",function(e){
+    e.preventDefault(); $("msg").className="msg"; $("msg").textContent="";
+    var d={ nome:$("nome").value.trim(), email:$("email").value.trim(), telefone:$("telefone").value, documento:$("documento").value,
+      cidade:$("cidade").value.trim(), senha:$("senha").value, plano:document.querySelector('input[name="plano"]:checked').value, aceite:$("aceite").checked };
+    if(d.nome.split(/\s+/).length<2) return erro("Informe nome e sobrenome.");
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) return erro("Confira o e-mail.");
+    if(d.senha.length<8) return erro("A senha precisa ter pelo menos 8 caracteres.");
+    if(d.senha!==$("senha2").value) return erro("As duas senhas não estão iguais.");
+    if(!d.aceite) return erro("Marque que aceita a política e os termos.");
+    var b=$("btn"); b.disabled=true; b.textContent="Criando sua conta…";
+    fetch(FN,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(d)})
+      .then(function(r){ return r.json().catch(function(){return {ok:false};}); })
+      .then(function(r){
+        if(!r.ok){ erro(r.erro||"Não foi possível criar a conta agora."); b.disabled=false; b.textContent="Criar conta e começar o teste"; return; }
+        $("f").style.display="none"; document.querySelector(".nota").style.display="none"; document.querySelector("h1").style.display="none"; document.querySelector(".lead").style.display="none"; $("ok").style.display="block";
+        var fim=r.teste_ate?r.teste_ate.split("-").reverse().join("/"):"";
+        $("okTxt").textContent="Seu teste grátis vai até "+fim+". Abrindo a sua Central…";
+        return window.CentralAuth.entrar(d.email,d.senha).then(function(){ location.href="../central/"; },function(){ location.href="../central/"; });
+      })
+      .catch(function(){ erro("Sem conexão. Tente de novo."); b.disabled=false; b.textContent="Criar conta e começar o teste"; });
+  });
+})();
+</script>
+</body>
+</html>
