@@ -144,7 +144,7 @@ header button{background:rgba(255,255,255,.12)}
     <h1>Ofertas do mês</h1>
   </header>
   <main>
-    <p class="aviso" style="padding:14px 16px;text-align:left">A IA só cita ofertas ativas e dentro da validade, com as mesmas palavras daqui. Nunca passa valor de mensalidade.</p>
+    <p class="aviso" id="ofAviso" style="padding:14px 16px;text-align:left">A IA só cita ofertas ativas e dentro da validade, com as mesmas palavras daqui. Nunca passa valor de mensalidade.</p>
     <div id="ofLista"><div class="aviso">Carregando…</div></div>
     <form class="of-form" id="ofForm">
       <b>Nova oferta</b>
@@ -223,6 +223,7 @@ header button{background:rgba(255,255,255,.12)}
 
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+// v2.4 (14/11/2026): ofertas das operadoras valem para todos os consultores; Essencial vê só para consulta
 // v2.3: link do e-mail (convite ou esqueci a senha) leva para a tela de definir senha
 const tipoLink = new URLSearchParams(location.hash.slice(1)).get("type");
 const db = createClient("https://tqhrjivlfpexmhkwakwl.supabase.co", "sb_publishable_vI455mCunOwgHkEaPra01w_05Ynugib");
@@ -290,19 +291,31 @@ async function abrirOfertas() {
   const h = hojeISO(); const fimMes = new Date(); fimMes.setMonth(fimMes.getMonth() + 1, 0);
   if (!$("ofIni").value) $("ofIni").value = h;
   if (!$("ofFim").value) $("ofFim").value = fimMes.toLocaleDateString("en-CA");
+  // v2.4: ofertas das operadoras (cadastradas pelo administrador) valem para todos; plano Essencial só consulta
+  const soConsulta = EU.plano !== "ia" && EU.papel !== "dono";
+  $("ofForm").style.display = soConsulta ? "none" : "";
+  $("ofAviso").textContent = EU.papel === "dono"
+    ? "As ofertas que você cadastra aqui ou no Painel Admin são ofertas das operadoras e valem para todos os consultores. A IA só cita ofertas ativas e dentro da validade, com as mesmas palavras daqui. Nunca passa valor de mensalidade."
+    : soConsulta
+      ? "Ofertas das operadoras valendo agora, cadastradas pelo administrador. Só para consulta."
+      : "Ofertas das operadoras valem para todos e são cadastradas pelo administrador. Você também pode cadastrar ofertas suas abaixo. A IA só cita ofertas ativas e dentro da validade, com as mesmas palavras daqui.";
   await carregarOfertas();
 }
 async function carregarOfertas() {
-  const { data, error } = await db.from("ofertas").select("*").order("fim", { ascending: false });
+  const { data, error } = await db.from("ofertas").select("*").order("geral", { ascending: false }).order("fim", { ascending: false });
   if (error) { $("ofLista").innerHTML = '<div class="aviso">Não foi possível carregar as ofertas.</div>'; return; }
   const h = hojeISO();
-  $("ofLista").innerHTML = (data || []).map(function (o) {
+  // ofertas de outros (as das operadoras) só aparecem enquanto estiverem ativas e dentro da validade
+  const lista = (data || []).filter((o) => o.consultor_id === EU.id || (o.ativo && o.fim >= h));
+  $("ofLista").innerHTML = lista.map(function (o) {
     const vale = o.ativo && o.inicio <= h && o.fim >= h;
     const sit = !o.ativo ? "Desativada" : vale ? "Valendo agora" : (o.fim < h ? "Vencida" : "Começa em " + dataBR(o.inicio));
-    return '<div class="of-item' + (vale ? "" : " of-off") + '"><div class="meio"><b>' + esc(o.operadora) + '</b> · ' + esc(o.descricao) +
+    const minha = o.consultor_id === EU.id;
+    const selo = o.geral ? '<span class="tag t-cotar" style="margin:0 6px 0 0">Operadora · todos</span>' : '<span class="tag t-ia" style="margin:0 6px 0 0">Só sua</span>';
+    return '<div class="of-item' + (vale ? "" : " of-off") + '"><div class="meio">' + selo + '<b>' + esc(o.operadora) + '</b> · ' + esc(o.descricao) +
       '<small>' + sit + ' · ' + dataBR(o.inicio) + ' a ' + dataBR(o.fim) + '</small></div>' +
-      '<button data-of="' + o.id + '" data-at="' + (o.ativo ? "0" : "1") + '">' + (o.ativo ? "Desativar" : "Ativar") + '</button></div>';
-  }).join("") || '<div class="aviso">Nenhuma oferta cadastrada.</div>';
+      (minha ? '<button data-of="' + o.id + '" data-at="' + (o.ativo ? "0" : "1") + '">' + (o.ativo ? "Desativar" : "Ativar") + '</button>' : '') + '</div>';
+  }).join("") || '<div class="aviso">Nenhuma oferta valendo agora.</div>';
   [...$("ofLista").querySelectorAll("button[data-of]")].forEach(function (b) {
     b.onclick = async function () { await db.from("ofertas").update({ ativo: b.dataset.at === "1" }).eq("id", b.dataset.of); carregarOfertas(); };
   });
@@ -390,7 +403,7 @@ async function iniciar() {
   if (!eu) { document.body.innerHTML = '<div class="login"><h2 style="margin-top:0">Conta sem cadastro de consultor</h2><p>Seu login existe, mas ainda não foi liberado como consultor. Fale com o administrador da Central.</p></div>'; return; }
   $("auto").checked = eu.modo_automatico === true;
   // v2.1: plano essencial (sem IA) esconde o que e da IA
-  if (eu.plano !== "ia") { $("auto").closest("label").style.display = "none"; $("bOfertas").style.display = "none"; const fIA = document.querySelector('#filtros [data-f="ia"]'); if (fIA) fIA.style.display = "none"; }
+  if (eu.plano !== "ia") { $("auto").closest("label").style.display = "none"; const fIA = document.querySelector('#filtros [data-f="ia"]'); if (fIA) fIA.style.display = "none"; }
   $("auto").onchange = async (e) => {
     if (e.target.checked && !confirm("Ligar a IA automatica? Ela vai responder sozinha os leads novos ate o fecho da cotacao.")) { e.target.checked = false; return; }
     const { error: eAuto } = await db.from("consultores").update({ modo_automatico: e.target.checked }).eq("id", EU.id);
