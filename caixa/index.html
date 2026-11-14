@@ -195,6 +195,8 @@ header button{background:rgba(255,255,255,.12)}
 
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+// v2.3: link do e-mail (convite ou esqueci a senha) leva para a tela de definir senha
+const tipoLink = new URLSearchParams(location.hash.slice(1)).get("type");
 const db = createClient("https://tqhrjivlfpexmhkwakwl.supabase.co", "sb_publishable_vI455mCunOwgHkEaPra01w_05Ynugib");
 
 const $ = (id) => document.getElementById(id);
@@ -213,18 +215,43 @@ if (!session) {
     <input id="pw" type="password" placeholder="senha" autocomplete="current-password">
     <button id="entrar">Entrar</button>
     <p style="text-align:center"><a href="#" id="go" style="color:var(--verde)">Prefiro receber um link por e-mail</a></p>
-    <p id="msg" style="color:var(--suave)"></p></div>`;
+    <p style="text-align:center;margin:4px 0"><a href="#" id="esqueci" style="color:var(--suave)">Esqueci minha senha</a></p>
+<p id="msg" style="color:var(--suave)"></p></div>`;
   $("entrar").onclick = async () => {
     const { error } = await db.auth.signInWithPassword({ email: $("em").value.trim(), password: $("pw").value });
     if (error) $("msg").textContent = "Nao foi possivel: " + error.message; else location.reload();
   };
-  $("pw").onkeydown = (e) => { if (e.key === "Enter") $("entrar").click(); };
+  $("esqueci").onclick = async (e) => { e.preventDefault();
+const em = $("em").value.trim(); if (!em) { $("msg").textContent = "Digite seu e-mail acima e toque de novo em Esqueci minha senha."; return; }
+const { error } = await db.auth.resetPasswordForEmail(em, { redirectTo: location.origin + location.pathname });
+$("msg").textContent = error ? "Não foi possível: " + error.message : "Enviamos um link para o seu e-mail para criar uma senha nova.";
+};
+$("pw").onkeydown = (e) => { if (e.key === "Enter") $("entrar").click(); };
   $("go").onclick = async (e) => { e.preventDefault();
     const { error } = await db.auth.signInWithOtp({ email: $("em").value.trim(), options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: false } });
     $("msg").textContent = error ? "Nao foi possivel: " + error.message : "Link enviado. Abra no seu e-mail neste aparelho.";
   };
+} else if (tipoLink === "invite" || tipoLink === "recovery") {
+  definirSenha();
 } else {
   iniciar();
+}
+
+function definirSenha() {
+  document.body.innerHTML = `<div class="login"><h2 style="margin-top:0">${tipoLink === "invite" ? "Bem-vindo(a) à Caixa de Entrada" : "Nova senha"}</h2>
+  <p style="color:var(--suave)">Crie a sua senha de acesso (mínimo 8 caracteres).</p>
+  <input id="s1" type="password" placeholder="nova senha" autocomplete="new-password">
+  <input id="s2" type="password" placeholder="repita a senha" autocomplete="new-password">
+  <button id="salvarSenha">Salvar senha e entrar</button>
+  <p id="msg" style="color:var(--suave)"></p></div>`;
+  $("salvarSenha").onclick = async () => {
+    const s1 = $("s1").value, s2 = $("s2").value;
+    if (s1.length < 8) { $("msg").textContent = "A senha precisa ter pelo menos 8 caracteres."; return; }
+    if (s1 !== s2) { $("msg").textContent = "As duas senhas não são iguais."; return; }
+    const { error } = await db.auth.updateUser({ password: s1 });
+    if (error) { $("msg").textContent = "Não foi possível salvar: " + error.message; return; }
+    location.replace(location.pathname);
+  };
 }
 
 
