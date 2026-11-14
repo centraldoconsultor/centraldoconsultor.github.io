@@ -91,7 +91,8 @@
   .of-off { opacity:.5; }
   .of-form { background:var(--card); margin:12px 16px; border:1px solid var(--linha); border-radius:12px; padding:14px; display:grid; gap:8px; }
   .of-form input { width:100%; padding:9px; border:1px solid var(--linha); border-radius:8px; font:inherit; background:var(--fundo); color:var(--texto); }
-  .of-form label { display:grid; gap:4px; font-size:14px; color:var(--suave); }
+  #admLista .of-item select, #admLista .of-item button { flex:none; }
+.of-form label { display:grid; gap:4px; font-size:14px; color:var(--suave); }
 .of-form .datas { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .of-form button.ok { background:var(--verde); color:#fff; border-color:var(--verde); font-weight:600; }
 .arq { display:inline-block; margin:2px 0; color:var(--azul); font-weight:600; text-decoration:none; }
@@ -119,7 +120,8 @@ header button{background:rgba(255,255,255,.12)}
 <div id="lista">
   <header>
     <h1>Caixa de Entrada</h1>
-    <button id="bPerfil" type="button">Perfil</button>
+    <button id="bAdm" type="button" hidden>Consultores</button>
+<button id="bPerfil" type="button">Perfil</button>
 <button id="bOfertas" type="button">Ofertas</button>
     <label class="auto" title="IA responde sozinha até o fecho da cotação"><input type="checkbox" id="auto"> IA automática</label>
   </header>
@@ -168,7 +170,33 @@ header button{background:rgba(255,255,255,.12)}
 <button class="ok" type="submit">Salvar perfil</button>
 <span id="pfMsg" class="aviso" style="padding:0;text-align:left"></span>
 </form>
+<form class="of-form" id="pfRegras" style="display:none">
+<b>Regras de operadora da IA</b>
+<span class="aviso" style="padding:0;text-align:left">Uma regra por linha. Deixe vazio para usar o padrão (MedSenior para 49+, Bluzz Saúde e São Bernardo Samp nos demais casos, família mista passa para você).</span>
+<textarea id="pfRegrasTxt" rows="5" style="width:100%;padding:9px;border:1px solid var(--linha);border-radius:8px;font:inherit;background:var(--fundo);color:var(--texto)" placeholder="Ex.: Pessoa com 59 anos ou mais: MedSenior&#10;Rotina: Unimed Vitória e Bluzz Saúde&#10;Empresa (CNPJ): passar para mim"></textarea>
+<button class="ok" type="submit">Salvar regras</button>
+<span id="pfRegrasMsg" class="aviso" style="padding:0;text-align:left"></span>
+</form>
 <div class="of-form" id="pfNumero"></div>
+</main>
+</div>
+
+<div id="admin" style="display:none">
+<header>
+<button id="admVoltar" aria-label="Voltar">‹</button>
+<h1>Consultores</h1>
+</header>
+<main>
+<p class="aviso" style="padding:14px 16px;text-align:left">Só você vê esta tela. Cada consultor vê apenas as próprias conversas. Plano Essencial = sem IA; Com IA = IA sugerindo e respondendo.</p>
+<div id="admLista"><div class="aviso">Carregando…</div></div>
+<form class="of-form" id="admForm">
+<b>Convidar consultor</b>
+<label>Nome<input id="admNome" required></label>
+<label>E-mail<input id="admEmail" type="email" required></label>
+<label>Plano<select id="admPlano" style="padding:9px;border:1px solid var(--linha);border-radius:8px;font:inherit;background:var(--fundo);color:var(--texto)"><option value="essencial">Essencial (sem IA)</option><option value="ia">Com IA</option></select></label>
+<button class="ok" type="submit">Enviar convite por e-mail</button>
+<span id="admMsg" class="aviso" style="padding:0;text-align:left"></span>
+</form>
 </main>
 </div>
 
@@ -289,7 +317,57 @@ async function salvarOferta(e) {
   $("ofOp").value = ""; $("ofDesc").value = ""; carregarOfertas();
 }
 
+async function adm(corpo) {
+const { data, error } = await db.functions.invoke("admin-consultores", { body: corpo });
+if (error || data?.ok === false) throw new Error(data?.erro || error?.message || "erro");
+return data;
+}
+function quando(d) { return d ? new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) + " " + new Date(d).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—"; }
+async function abrirAdmin() {
+$("lista").style.display = "none"; $("admin").style.display = ""; $("admMsg").textContent = "";
+await carregarAdmin();
+}
+async function carregarAdmin() {
+try {
+const { consultores } = await adm({ acao: "listar" });
+$("admLista").innerHTML = consultores.map((c) => {
+const situ = c.papel === "dono" ? "Administrador" : (c.ultimo_acesso ? "Último acesso " + quando(c.ultimo_acesso) : "Convite enviado " + quando(c.convidado_em) + " · ainda não entrou");
+const zap = c.phone_number_id ? "WhatsApp conectado" : "WhatsApp não conectado";
+const plano = c.papel === "dono" ? '<b>' + (c.plano === "ia" ? "Com IA" : "Essencial") + '</b>'
+: '<select data-plano="' + c.id + '" style="padding:6px;border:1px solid var(--linha);border-radius:8px;font:inherit;background:var(--fundo);color:var(--texto)"><option value="essencial"' + (c.plano !== "ia" ? " selected" : "") + '>Essencial</option><option value="ia"' + (c.plano === "ia" ? " selected" : "") + '>Com IA</option></select>';
+const reenviar = c.papel === "dono" ? "" : '<button data-reenviar="' + c.id + '">' + (c.ultimo_acesso ? "Enviar link de senha" : "Reenviar convite") + '</button>';
+return '<div class="of-item"><div class="meio"><b>' + esc(c.nome || c.email) + '</b> · ' + esc(c.email) + '<small>' + esc(situ) + ' · ' + zap + '</small></div>' + plano + reenviar + '</div>';
+}).join("");
+[...$("admLista").querySelectorAll("select[data-plano]")].forEach((s) => s.onchange = async () => {
+try { await adm({ acao: "plano", id: s.dataset.plano, plano: s.value }); $("admMsg").textContent = "Plano atualizado."; } catch (e) { alert("Não foi possível: " + e.message); carregarAdmin(); }
+});
+[...$("admLista").querySelectorAll("button[data-reenviar]")].forEach((b) => b.onclick = async () => {
+if (!confirm("Enviar de novo o e-mail de acesso para este consultor?")) return;
+b.disabled = true;
+try { const r = await adm({ acao: "reenviar", id: b.dataset.reenviar }); $("admMsg").textContent = r.tipo === "convite" ? "Convite reenviado." : "Link para criar senha enviado."; } catch (e) { alert("Não foi possível: " + e.message); }
+b.disabled = false;
+});
+} catch (e) { $("admLista").innerHTML = '<div class="aviso">Não foi possível carregar: ' + esc(e.message) + '</div>'; }
+}
+async function convidarConsultor(e) {
+e.preventDefault();
+const nome = $("admNome").value.trim(), email = $("admEmail").value.trim(), plano = $("admPlano").value;
+if (!nome || !email) return;
+if (!confirm("Enviar convite para " + email + " (plano " + (plano === "ia" ? "Com IA" : "Essencial") + ")?")) return;
+$("admMsg").textContent = "Enviando…";
+try { await adm({ acao: "convidar", nome, email, plano }); $("admMsg").textContent = "Convite enviado para " + email + "."; $("admNome").value = ""; $("admEmail").value = ""; await carregarAdmin(); }
+catch (err) { $("admMsg").textContent = "Não foi possível: " + err.message; }
+}
+async function salvarRegras(e) {
+e.preventDefault();
+const regras = $("pfRegrasTxt").value.trim();
+const { error } = await db.from("consultores").update({ regras_operadoras: regras }).eq("id", EU.id);
+if (error) { $("pfRegrasMsg").textContent = "Não foi possível salvar: " + error.message; return; }
+EU.regras_operadoras = regras; $("pfRegrasMsg").textContent = regras ? "Regras salvas. A IA já usa nas próximas respostas." : "Sem regras próprias: a IA usa o padrão.";
+}
+
 function abrirPerfil() {
+$("pfRegras").style.display = EU.plano !== "ia" ? "none" : ""; $("pfRegrasTxt").value = EU.regras_operadoras || ""; $("pfRegrasMsg").textContent = "";
 $("lista").style.display = "none"; $("perfil").style.display = "";
 $("pfNome").value = EU.nome || ""; $("pfCorretora").value = EU.corretora || ""; $("pfCidade").value = EU.cidade || ""; $("pfMsg").textContent = "";
 $("pfNumero").innerHTML = '<b>Plano: ' + (EU.plano === "ia" ? "Com IA" : "Essencial (sem IA)") + '</b>' + (EU.phone_number_id
@@ -326,6 +404,10 @@ if (eAuto) { alert("Não foi possível mudar: " + eAuto.message); e.target.check
   $("bEncerrar").onclick = () => { if (confirm("Encerrar esta conversa? Ela sai da lista principal e a IA nao responde mais esse contato.")) etiquetar("ENCERRADO"); };
   $("bOfertas").onclick = abrirOfertas;
 $("bPerfil").onclick = abrirPerfil;
+$("pfRegras").onsubmit = salvarRegras;
+if (EU.papel === "dono") { $("bAdm").hidden = false; $("bAdm").onclick = abrirAdmin; }
+$("admVoltar").onclick = () => { $("admin").style.display = "none"; $("lista").style.display = ""; };
+$("admForm").onsubmit = convidarConsultor;
 $("pfVoltar").onclick = () => { $("perfil").style.display = "none"; $("lista").style.display = ""; };
 $("pfForm").onsubmit = salvarPerfil;
   $("ofVoltar").onclick = () => { $("ofertas").classList.remove("on"); $("lista").style.display = ""; };
