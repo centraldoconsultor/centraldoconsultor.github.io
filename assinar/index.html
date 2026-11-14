@@ -77,7 +77,7 @@ button:disabled{opacity:.6;cursor:default}
       <label class="campo">Crie uma senha<input id="senha" type="password" autocomplete="new-password" minlength="8" required><small>Pelo menos 8 caracteres</small></label>
       <label class="campo">Repita a senha<input id="senha2" type="password" autocomplete="new-password" required></label>
     </div>
-    <label class="aceite"><input type="checkbox" id="aceite"><span>Li e aceito a <a href="../privacidade/" target="_blank" rel="noopener">Política de Privacidade</a> e os termos de uso da Central do Consultor.</span></label>
+    <label class="aceite"><input type="checkbox" id="aceite"><span>Li e aceito os <a href="../termos/" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="../privacidade/" target="_blank" rel="noopener">Política de Privacidade</a> da Central do Consultor.</span></label>
     <div class="msg" id="msg" role="status" aria-live="polite"></div>
     <button type="submit" id="btn">Criar conta e começar o teste</button>
   </form>
@@ -100,7 +100,7 @@ button:disabled{opacity:.6;cursor:default}
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) return erro("Confira o e-mail.");
     if(d.senha.length<8) return erro("A senha precisa ter pelo menos 8 caracteres.");
     if(d.senha!==$("senha2").value) return erro("As duas senhas não estão iguais.");
-    if(!d.aceite) return erro("Marque que aceita a política e os termos.");
+    if(!d.aceite) return erro("Marque que aceita os Termos de Uso e a Política de Privacidade.");
     var b=$("btn"); b.disabled=true; b.textContent="Criando sua conta…";
     fetch(FN,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(d)})
       .then(function(r){ return r.json().catch(function(){return {ok:false};}); })
