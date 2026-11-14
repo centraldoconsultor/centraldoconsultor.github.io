@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="../central/central-db.js?v=3"></script>
+<script src="../central/central-db.js?v=4"></script>
 <script>window.__CENTRAL_ADMIN=true;</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -308,7 +308,7 @@ function pillStatus(s){var m={"Feito":"ok","Em andamento":"info","Bloqueado":"ba
 function alertas(){
   var a=[];
   D.reajustes.forEach(function(r){var s=statusReajuste(r);if(s.cls==="bad"||s.cls==="warn")a.push({cls:s.cls,txt:"<b>"+esc(r.operadora)+"</b>: reajuste em "+fData(r.data)+". "+esc(s.txt)+".",go:"reajustes"});});
-  D.assinaturas.forEach(function(x){if(x.status==="Atrasado")a.push({cls:"bad",txt:"<b>"+esc(nomeConsultor(x.consultor))+"</b> está com a assinatura atrasada.",go:"assinaturas"});});
+  (ASS||[]).forEach(function(x){if(x.status==="atrasado"||x.status==="bloqueado")a.push({cls:"bad",txt:"<b>"+esc(x.nome||x.email)+"</b> está com a mensalidade "+(x.status==="bloqueado"?"atrasada e o acesso pausado":"atrasada")+".",go:"assinaturas"});});
   D.projeto.forEach(function(t){var d=dias(t.prazo);if(t.status!=="Feito"&&d!=null&&d<0)a.push({cls:"warn",txt:"Tarefa atrasada: <b>"+esc(t.titulo)+"</b> (prazo "+fData(t.prazo)+").",go:"projeto"});
     if(t.status==="Bloqueado")a.push({cls:"bad",txt:"Tarefa bloqueada: <b>"+esc(t.titulo)+"</b>.",go:"projeto"});});
   return a;
@@ -373,7 +373,8 @@ V["projeto"]=function(){
 };
 V["visao-geral"]=function(){
   var cs=D.consultores,at=cs.filter(function(c){return c.status==="Ativo";}).length,te=cs.filter(function(c){return c.status==="Piloto"||c.status==="Teste grátis";}).length,ca=cs.filter(function(c){return c.status==="Cancelado";}).length;
-  var rec=D.assinaturas.filter(function(a){return a.status==="Em dia"||a.status==="Atrasado";}).reduce(function(s,a){return s+(Number(a.valor)||0);},0);
+  if(ASS===null) carregarAss();
+  var rec=(ASS||[]).filter(function(a){return a.status==="ativo"||a.status==="atrasado";}).reduce(function(s,a){return s+(Number(a.valor)||0);},0);
   var m=mesAtual(),msgs=D.mensagens.filter(function(x){return x.mes===m;});
   var custo=msgs.reduce(function(s,x){return s+(Number(x.custoApi)||0);},0);
   var novos=cs.filter(function(c){return (c.inicio||"").slice(0,7)===m;}).length;
@@ -469,23 +470,58 @@ V["piloto"]=function(){
      {l:"Melhorar",f:function(r){return esc(r.melhorar||"—");}},
      {l:"Pagaria?",f:function(r){return r.pagaria?pillStatus(r.pagaria):"—";}}],rows,"Nenhum feedback registrado ainda. O primeiro formulário é na sexta-feira da primeira semana do piloto.");
 };
+/* ---------- assinaturas reais (teste, pagamento, bloqueio) ---------- */
+var ASS=null, assErro="";
+function rpcA(n,a){ return window.CentralAuth.rpc(n,a).then(function(r){ if(r.error) throw new Error(r.error.message); return r.data; }); }
+function carregarAss(){ assErro=""; return rpcA("admin_assinaturas").then(function(d){ ASS=d||[]; render(); },function(e){ assErro=e.message; ASS=ASS||[]; render(); }); }
+var STA={teste:["Em teste","warn"],ativo:["Ativo","ok"],atrasado:["Atrasado","bad"],bloqueado:["Bloqueado","bad"],cancelado:["Cancelado",""],cortesia:["Cortesia","info"]};
+function stPill(s){var x=STA[s]||[s,""];return '<span class="pill '+x[1]+'">'+esc(x[0])+'</span>';}
+function diasP(d){ if(!d) return null; var h=new Date(new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo"}).format(new Date())+"T00:00:00"); return Math.round((new Date(d+"T00:00:00")-h)/86400000); }
+function quandoV(d){ var n=diasP(d); if(n===null) return ""; return n===0?"hoje":(n>0?"em "+n+(n===1?" dia":" dias"):"há "+(-n)+(n===-1?" dia":" dias")); }
 V["assinaturas"]=function(){
-  var rows=D.assinaturas.slice().sort(function(a,b){return String(a.vencimento||"9").localeCompare(String(b.vencimento||"9"));});
-  var rec=rows.filter(function(a){return a.status==="Em dia"||a.status==="Atrasado";}).reduce(function(s,a){return s+(Number(a.valor)||0);},0);
-  var atr=rows.filter(function(a){return a.status==="Atrasado";});
-  return cab("Assinaturas","Plano, valor e pagamento de cada cliente. Quando o Asaas estiver ligado, estes dados chegam sozinhos pelo aviso de pagamento.","assinaturas","Nova assinatura")+
-   '<div class="kpis">'+kpi("Receita mensal",brl(rec),"em dia + atrasadas",1)+kpi("Atrasadas",atr.length,brl(atr.reduce(function(s,a){return s+(Number(a.valor)||0);},0))+" em aberto")+kpi("Em teste",rows.filter(function(a){return a.status==="Em teste";}).length,"ainda não pagam")+'</div>'+
-   tabela("assinaturas",[
-     {l:"Cliente",f:function(r){return '<b>'+esc(nomeConsultor(r.consultor))+'</b>';}},
-     {l:"Plano",f:function(r){return esc(r.plano);}},
-     {l:"Valor",n:1,f:function(r){return brl(r.valor);}},
-     {l:"Vencimento",f:function(r){return fData(r.vencimento);}},
-     {l:"Último pagamento",f:function(r){return fData(r.ultimoPagamento);}},
-     {l:"Status",f:function(r){return pillStatus(r.status);}}],rows,"Nenhuma assinatura ainda. As primeiras entram em janeiro de 2027.")+
+  if(ASS===null) carregarAss();
+  var l=ASS||[], f=V.filtroAss||"todos";
+  var cont=function(s){return l.filter(function(a){return a.status===s;});};
+  var soma=function(xs){return xs.reduce(function(s,a){return s+(Number(a.valor)||0);},0);};
+  var rows=f==="todos"?l:cont(f);
+  var ops=[["todos","Todos"],["teste","Em teste"],["ativo","Ativos"],["atrasado","Atrasados"],["bloqueado","Bloqueados"],["cancelado","Cancelados"],["cortesia","Cortesia"]];
+  return cab("Assinaturas","Quem está em teste, quem paga e quem está atrasado. Todo dia às 00:10 o sistema marca como atrasado quem passou do vencimento e bloqueia quem passou 3 dias. Quando o Asaas estiver ligado, o pagamento libera sozinho.")+
+   (assErro?'<div class="notice">Não foi possível carregar: '+esc(assErro)+'</div>':"")+
+   '<div class="kpis">'+kpi("Receita mensal",brl(soma(cont("ativo"))),cont("ativo").length+" ativo(s)",1)+kpi("Em teste",cont("teste").length,brl(soma(cont("teste")))+" se todos assinarem")+
+     kpi("Atrasados",cont("atrasado").length,brl(soma(cont("atrasado")))+" em aberto")+kpi("Bloqueados",cont("bloqueado").length,"acesso pausado")+kpi("Cancelados",cont("cancelado").length,"no total")+'</div>'+
+   '<div class="filters"><label for="fAss">Mostrar</label><select id="fAss">'+ops.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===f?" selected":"")+'>'+o[1]+(o[0]==="todos"?" ("+l.length+")":" ("+cont(o[0]).length+")")+'</option>';}).join("")+'</select> <button class="ghost" id="bAssAtualizar">Atualizar</button></div>'+
+   (ASS===null?'<div class="tbl"><div class="empty">Carregando…</div></div>':!rows.length?'<div class="tbl"><div class="empty">Nenhuma assinatura neste filtro.</div></div>':
+   '<div class="tbl"><table><thead><tr><th>Consultor</th><th>Plano</th><th>Status</th><th>Vencimento</th><th>Último pagamento</th><th></th></tr></thead><tbody>'+
+   rows.map(function(a){
+     var id=esc(a.consultor_id), venc=a.status==="teste"?(a.teste_ate||a.proximo_vencimento):a.proximo_vencimento;
+     var acoes=a.status==="cortesia"?"":
+       '<button class="ghost" data-ass="liberar|'+id+'" title="Marca como pago e soma 30 dias">Pagou (+30 dias)</button> '+
+       '<button class="ghost" data-ass="dias|'+id+'" title="Dá mais dias sem cobrar">+ dias</button> '+
+       (a.status==="cancelado"?'<button class="ghost" data-ass="reativar|'+id+'">Reativar</button>':'<button class="ghost" data-ass="cancelar|'+id+'">Cancelar</button>');
+     return '<tr><td><b>'+esc(a.nome||a.email)+'</b><br><small style="color:var(--muted)">'+esc(a.email||"")+(a.telefone?" · "+esc(a.telefone):"")+'</small></td>'+
+       '<td>'+(a.plano==="ia"?"Com IA":"Essencial")+'<br><small style="color:var(--muted)">'+brl(a.valor)+'/mês</small></td>'+
+       '<td>'+stPill(a.status)+'</td>'+
+       '<td>'+(a.status==="cortesia"?"—":fData(venc)+'<br><small style="color:var(--muted)">'+(a.status==="teste"?"fim do teste ":"")+quandoV(venc)+'</small>')+'</td>'+
+       '<td>'+fData(a.ultimo_pagamento)+(a.forma?'<br><small style="color:var(--muted)">'+esc(a.forma)+'</small>':"")+'</td>'+
+       '<td class="act">'+acoes+'</td></tr>';
+   }).join("")+'</tbody></table></div>')+
    '<div class="card"><h2>Planos e preços</h2><p class="lead">Valores usados nos cálculos do painel. Ainda são sugestões (R$ 99 e R$ 199) para validar no piloto: ajuste e salve quando decidir.</p><div class="cfg">'+
      [["essencial","Essencial, sem IA (R$/mês)"],["comIA","Com IA (R$/mês)"],["inclIA","Mensagens automáticas incluídas no Com IA"],["excedente","Mensagem excedente (R$)"]].map(function(p){return '<label for="cfg_'+p[0]+'">'+p[1]+'<input id="cfg_'+p[0]+'" type="number" step="0.01" value="'+esc(CFG[p[0]])+'"></label>';}).join("")+
    '</div><div><button class="pri" id="bCfg">Salvar preços</button></div></div>';
 };
+document.getElementById("view").addEventListener("change",function(e){ if(e.target.id==="fAss"){ V.filtroAss=e.target.value; render(); } });
+document.getElementById("view").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  if(b.id==="bAssAtualizar"){ ASS=null; render(); return; }
+  if(!b.dataset.ass) return;
+  var p=b.dataset.ass.split("|"), op=p[0], id=p[1], a=(ASS||[]).find(function(x){return x.consultor_id===id;})||{}, quem=a.nome||a.email||"este consultor", dias=0;
+  if(op==="dias"){ var v=prompt("Quantos dias a mais para "+quem+"? (sem cobrar)","7"); if(v===null) return; dias=parseInt(v,10); if(!(dias>=1&&dias<=365)){ toast("Informe de 1 a 365 dias."); return; } }
+  else if(op==="liberar"){ if(!confirm("Marcar "+quem+" como pago? O acesso fica liberado por mais 30 dias.")) return; }
+  else if(op==="cancelar"){ if(!confirm("Cancelar a assinatura de "+quem+"? O acesso é pausado quando acabar o período já pago. Os dados ficam guardados.")) return; }
+  else if(op==="reativar"){ if(!confirm("Reativar a assinatura de "+quem+"?")) return; }
+  b.disabled=true;
+  rpcA("admin_assinatura_acao",{p_id:id,p_op:op,p_dias:dias}).then(function(){ toast(op==="liberar"?"Pagamento registrado.":op==="dias"?"Dias adicionados.":op==="cancelar"?"Assinatura cancelada.":"Assinatura reativada."); carregarAss(); },function(err){ toast("Não foi possível: "+err.message); b.disabled=false; });
+});
 
 /* ---------- contas reais (login, plano, convite) ---------- */
 var CONTAS=null, contasErro="", contasMsg="";
