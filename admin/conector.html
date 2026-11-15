@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Conector do Claude · Painel ADM</title>
+<script src="../central/central-db.js?v=5"></script>
+<style>
+:root{--navy:#0e2a52;--gold:#d9bf85;--bg:#f7f4ec;--card:#fff;--fg:#14213a;--muted:#5d6678;--line:#e4dfd2;--ok:#1e6b4f;--bad:#a33}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1622;--card:#182233;--fg:#e8ecf2;--muted:#9aa6b8;--line:#2a3548}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{background:var(--navy);color:#f4efe3;padding:14px 16px}header b{font-size:1.05rem}header a{color:var(--gold);font-size:.85rem;margin-left:10px}
+main{max-width:860px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row .nm{flex:1;min-width:180px}
+.nm b{display:block}.nm small{color:var(--muted)}
+.st{font-size:.8rem;padding:3px 8px;border-radius:20px;background:#eee;color:#555}.st.on{background:#dff3ea;color:var(--ok)}
+button{border:0;border-radius:9px;padding:8px 12px;font-weight:700;cursor:pointer;background:var(--navy);color:#fff}
+button.sec{background:#e9e4d8;color:#0e1f3d}
+.out{margin-top:12px;border-top:1px dashed var(--line);padding-top:12px}
+.out code{display:block;word-break:break-all;background:#f0ece2;color:#14213a;padding:8px;border-radius:8px;font-size:.82rem}
+.out textarea{width:100%;height:190px;border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;font-size:.85rem;background:var(--card);color:var(--fg)}
+.aviso{font-size:.85rem;color:var(--muted)}
+.erro{color:var(--bad)}
+</style>
+</head>
+<body>
+<header><b>Conector do Claude</b><a href="/admin/">← Painel ADM</a></header>
+<main>
+<p class="aviso">Cada consultor recebe um link pessoal para ligar o Claude dele à Central. O link funciona como senha: só mostra os dados daquele consultor e aparece <b>uma única vez</b> aqui. Gerar de novo desliga o link anterior.</p>
+<div id="lista"><div class="card">Carregando…</div></div>
+</main>
+<script>
+(function(){
+  var FN="https://tqhrjivlfpexmhkwakwl.supabase.co/functions/v1/mcp-central/";
+  var L=document.getElementById("lista");
+  function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function dt(s){ if(!s) return "nunca"; var d=new Date(s); return d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }
+  function passo(nome,link){
+    return "Oi "+nome.split(" ")[0]+"! Segue o seu acesso ao Conector da Central do Consultor no Claude:\n\n"+
+      "1. Abra o Claude (claude.ai ou o app) com a sua conta Pro.\n"+
+      "2. Vá em Configurações → Conectores → \"Adicionar conector personalizado\".\n"+
+      "3. Nome: Central do Consultor\n   URL: "+link+"\n"+
+      "4. Salve. Numa conversa nova, confira se o conector está ligado (botão de ferramentas / \"+\").\n\n"+
+      "Depois é só pedir, por exemplo:\n"+
+      "\"Cadastra a proposta da Maria Souza, Bluzz Executivo enfermaria pela Egrégora, 2 vidas — documentos em anexo.\"\n"+
+      "\"Quais propostas estão em pendência?\"\n\n"+
+      "Esse link é pessoal (funciona como senha). Não compartilhe com ninguém.";
+  }
+  async function carregar(){
+    var s=await window.CentralAuth.sessao();
+    if(!s){ L.innerHTML='<div class="card">Entre no <a href="/admin/">Painel ADM</a> primeiro e volte para esta página.</div>'; return; }
+    var r=await window.CentralAuth.rpc("admin_mcp_lista",{});
+    if(r.error){ L.innerHTML='<div class="card erro">'+esc(r.error.message)+'</div>'; return; }
+    L.innerHTML=(r.data||[]).map(function(c){
+      return '<div class="card" data-id="'+esc(c.consultor_id)+'" data-nome="'+esc(c.nome||c.email)+'"><div class="row">'+
+        '<div class="nm"><b>'+esc(c.nome||"(sem nome)")+'</b><small>'+esc(c.email)+' · plano '+esc(c.plano||"")+'</small></div>'+
+        '<span class="st'+(c.ativo?' on':'')+'">'+(c.ativo?'Ligado · último uso: '+dt(c.ultimo_uso):'Sem link')+'</span>'+
+        '<button data-op="gerar">'+(c.ativo?'Gerar novo link':'Gerar link')+'</button>'+
+        (c.ativo?'<button class="sec" data-op="desligar">Desligar</button>':'')+
+        '</div><div class="out" hidden></div></div>';
+    }).join("")||'<div class="card">Nenhum consultor.</div>';
+  }
+  L.addEventListener("click",async function(e){
+    var b=e.target.closest("button"); if(!b) return; var card=b.closest(".card"); var op=b.getAttribute("data-op");
+    if(!op) return;
+    if(op==="desligar" && !confirmar(card,"desligar")) return;
+    b.disabled=true;
+    var r=await window.CentralAuth.rpc("admin_mcp_acao",{p_consultor:card.getAttribute("data-id"),p_op:op});
+    b.disabled=false;
+    var out=card.querySelector(".out"); out.hidden=false;
+    if(r.error){ out.innerHTML='<span class="erro">'+esc(r.error.message)+'</span>'; return; }
+    if(op==="desligar"){ out.textContent="Link desligado."; setTimeout(carregar,800); return; }
+    var link=FN+r.data;
+    out.innerHTML='<b>Link pessoal (copie agora, não aparece de novo):</b><code>'+esc(link)+'</code>'+
+      '<p class="aviso">Mensagem pronta para enviar ao consultor:</p><textarea readonly>'+esc(passo(card.getAttribute("data-nome"),link))+'</textarea>'+
+      '<div class="row" style="margin-top:8px"><button data-copy="link">Copiar link</button><button class="sec" data-copy="msg">Copiar mensagem</button></div>';
+    var st=card.querySelector(".st"); st.className="st on"; st.textContent="Ligado · recém-gerado";
+  });
+  L.addEventListener("click",function(e){
+    var b=e.target.closest("button[data-copy]"); if(!b) return; var card=b.closest(".card");
+    var t=b.getAttribute("data-copy")==="link"?card.querySelector(".out code").textContent:card.querySelector(".out textarea").value;
+    navigator.clipboard.writeText(t).then(function(){ b.textContent="Copiado!"; setTimeout(function(){ b.textContent=b.getAttribute("data-copy")==="link"?"Copiar link":"Copiar mensagem"; },1500); });
+  });
+  function confirmar(card,acao){ if(card.getAttribute("data-conf")===acao){ card.removeAttribute("data-conf"); return true; } card.setAttribute("data-conf",acao); var out=card.querySelector(".out"); out.hidden=false; out.textContent="Clique em Desligar de novo para confirmar."; return false; }
+  carregar();
+})();
+</script>
+</body>
+</html>
