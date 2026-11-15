@@ -8,7 +8,7 @@
  "theme_color": "#0e2a52",
  "icons": [
   {
-   "src": "/img/icon-caixa.png",
+   "src": "/img/icon-caixa-v2.png",
    "sizes": "512x512",
    "type": "image/png",
    "purpose": "any"
