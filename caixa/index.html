@@ -228,6 +228,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // v2.3: link do e-mail (convite ou esqueci a senha) leva para a tela de definir senha
 const tipoLink = new URLSearchParams(location.hash.slice(1)).get("type");
 const db = createClient("https://tqhrjivlfpexmhkwakwl.supabase.co", "sb_publishable_vI455mCunOwgHkEaPra01w_05Ynugib");
+window.__ccDb = db; // v4.2 avisos no celular
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
@@ -587,5 +588,6 @@ async function enviarManual(e) {
   await carregar();
 }
 </script>
+<script src="avisos.js?v=1" defer></script>
 </body>
 </html>
