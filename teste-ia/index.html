@@ -27,7 +27,7 @@ form button{border:0;border-radius:50%;width:44px;height:44px;background:#00a884
 </head>
 <body>
 <header><b>Teste da IA</b><small>Você escreve como se fosse o cliente. Nada é enviado no WhatsApp.</small>
-<input id="nome" placeholder="Nome do cliente (perfil)"><button id="limpar" type="button">Nova conversa</button></header>
+<label style="font-size:.85rem;display:flex;gap:4px;align-items:center;margin-left:auto"><input type="checkbox" id="real" checked style="width:auto">Tempo real</label><input id="nome" placeholder="Nome do cliente (perfil)" style="margin-left:0"><button id="limpar" type="button">Nova conversa</button></header>
 <div id="chat"><div class="aviso">Escreva a primeira mensagem do cliente, por exemplo: "Oi, quero cotação de plano de saúde".</div></div>
 <div id="st"></div>
 <form id="f"><textarea id="txt" placeholder="Mensagem do cliente…"></textarea><button aria-label="Enviar">➤</button></form>
@@ -38,20 +38,45 @@ form button{border:0;border-radius:50%;width:44px;height:44px;background:#00a884
   function aviso(t){ var d=document.createElement("div"); d.className="aviso"; d.textContent=t; chat.appendChild(d); chat.scrollTop=chat.scrollHeight; }
   document.getElementById("limpar").onclick=function(){ conversa=[]; chat.innerHTML=""; aviso("Nova conversa."); };
   document.getElementById("txt").addEventListener("keydown",function(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); document.getElementById("f").requestSubmit(); } });
-  document.getElementById("f").addEventListener("submit",async function(e){
-    e.preventDefault(); var t=document.getElementById("txt").value.trim(); if(!t) return;
-    document.getElementById("txt").value=""; add("lead",t); conversa.push({de:"lead",texto:t});
-    st.textContent="A IA está escrevendo…";
+  var timer=null, tick=null, primeiraPendente=0, ultimaMsg=0, ocupado=false;
+  function esperar(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+  function jaRespondeu(){ return conversa.some(function(m){ return m.de==="ia"; }); }
+  function agendar(){
+    var real=document.getElementById("real").checked;
+    clearTimeout(timer); clearInterval(tick);
+    if(!real){ timer=setTimeout(responder,300); return; }
+    // igual ao WhatsApp: junta mensagens por 35s; 1a resposta ~2 min, depois 1 a 1,5 min
+    var alvo=jaRespondeu()? (60000+Math.random()*30000) : 115000;
+    var quando=Math.max(primeiraPendente+alvo, ultimaMsg+35000);
+    tick=setInterval(function(){ var f=Math.max(0,Math.round((quando-Date.now())/1000)); st.textContent="IA responde em "+Math.floor(f/60)+":"+String(f%60).padStart(2,"0")+" (como no WhatsApp)"; },500);
+    timer=setTimeout(responder, quando-Date.now());
+  }
+  async function responder(){
+    clearInterval(tick); if(ocupado){ timer=setTimeout(responder,1000); return; }
+    ocupado=true; primeiraPendente=0; st.textContent="digitando…";
+    var real=document.getElementById("real").checked;
     try{
-      var r=await window.CentralAuth.funcao("whatsapp-webhook?simular=1",{conversa:conversa,nome:document.getElementById("nome").value.trim()||null});
-      st.textContent="";
-      if(r.error){ aviso("Erro: "+(r.error.message||r.error)+" — entre na Central primeiro e tente de novo."); return; }
+      var r=await window.CentralAuth.funcao("whatsapp-webhook?simular=1",{conversa:conversa.slice(),nome:document.getElementById("nome").value.trim()||null});
+      if(r.error){ st.textContent=""; aviso("Erro: "+(r.error.message||r.error)+" — entre na Central primeiro e tente de novo."); return; }
       var s=r.data||{};
-      if(s.erro){ aviso("Erro: "+s.erro); return; }
-      (s.linhas||[]).forEach(function(l){ add("ia",l); conversa.push({de:"ia",texto:l}); });
+      if(s.erro){ st.textContent=""; aviso("Erro: "+s.erro); return; }
+      var ls=s.linhas||[];
+      for(var i=0;i<ls.length;i++){
+        if(i>0&&real){ st.textContent="digitando…"; await esperar(2500+Math.random()*2000); }
+        add("ia",ls[i]); conversa.push({de:"ia",texto:ls[i]});
+      }
+      st.textContent="";
       if(s.passar_para_diego) aviso("➜ Passou para você"+(s.motivo?": "+s.motivo:""));
       if(s.resumo) aviso("Resumo: "+[s.resumo.nome,s.resumo.vidas?s.resumo.vidas+" vida(s)":"",(s.resumo.idades||[]).join(", "),s.resumo.cidade,s.resumo.observacoes,s.resumo.status].filter(Boolean).join(" · "));
     }catch(err){ st.textContent=""; aviso("Sem conexão: "+err.message); }
+    finally{ ocupado=false; if(primeiraPendente) agendar(); }
+  }
+  document.getElementById("limpar").addEventListener("click",function(){ clearTimeout(timer); clearInterval(tick); primeiraPendente=0; st.textContent=""; });
+  document.getElementById("f").addEventListener("submit",function(e){
+    e.preventDefault(); var t=document.getElementById("txt").value.trim(); if(!t) return;
+    document.getElementById("txt").value=""; add("lead",t); conversa.push({de:"lead",texto:t});
+    var agora=Date.now(); if(!primeiraPendente) primeiraPendente=agora; ultimaMsg=agora;
+    if(!ocupado) agendar();
   });
   window.CentralAuth && window.CentralAuth.sessao && window.CentralAuth.sessao().then(function(s){ if(!s) aviso("Você não está logado neste endereço: abra a Central (centralconsultorsaude.com.br/central/), entre com seu e-mail e senha e volte para esta página."); });
 })();
