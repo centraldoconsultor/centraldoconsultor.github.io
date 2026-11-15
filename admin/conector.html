@@ -39,13 +39,15 @@ button.sec{background:#e9e4d8;color:#0e1f3d}
   function dt(s){ if(!s) return "nunca"; var d=new Date(s); return d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }
   function passo(nome,link){
     return "Oi "+nome.split(" ")[0]+"! Segue o seu acesso ao Conector da Central do Consultor no Claude:\n\n"+
-      "1. Abra o Claude (claude.ai ou o app) com a sua conta Pro.\n"+
+      "1. Abra claude.ai no NAVEGADOR (Safari no iPhone ou no computador) e entre com a sua conta Pro. O app do Claude no celular não deixa adicionar conector; depois de adicionado, funciona no app também.\n"+
       "2. Vá em Configurações → Conectores → \"Adicionar conector personalizado\".\n"+
       "3. Nome: Central do Consultor\n   URL: "+link+"\n"+
-      "4. Salve. Numa conversa nova, confira se o conector está ligado (botão de ferramentas / \"+\").\n\n"+
-      "Depois é só pedir, por exemplo:\n"+
+      "4. Salve. Nas permissões do conector, deixe \"Permitir sempre\" nas ferramentas de leitura (Ler dados, Ler documento, Listar propostas, Ver proposta, Administradoras) e \"Perguntar\" em Cadastrar proposta e Atualizar proposta.\n"+
+      "5. Abra uma conversa NOVA e confira se o conector está ligado (botão \"+\" / ferramentas).\n\n"+
+      "Depois é só pedir e mandar o material (prints do WhatsApp, fotos ou PDFs dos documentos), por exemplo:\n"+
       "\"Cadastra a proposta da Maria Souza, Bluzz Executivo enfermaria pela Egrégora, 2 vidas — documentos em anexo.\"\n"+
-      "\"Quais propostas estão em pendência?\"\n\n"+
+      "\"Quais propostas estão em pendência?\"\n"+
+      "O Claude monta o resumo e só cadastra depois que você confirmar.\n\n"+
       "Esse link é pessoal (funciona como senha). Não compartilhe com ninguém.";
   }
   async function carregar(){
