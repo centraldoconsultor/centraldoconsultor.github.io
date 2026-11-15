@@ -1,0 +1,17 @@
+{
+ "name": "Cotador · Central do Consultor",
+ "short_name": "Cotador",
+ "start_url": "/central/cotador.html",
+ "scope": "/central/cotador.html",
+ "display": "standalone",
+ "background_color": "#f7f4ec",
+ "theme_color": "#0e2a52",
+ "icons": [
+  {
+   "src": "/img/apple-touch-icon.png",
+   "sizes": "180x180",
+   "type": "image/png",
+   "purpose": "any"
+  }
+ ]
+}
