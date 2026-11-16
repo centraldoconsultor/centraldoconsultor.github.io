@@ -1390,7 +1390,7 @@ function onHist(){histReady=true;const c=document.querySelector(".tabs .cnt");if
 let SHARED_DB=null;
 async function sharedDB(){if(SHARED_DB)return SHARED_DB;try{if(window.__R)SHARED_DB=await window.__R.use("db")}catch(e){}return SHARED_DB}
 const genCode=()=>{const a="abcdefghijkmnpqrstuvwxyz23456789";let c="";const r=crypto.getRandomValues(new Uint8Array(8));r.forEach(x=>c+=a[x%a.length]);return c};
-const shortOf=code=>(SHARE_BASE||location.href.split("#")[0])+"#p"+code;
+const shortOf=code=>"https://centralconsultorsaude.com.br/proposta/#p"+code; /* 16/11: /proposta/ tem prévia (imagem e título) no WhatsApp */
 function pubShort(code,hash){sharedDB().then(db=>{if(db){const o={h:hash,criada:new Date().toISOString()};if(FOTO_CORRETOR!==AVATAR_PADRAO)o.f=FOTO_CORRETOR;db.doc("propostas/"+code).set(o).catch(()=>{})}})}
 function ensureShort(rec){
   if(rec.code)return shortOf(rec.code);
