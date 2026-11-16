@@ -26,10 +26,11 @@ form button{border:0;border-radius:50%;width:44px;height:44px;background:#00a884
 </style>
 </head>
 <body>
-<header><b>Teste da IA</b><small>Você escreve como se fosse o cliente. Nada é enviado no WhatsApp.</small>
+<header><a href="../caixa/" style="color:#d9bf85;text-decoration:none;font-weight:700">‹ Caixa</a><b>Teste da IA</b><small>Você escreve como se fosse o cliente. Nada é enviado no WhatsApp.</small>
 <label style="font-size:.85rem;display:flex;gap:4px;align-items:center;margin-left:auto"><input type="checkbox" id="real" checked style="width:auto">Tempo real</label><input id="nome" placeholder="Nome do cliente (perfil)" style="margin-left:0"><button id="limpar" type="button">Nova conversa</button></header>
 <div id="chat"><div class="aviso">Escreva a primeira mensagem do cliente, por exemplo: "Oi, quero cotação de plano de saúde".</div></div>
 <div id="st"></div>
+<div id="uso" style="font-size:.75rem;color:var(--muted);text-align:center;min-height:1em"></div>
 <form id="f"><textarea id="txt" placeholder="Mensagem do cliente…"></textarea><button aria-label="Enviar">➤</button></form>
 <script>
 (function(){
@@ -57,7 +58,7 @@ form button{border:0;border-radius:50%;width:44px;height:44px;background:#00a884
     var real=document.getElementById("real").checked;
     try{
       var r=await window.CentralAuth.funcao("whatsapp-webhook?simular=1",{conversa:conversa.slice(),nome:document.getElementById("nome").value.trim()||null});
-      if(r.error){ st.textContent=""; aviso("Erro: "+(r.error.message||r.error)+" — entre na Central primeiro e tente de novo."); return; }
+      if(r.error){ st.textContent=""; var msg=""; try{ var j=await r.error.context.json(); msg=(j&&j.erro)||""; }catch(_){} aviso(msg||("Erro: "+(r.error.message||r.error)+" — entre na Central primeiro e tente de novo.")); return; }
       var s=r.data||{};
       if(s.erro){ st.textContent=""; aviso("Erro: "+s.erro); return; }
       var ls=s.linhas||[];
@@ -65,7 +66,7 @@ form button{border:0;border-radius:50%;width:44px;height:44px;background:#00a884
         if(i>0&&real){ st.textContent="digitando…"; await esperar(2500+Math.random()*2000); }
         add("ia",ls[i]); conversa.push({de:"ia",texto:ls[i]});
       }
-      st.textContent="";
+      st.textContent=""; mostrarUso();
       if(s.passar_para_diego) aviso("➜ Passou para você"+(s.motivo?": "+s.motivo:""));
       if(s.resumo) aviso("Resumo: "+[s.resumo.nome,s.resumo.vidas?s.resumo.vidas+" vida(s)":"",(s.resumo.idades||[]).join(", "),s.resumo.cidade,s.resumo.observacoes,s.resumo.status].filter(Boolean).join(" · "));
     }catch(err){ st.textContent=""; aviso("Sem conexão: "+err.message); }
@@ -78,6 +79,16 @@ form button{border:0;border-radius:50%;width:44px;height:44px;background:#00a884
     var agora=Date.now(); if(!primeiraPendente) primeiraPendente=agora; ultimaMsg=agora;
     if(!ocupado) agendar();
   });
+  // uso da IA no mes (cada consultor ve o seu)
+  async function mostrarUso(){
+    try{
+      var s=await window.CentralAuth.sessao(); if(!s) return;
+      var eu=s.user&&s.user.id; var r=await window.CentralAuth.rpc("uso_ia_resumo",{});
+      var n=0, usd=0; (r.data||[]).forEach(function(x){ if(x.consultor_id===eu){ n+=Number(x.chamadas)||0; usd+=Number(x.custo_usd)||0; } });
+      document.getElementById("uso").textContent= n? ("Seu uso da IA neste mês (teste + WhatsApp): "+n+" resposta"+(n>1?"s":"")+" · US$ "+usd.toFixed(2).replace(".",",")) : "";
+    }catch(_){}
+  }
+  mostrarUso();
   window.CentralAuth && window.CentralAuth.sessao && window.CentralAuth.sessao().then(function(s){ if(!s) aviso("Você não está logado neste endereço: abra a Central (centralconsultorsaude.com.br/central/), entre com seu e-mail e senha e volte para esta página."); });
 })();
 </script>
