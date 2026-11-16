@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Uso da IA · Painel ADM</title>
+<script src="../central/central-db.js?v=5"></script>
+<style>
+:root{--navy:#0e2a52;--gold:#d9bf85;--bg:#f7f4ec;--card:#fff;--fg:#14213a;--muted:#5d6678;--line:#e4dfd2;--ok:#1e6b4f;--bad:#a33}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1622;--card:#182233;--fg:#e8ecf2;--muted:#9aa6b8;--line:#2a3548}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{background:var(--navy);color:#f4efe3;padding:14px 16px}header b{font-size:1.05rem}header a{color:var(--gold);font-size:.85rem;margin-left:10px}
+main{max-width:860px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row .nm{flex:1;min-width:180px}
+.nm b{display:block;word-break:break-all}.nm small{color:var(--muted)}
+button,a.btn{border:0;border-radius:9px;padding:9px 14px;font-weight:700;cursor:pointer;background:var(--navy);color:#fff;text-decoration:none;font-size:.9rem;display:inline-block}
+button:disabled{opacity:.6}
+.aviso{font-size:.88rem;color:var(--muted)}
+.erro{color:var(--bad)}.ok{color:var(--ok)}
+table{width:100%;border-collapse:collapse;font-size:.92rem}th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left;white-space:normal}th{color:var(--muted);font-weight:600;font-size:.8rem}
+tfoot td{font-weight:700}.tbl{overflow-x:auto}
+input{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);width:120px}
+</style>
+</head>
+<body>
+<header><b>Uso da IA por consultor</b><a href="/admin/">← Painel ADM</a></header>
+<main>
+<div class="card">
+  <p class="aviso" style="margin-top:0">Cada resposta da IA (no <b>Teste da IA</b> e no <b>WhatsApp</b> pela Caixa) fica registrada no nome do consultor que usou. O custo é calculado pelos tokens de cada chamada, no preço oficial do modelo. Use para repassar o custo a cada um.</p>
+  <div class="row"><label class="aviso">Mês <input type="month" id="mes"></label><label class="aviso">Dólar (R$) <input type="number" id="dolar" step="0.01" min="1"></label></div>
+</div>
+<div class="card tbl" id="lista">Carregando…</div>
+</main>
+<script>
+(function(){
+  var L=document.getElementById("lista"), M=document.getElementById("mes"), D=document.getElementById("dolar");
+  function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  var hoje=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"}); M.value=hoje.slice(0,7);
+  try{ D.value=localStorage.getItem("cc-dolar")||"5.50"; }catch(_){ D.value="5.50"; }
+  function us(v){ return "US$ "+Number(v||0).toFixed(2).replace(".",","); }
+  function rs(v){ return "R$ "+(Number(v||0)*Number(D.value||0)).toFixed(2).replace(".",","); }
+  async function carregar(){
+    var s=await window.CentralAuth.sessao();
+    if(!s){ L.innerHTML='Entre no <a href="/admin/">Painel ADM</a> primeiro e volte para esta página.'; return; }
+    L.textContent="Carregando…";
+    var r=await window.CentralAuth.rpc("uso_ia_resumo",{mes:M.value});
+    if(r.error){ L.innerHTML='<span class="erro">Não consegui carregar agora.</span>'; return; }
+    var por={}; (r.data||[]).forEach(function(x){ var p=por[x.consultor_id]||(por[x.consultor_id]={nome:x.nome,teste:{n:0,u:0},whatsapp:{n:0,u:0}}); var o=p[x.origem]||(p[x.origem]={n:0,u:0}); o.n+=Number(x.chamadas)||0; o.u+=Number(x.custo_usd)||0; });
+    var ids=Object.keys(por); if(!ids.length){ L.innerHTML='<span class="aviso">Nenhum uso da IA neste mês.</span>'; return; }
+    var tot={tn:0,tu:0,wn:0,wu:0};
+    var linhas=ids.sort(function(a,b){return por[a].nome.localeCompare(por[b].nome)}).map(function(id){ var p=por[id]; tot.tn+=p.teste.n; tot.tu+=p.teste.u; tot.wn+=p.whatsapp.n; tot.wu+=p.whatsapp.u;
+      return '<tr><td>'+esc(p.nome)+'</td><td>'+p.teste.n+'</td><td>'+us(p.teste.u)+'</td><td>'+p.whatsapp.n+'</td><td>'+us(p.whatsapp.u)+'</td><td><b>'+us(p.teste.u+p.whatsapp.u)+'</b></td><td>'+rs(p.teste.u+p.whatsapp.u)+'</td></tr>'; }).join("");
+    L.innerHTML='<table><thead><tr><th>Consultor</th><th>Teste (resp.)</th><th>Teste</th><th>WhatsApp (resp.)</th><th>WhatsApp</th><th>Total</th><th>≈ Reais</th></tr></thead><tbody>'+linhas+'</tbody><tfoot><tr><td>Total</td><td>'+tot.tn+'</td><td>'+us(tot.tu)+'</td><td>'+tot.wn+'</td><td>'+us(tot.wu)+'</td><td>'+us(tot.tu+tot.wu)+'</td><td>'+rs(tot.tu+tot.wu)+'</td></tr></tfoot></table><p class="aviso">Valores em reais são aproximados (dólar informado acima). Registro desde 16/11/2026.</p>';
+  }
+  M.addEventListener("change",carregar);
+  D.addEventListener("change",function(){ try{ localStorage.setItem("cc-dolar",D.value); }catch(_){} carregar(); });
+  carregar();
+})();
+</script>
+</body>
+</html>
