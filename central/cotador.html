@@ -1448,7 +1448,7 @@ function gerarCotacao(mode){
   const snap=JSON.parse(JSON.stringify(st));delete snap.editId;delete snap.editCriada;delete snap.editNome;
   const rec={id:upd?st.editId:Date.now().toString(36)+Math.random().toString(36).slice(2,6),criada:upd?st.editCriada:new Date().toISOString(),
     cliente:st.cliente.trim(),modal:modTxt(st),
-    bene:beneText(B),hash:buildHash(st),link:linkFor(),zap:zapText(),code:undefined,
+    bene:beneText(B),hash:buildHash(st),link:linkFor(),zap:zapText(),code:upd?((HIST.find(x=>x.id===st.editId)||{}).code):undefined,
     planos:plans.map(({p,q})=>({op:p.op,i:p.i,nome:pname(p),ac:acLbl(p.ac),total:Math.round(q.total*100)/100})),
     st:snap};
   if(upd)rec.editada=new Date().toISOString();
@@ -1463,10 +1463,14 @@ function openResumo(rec,nova){
       <div class="rs-head"><div><span class="lbl">Cliente</span><b>${esc(rec.cliente||"Sem nome")}</b></div><div><span class="lbl">Data</span><b class="num">${fmtData(rec.criada)}</b></div></div>
       <p class="hint">${esc(rec.modal)} · ${esc(rec.bene)}</p>
       <ul class="rs-list">${rec.planos.map(x=>`<li><span class="opline">${logoImg(x.op)}<span><b>${esc(x.nome)}</b><small>${esc(OPS[x.op].nome)}${OPS[x.op].canal?" ("+esc(OPS[x.op].canal)+")":""} · ${esc(x.ac)}</small>${(()=>{const pr=x.i!=null&&PLANS[x.i]?promoFor(PLANS[x.i]):null;if(!pr)return "";const d=Object.entries(pr.desc).map(([k,v])=>`${k}ª: ${brl(x.total*(1-v/100))} (−${v}%)`).join(" · ");return `<small class="rs-promo">★ ${esc(pr.nome)}${d?" · "+d:""}</small>`})()}</span></span><span class="num rs-v">${brl(x.total)}</span></li>`).join("")}</ul>
-      ${nova?'<p class="hint">Esta cotação foi gravada em <b>Cotações geradas</b>. Baixe o PDF e envie ao cliente pelo WhatsApp.</p>':""}
+      ${nova?'<p class="hint">Esta cotação foi gravada em <b>Cotações geradas</b>. Envie o link ou o PDF ao cliente pelo WhatsApp.</p>':""}
       ${rec.editada&&!nova?`<p class="hint">Editada em ${fmtData(rec.editada)}.</p>`:""}
     </div>`,null,
-    `<button class="btn gold" type="button" id="rs-pdf">Gerar PDF da proposta</button>`);
+    `<button class="btn" type="button" id="rs-link">Copiar link</button><button class="btn" type="button" id="rs-zap">Copiar mensagem do WhatsApp</button><button class="btn gold" type="button" id="rs-pdf">Gerar PDF da proposta</button>`);
+  /* 16/11: link curto do cliente (o mesmo link continua valendo depois de editar a cotacao) */
+  const linkDoCliente=async()=>{await sharedDB();return ensureShort(rec)};
+  $("#rs-link").onclick=async()=>{copy(await linkDoCliente(),"Link copiado.","Link da proposta")};
+  $("#rs-zap").onclick=async()=>{await linkDoCliente();copy(rec.zap||"","Mensagem copiada. Cole no WhatsApp do cliente.","Mensagem para o WhatsApp")};
   $("#rs-pdf").onclick=()=>{document.querySelector(".modal").remove();try{sessionStorage.setItem("cot-preview","1");sessionStorage.setItem("cot-autopdf","1")}catch(e){}if(location.hash==="#"+rec.hash)route();else location.hash=rec.hash};
 }
 let histQ="";const ARMED=new Set();
