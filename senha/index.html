@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Criar senha · Central do Consultor</title>
+<meta name="theme-color" content="#0e2a52">
+<script src="../central/central-db.js?v=6"></script>
+<style>
+:root{--navy:#0e2a52;--gold:#d9bc78;--bg:#f7f4ec;--card:#fff;--fg:#14213a;--muted:#5d6678;--line:#e4dfd2;--bad:#a33}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1622;--card:#182233;--fg:#e8ecf2;--muted:#9aa6b8;--line:#2a3548}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:16px}
+.card{width:100%;max-width:400px;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:16px;padding:26px 22px}
+.logo{width:44px;height:44px;border-radius:50%;background:var(--navy);color:var(--gold);display:grid;place-items:center;font:700 15px system-ui;margin-bottom:12px}
+h1{font-size:1.3rem;margin:0 0 6px}
+p{color:var(--muted);margin:0 0 16px;font-size:.95rem}
+label{display:block;font-size:.85rem;font-weight:600;margin:12px 0 4px}
+input{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg)}
+button,a.btn{display:block;width:100%;margin-top:18px;border:0;border-radius:10px;padding:12px;background:var(--navy);color:#fff;font:700 1rem system-ui;cursor:pointer;text-align:center;text-decoration:none}
+button:disabled{opacity:.6}
+#msg{min-height:1.2em;margin-top:12px;font-size:.9rem;color:var(--bad)}
+</style>
+</head>
+<body>
+<main class="card" id="card">
+  <div class="logo">CC</div>
+  <h1 id="tit">Central do Consultor</h1>
+  <p id="sub">Carregando…</p>
+</main>
+<script>
+/* /senha/: destino dos e-mails de convite e de "esqueci minha senha". Cria a senha e leva para a Central. */
+(function(){
+  var tipo = new URLSearchParams((location.hash||"").slice(1)).get("type") || new URLSearchParams(location.search).get("type") || "";
+  var erroLink = new URLSearchParams((location.hash||"").slice(1)).get("error_description");
+  var $ = function(id){ return document.getElementById(id); };
+  function semLink(){
+    $("tit").textContent = "Link expirado ou já usado";
+    $("sub").textContent = "Peça um novo convite ao administrador, ou use \"Esqueci minha senha\" na tela de entrada da Central.";
+    $("card").insertAdjacentHTML("beforeend", '<a class="btn" href="/central/">Ir para a Central</a>');
+  }
+  if (erroLink) { semLink(); return; }
+  window.CentralAuth.sessao().then(function(s){
+    if (!s) { semLink(); return; }
+    $("tit").textContent = tipo === "recovery" ? "Crie uma senha nova" : "Bem-vindo(a) à Central do Consultor";
+    $("sub").textContent = "Crie a sua senha de acesso (mínimo 8 caracteres). Ela vale para a Central, o Cotador e a Caixa.";
+    $("card").insertAdjacentHTML("beforeend",
+      '<label for="s1">Nova senha</label><input id="s1" type="password" autocomplete="new-password">' +
+      '<label for="s2">Repita a senha</label><input id="s2" type="password" autocomplete="new-password">' +
+      '<button id="salvar" type="button">Salvar senha e entrar</button><div id="msg"></div>');
+    $("salvar").onclick = function(){
+      var s1 = $("s1").value, s2 = $("s2").value;
+      if (s1.length < 8) { $("msg").textContent = "A senha precisa ter pelo menos 8 caracteres."; return; }
+      if (s1 !== s2) { $("msg").textContent = "As duas senhas não são iguais."; return; }
+      $("salvar").disabled = true; $("msg").textContent = "";
+      window.CentralAuth.definirSenha(s1).then(function(){ location.replace("/central/"); }, function(e){
+        $("salvar").disabled = false; $("msg").textContent = "Não foi possível salvar: " + ((e && e.message) || "tente de novo");
+      });
+    };
+  }, semLink);
+})();
+</script>
+</body>
+</html>
