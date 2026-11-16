@@ -1,0 +1,55 @@
+# .github/workflows/ci.yml — verificação automática da Central do Consultor
+# A cada mudança na main: procura senhas/chaves vazadas, confere a sintaxe do JavaScript das páginas
+# e roda o teste de fumaça (QA) no site publicado. Todo dia às 7h15 (Brasília) roda o QA de novo.
+# A publicação do site é feita pela Vercel (integração com o GitHub), não por este arquivo.
+# Segredos opcionais (Settings › Secrets and variables › Actions): QA_EMAIL e QA_SENHA (conta de demonstração).
+name: ci
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "15 10 * * *"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checar:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Procurar segredos vazados no código
+        uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Conferir sintaxe do JavaScript das páginas
+        run: node scripts/checar-paginas.mjs
+
+  qa:
+    needs: checar
+    if: always() && (needs.checar.result == 'success' || needs.checar.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Esperar o site publicar a mudança
+        if: github.event_name == 'push'
+        run: sleep 120
+      - run: npm i --no-save @playwright/test@1.48.2 && npx playwright install --with-deps chromium
+      - name: Teste de fumaça em todas as telas
+        run: npx playwright test qa/ --reporter=list,html
+        env:
+          SITE: https://centralconsultorsaude.com.br
+          QA_EMAIL: ${{ secrets.QA_EMAIL }}
+          QA_SENHA: ${{ secrets.QA_SENHA }}
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: { name: relatorio-qa, path: playwright-report/, retention-days: 14 }
