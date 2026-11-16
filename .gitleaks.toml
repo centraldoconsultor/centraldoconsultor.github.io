@@ -1,0 +1,9 @@
+# Configuração do gitleaks (procura senhas e chaves vazadas no código)
+title = "Central do Consultor"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Chave publicável do Supabase: feita para ficar no navegador (o acesso é controlado pelo RLS)"
+regexes = ['''sb_publishable_[A-Za-z0-9_-]+''']
