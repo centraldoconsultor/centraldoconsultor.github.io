@@ -212,6 +212,8 @@ header button{background:rgba(255,255,255,.12)}
     <button id="bAssumir" class="forte">Assumir conversa</button>
     <button id="bIA">Devolver para a IA</button>
     <button id="bEncerrar">Encerrar conversa</button>
+    <button id="bBloquear">Bloquear</button>
+    <button id="bDesbloq">Desbloquear</button>
   </div>
   <div id="cResumo"></div>
   <div id="cPend"></div>
@@ -421,6 +423,8 @@ if (eAuto) { alert("Não foi possível mudar: " + eAuto.message); e.target.check
   $("bAssumir").onclick = () => etiquetar("ASSUMIDO");
   $("bIA").onclick = () => etiquetar(null);
   $("bEncerrar").onclick = () => { if (confirm("Encerrar esta conversa? Ela sai da lista principal e a IA nao responde mais esse contato.")) etiquetar("ENCERRADO"); };
+$("bBloquear").onclick = () => { if (confirm("Bloquear este contato? A IA para de responder, você não recebe mais avisos dele e os arquivos que ele mandar não são baixados. Dá para desbloquear depois.")) etiquetar("BLOQUEADO"); };
+$("bDesbloq").onclick = () => etiquetar(null);
   $("bOfertas").onclick = abrirOfertas;
 $("bPerfil").onclick = abrirPerfil;
 $("pfRegras").onsubmit = salvarRegras;
@@ -455,6 +459,7 @@ async function carregar() {
 }
 
 function situacao(ct) {
+  if (ct.etiqueta === "BLOQUEADO") return "bloq";
   if (ct.etiqueta === "ENCERRADO" || ct.etiqueta === "FECHADO") return "fim";
   if (ct.etiqueta === "APP") return "app";
 if (EU && EU.plano !== "ia" && !ct.etiqueta) return "voce";
@@ -463,14 +468,14 @@ if (EU && EU.plano !== "ia" && !ct.etiqueta) return "voce";
   if (dados.funil.some((f) => f.contato_id === ct.id)) return "cotar";
   return "ia";
 }
-const ROTULO = { ia:["IA atendendo","t-ia"], voce:["Precisa de você","t-voce"], cotar:["Pronto para cotar","t-cotar"], fim:["Encerrada","t-fim"], app:["No app","t-fim"] };
+const ROTULO = { ia:["IA atendendo","t-ia"], voce:["Precisa de você","t-voce"], cotar:["Pronto para cotar","t-cotar"], fim:["Encerrada","t-fim"], app:["No app","t-fim"], bloq:["Bloqueado (spam)","t-fim"] };
 
 function desenharLista() {
   const linhas = dados.contatos.map((ct) => {
     const ms = dados.msgs.filter((m) => m.contato_id === ct.id);
     const ult = ms[ms.length - 1];
     return { ct, ult, sit: situacao(ct), quando: ult ? new Date(ult.criado_em).getTime() : 0 };
-  }).filter((l) => filtro === "todos" ? !["fim", "app"].includes(l.sit) : l.sit === filtro)
+  }).filter((l) => filtro === "todos" ? !["fim", "app", "bloq"].includes(l.sit) : (l.sit === filtro || (filtro === "fim" && l.sit === "bloq")))
     .sort((a, b) => ((b.sit === "voce") - (a.sit === "voce")) || (b.quando - a.quando));
   if (!linhas.length) { $("itens").innerHTML = `<div class="vazio">Nenhuma conversa aqui.</div>`; return; }
   $("itens").innerHTML = linhas.map(({ ct, ult, sit }) => {
@@ -490,9 +495,11 @@ function desenharConversa(rolar) {
   const ct = dados.contatos.find((c) => c.id === aberta); if (!ct) return;
   $("cNome").textContent = (ct.nome_perfil || "Sem nome") + " · " + fone(ct.wa_id);
   const sit = situacao(ct);
-  $("bAssumir").style.display = ["ASSUMIDO", "APP"].includes(ct.etiqueta) || sit === "fim" ? "none" : "";
+  $("bAssumir").style.display = ["ASSUMIDO", "APP"].includes(ct.etiqueta) || sit === "fim" || sit === "bloq" ? "none" : "";
   $("bIA").style.display = ["ASSUMIDO", "APP"].includes(ct.etiqueta) ? "" : "none";
-  $("bEncerrar").style.display = sit === "fim" ? "none" : "";
+  $("bEncerrar").style.display = sit === "fim" || sit === "bloq" ? "none" : "";
+  $("bBloquear").style.display = sit === "bloq" ? "none" : "";
+  $("bDesbloq").style.display = sit === "bloq" ? "" : "none";
 
   const f = dados.funil.find((x) => x.contato_id === ct.id);
   $("cResumo").innerHTML = f ? `<div class="resumo"><b>Pronto para cotar</b><br>
