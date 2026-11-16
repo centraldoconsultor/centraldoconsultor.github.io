@@ -85,6 +85,7 @@ textarea{min-height:80px;resize:vertical}
   function fData(s){var p=String(s||"").split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:"—";}
   var $=function(id){return document.getElementById(id)};
   $("semana").value=sexta();
+  function avisarOk(){ var k=sexta(); if(DOC&&DOC.respostas&&DOC.respostas[k]){ try{ if(window.parent!==window) window.parent.postMessage({type:"central:feedback-ok",semana:k},location.origin); }catch(e){} } }
   var REF=null, DOC={respostas:{}}, timer=setTimeout(function(){ if(!REF) $("st").innerHTML='<div class="notice">Não foi possível conectar ao banco de dados. Entre na Central com seu e-mail e senha.</div>'; },10000);
   function hist(){
     var r=DOC.respostas||{}, ks=Object.keys(r).sort().reverse();
@@ -102,7 +103,7 @@ textarea{min-height:80px;resize:vertical}
     var db=r[0],u=r[1]; if(!db||!u) return;
     return Promise.resolve(u.id()).then(function(id){ if(!id) return;
       REF=db.doc("feedback/"+id); clearTimeout(timer);
-      return REF.get().then(function(s){ if(s.exists) DOC=JSON.parse(JSON.stringify(s.data())); DOC.uid=id; DOC.respostas=DOC.respostas||{}; hist(); carregarSemana(); });
+      return REF.get().then(function(s){ if(s.exists) DOC=JSON.parse(JSON.stringify(s.data())); DOC.uid=id; DOC.respostas=DOC.respostas||{}; hist(); carregarSemana(); avisarOk(); });
     });
   }).catch(function(){ $("st").innerHTML='<div class="notice">Não foi possível carregar o feedback.</div>'; });
   else $("st").innerHTML='<div class="notice">Abra esta tela dentro da Central do Consultor.</div>';
@@ -112,7 +113,7 @@ textarea{min-height:80px;resize:vertical}
     var pg=document.querySelector('input[name="pagaria"]:checked'), pl=document.querySelector('input[name="plano"]:checked');
     var x={nota:Number(nota.value),telas:[].map.call(document.querySelectorAll('#telas input:checked'),function(i){return i.value;}),gostou:$("gostou").value.trim(),melhorar:$("melhorar").value.trim(),faltou:$("faltou").value.trim(),pagaria:pg?pg.value:"",plano:pl?pl.value:"",em:new Date().toISOString()};
     DOC.respostas[$("semana").value]=x; DOC.ultimo=x.em; busy=true; $("btn").disabled=true; $("msg").textContent="Enviando…";
-    REF.set(JSON.parse(JSON.stringify(DOC))).then(function(){ $("msg").textContent="Obrigado! Feedback enviado."; hist(); },function(){ $("msg").textContent="Não foi possível enviar. Tente de novo."; }).then(function(){ busy=false; $("btn").disabled=false; });
+    REF.set(JSON.parse(JSON.stringify(DOC))).then(function(){ $("msg").textContent="Obrigado! Feedback enviado."; hist(); avisarOk(); },function(){ $("msg").textContent="Não foi possível enviar. Tente de novo."; }).then(function(){ busy=false; $("btn").disabled=false; });
   });
 })();
 </script>

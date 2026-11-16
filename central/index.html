@@ -600,4 +600,43 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(
   };
 })();
 </script>
+<script>
+/* Feedback semanal obrigatorio (pedido do Diego, 15/11/2026): de sexta a domingo a Central abre o Feedback
+   e so libera as outras abas depois que o consultor envia o feedback da semana. O dono nao e travado. */
+(function(){
+  var A=window.CentralAuth; if(!A) return;
+  if(/^#(p[a-z0-9]{8}$|q-)/.test(location.hash||"")) return;
+  function pad(n){return (n<10?"0":"")+n}
+  function iso(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+  var hoje=new Date(), w=hoje.getDay(); if(!(w===5||w===6||w===0)) return;
+  var s=new Date(hoje); s.setDate(hoje.getDate()-(w===5?0:w===6?1:2)); var SEM=iso(s); if(SEM<"2026-11-20") return; /* comeca na sexta 20/11 */
+  var travado=false, CK=null, faixa=null;
+  function guard(){ if(travado&&location.hash!=="#feedback") location.hash="feedback"; }
+  function travar(){
+    if(travado) return; travado=true;
+    var st=document.createElement("style"); st.id="travaFbCss";
+    st.textContent=".trava-feedback #topnav,.trava-feedback #botnav{pointer-events:none;opacity:.35;filter:grayscale(1)}#travaFb{position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#0e2a52;color:#f4efe3;padding:12px 16px calc(12px + env(safe-area-inset-bottom));font:600 14px/1.4 system-ui,-apple-system,sans-serif;text-align:center;border-top:2px solid #d9bf85}#travaFb b{color:#d9bf85}";
+    document.head.appendChild(st);
+    faixa=document.createElement("div"); faixa.id="travaFb"; faixa.setAttribute("role","status");
+    faixa.innerHTML="<b>Sexta \u00e9 dia de feedback.</b> Responda as perguntas abaixo (leva 1 minuto) para liberar a Central.";
+    document.body.appendChild(faixa); document.body.classList.add("trava-feedback");
+    window.addEventListener("hashchange",guard); guard();
+  }
+  function liberar(){
+    try{ if(CK) localStorage.setItem(CK,"1"); }catch(e){}
+    if(!travado) return; travado=false;
+    window.removeEventListener("hashchange",guard);
+    document.body.classList.remove("trava-feedback");
+    if(faixa){ faixa.innerHTML="<b>Obrigado!</b> A Central est\u00e1 liberada."; setTimeout(function(){ if(faixa) faixa.remove(); },2500); }
+  }
+  window.addEventListener("message",function(e){ if(e.origin!==location.origin) return; var m=e.data||{};
+    if(m.type==="central:feedback-ok"&&m.semana===SEM) liberar(); });
+  A.sessao().then(function(sess){ if(!sess) return; return A.eu().then(function(eu){
+    if(!eu||eu.ativo===false||eu.papel==="dono") return;
+    CK="cc-feedback-"+eu.id+"-"+SEM;
+    try{ if(localStorage.getItem(CK)==="1") return; }catch(e){}
+    travar();
+  }); }).catch(function(){});
+})();
+</script>
 </body></html>
