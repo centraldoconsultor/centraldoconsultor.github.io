@@ -424,7 +424,7 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(
   }
   if(!window.claude||!window.claude.use) return;
   Promise.all([window.__CC.use("db"),window.claude.use("user")]).then(function(r){
-    var d=r[0], u=r[1]; if(!d||!u||!u.isOwner||!u.isOwner()) return; db=d;
+    var d=r[0], u=r[1]; if(!d||!u) return; db=d; /* 16/11: roda para cada consultor nos proprios dados (antes so rodava como dono e parou quando a Central virou visao de consultor) */
     function sub(col,key){ db.collection(col).onSnapshot(function(s){ D[key]=s.docs.map(function(x){ var o=Object.assign({},x.data()); o.id=x.id; return o; }); schedule(); },function(){}); }
     sub("propostas","p"); sub("vendas","v"); sub("leads","l"); sub("operadoras","o"); sub("registros","r"); sub("campanhas","c");
   });
