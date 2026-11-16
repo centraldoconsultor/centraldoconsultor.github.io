@@ -180,6 +180,14 @@ header button{background:rgba(255,255,255,.12)}
 <button class="ok" type="submit">Salvar regras</button>
 <span id="pfRegrasMsg" class="aviso" style="padding:0;text-align:left"></span>
 </form>
+<form class="of-form" id="pfHorario" style="display:none">
+<b>Horário da IA</b>
+<span class="aviso" style="padding:0;text-align:left">Em que horário e dias a IA atende sozinha os seus leads. Fora desse horário, a mensagem fica para você responder. Se o fim for antes do início (ex.: 20:00 às 08:00), o turno atravessa a meia-noite.</span>
+<div class="datas"><label>Começa<input type="time" id="hrIni" required></label><label>Termina<input type="time" id="hrFim" required></label></div>
+<div id="hrDias" style="display:flex;flex-wrap:wrap;gap:6px 12px;font-size:14px"></div>
+<button class="ok" type="submit">Salvar horário</button>
+<span id="hrMsg" class="aviso" style="padding:0;text-align:left"></span>
+</form>
 <div class="of-form" id="pfNumero"></div>
 </main>
 </div>
@@ -387,7 +395,28 @@ if (error) { $("pfRegrasMsg").textContent = "Não foi possível salvar: " + erro
 EU.regras_operadoras = regras; $("pfRegrasMsg").textContent = regras ? "Regras salvas. A IA já usa nas próximas respostas." : "Sem regras próprias: a IA usa o padrão.";
 }
 
+// v3.5: horario de atendimento da IA (cada consultor do plano com IA define o seu)
+const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+function mostrarHorario() {
+$("pfHorario").style.display = EU.plano !== "ia" ? "none" : "";
+$("hrIni").value = String(EU.ia_inicio || "07:00").slice(0, 5); $("hrFim").value = String(EU.ia_fim || "21:00").slice(0, 5);
+const ds = Array.isArray(EU.ia_dias) ? EU.ia_dias.map(Number) : [0, 1, 2, 3, 4, 5, 6];
+$("hrDias").innerHTML = [1, 2, 3, 4, 5, 6, 0].map((d) => '<label style="display:flex;gap:4px;align-items:center"><input type="checkbox" value="' + d + '"' + (ds.includes(d) ? " checked" : "") + ">" + DIAS_SEMANA[d] + "</label>").join("");
+$("hrMsg").textContent = "";
+}
+async function salvarHorario(e) {
+e.preventDefault();
+const ini = $("hrIni").value, fim = $("hrFim").value;
+const dias = [...$("hrDias").querySelectorAll("input:checked")].map((x) => Number(x.value));
+if (!ini || !fim) { $("hrMsg").textContent = "Informe o horário de início e de fim."; return; }
+if (!dias.length) { $("hrMsg").textContent = "Marque pelo menos um dia (ou desligue a IA automática no topo)."; return; }
+const { error } = await db.from("consultores").update({ ia_inicio: ini, ia_fim: fim, ia_dias: dias }).eq("id", EU.id);
+if (error) { $("hrMsg").textContent = "Não foi possível salvar: " + error.message; return; }
+EU.ia_inicio = ini; EU.ia_fim = fim; EU.ia_dias = dias;
+$("hrMsg").textContent = "Horário salvo: a IA atende das " + ini + " às " + fim + " (" + [1, 2, 3, 4, 5, 6, 0].filter((d) => dias.includes(d)).map((d) => DIAS_SEMANA[d]).join(", ") + ").";
+}
 function abrirPerfil() {
+mostrarHorario();
 $("pfRegras").style.display = EU.plano !== "ia" ? "none" : ""; $("pfRegrasTxt").value = EU.regras_operadoras || ""; $("pfRegrasMsg").textContent = "";
 $("lista").style.display = "none"; $("perfil").style.display = "";
 $("pfNome").value = EU.nome || ""; $("pfCorretora").value = EU.corretora || ""; $("pfCidade").value = EU.cidade || ""; $("pfMsg").textContent = "";
@@ -428,6 +457,7 @@ $("bDesbloq").onclick = () => etiquetar(null);
   $("bOfertas").onclick = abrirOfertas;
 $("bPerfil").onclick = abrirPerfil;
 $("pfRegras").onsubmit = salvarRegras;
+$("pfHorario").onsubmit = salvarHorario;
 if (EU.papel === "dono") { $("bAdm").hidden = false; $("bAdm").onclick = abrirAdmin; }
 $("admVoltar").onclick = () => { $("admin").style.display = "none"; $("lista").style.display = ""; };
 $("admForm").onsubmit = convidarConsultor;
