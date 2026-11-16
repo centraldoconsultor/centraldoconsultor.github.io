@@ -1636,7 +1636,14 @@ async function openShort(code){
   let h=null;
   try{const db=await sharedDB();if(db){const sn=await db.doc("propostas/"+code).get();if(sn.exists){h=sn.data().h;window.__FOTO_PROP=sn.data().f||null}}}catch(e){}
   const q=h?parseHash("#"+h):null;
-  if(q&&beneCount(q.B))renderClient(q);else renderGuard();
+  if(q&&beneCount(q.B)){renderClient(q);avisarVisto(code,q.cliente)}else renderGuard();
+}
+/* avisa o consultor quando o cliente abre o link (funcao visto) */
+function avisarVisto(code,cliente){
+  try{if(sessionStorage.getItem("cot-corretor")==="1"||sessionStorage.getItem("cot-preview")==="1")return}catch(e){}
+  (async()=>{let tk=null;try{const s=window.CentralAuth&&await window.CentralAuth.sessao();tk=s&&s.access_token}catch(e){}
+    fetch("https://tqhrjivlfpexmhkwakwl.supabase.co/functions/v1/visto",{method:"POST",keepalive:true,headers:Object.assign({"Content-Type":"application/json"},tk?{Authorization:"Bearer "+tk}:{}),body:JSON.stringify({code:code,cliente:cliente||""})}).catch(()=>{});
+  })();
 }
 function route(){
   const m=/^#p([a-z0-9]{8})$/.exec(location.hash);
