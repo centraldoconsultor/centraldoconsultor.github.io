@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Cadastros · Painel ADM</title>
+<script src="../central/central-db.js?v=7"></script>
+<style>
+:root{--navy:#0e2a52;--gold:#d9bf85;--bg:#f7f4ec;--card:#fff;--fg:#14213a;--muted:#5d6678;--line:#e4dfd2;--ok:#1e6b4f;--bad:#a33}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1622;--card:#182233;--fg:#e8ecf2;--muted:#9aa6b8;--line:#2a3548}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{background:var(--navy);color:#f4efe3;padding:14px 16px}header b{font-size:1.05rem}header a{color:var(--gold);font-size:.85rem;margin-left:10px}
+main{max-width:860px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.aviso{font-size:.88rem;color:var(--muted)}
+.tabs{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap}.tabs button{background:var(--card);color:var(--fg);border:1px solid var(--line)}.tabs button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+button,a.btn{border:0;border-radius:9px;padding:9px 14px;font-weight:700;cursor:pointer;background:var(--navy);color:#fff;text-decoration:none;font-size:.9rem;display:inline-block}
+button.sec{background:transparent;color:var(--bad);border:1px solid var(--bad)}button:disabled{opacity:.6}
+.e{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;flex-direction:column;gap:6px}
+.e b{font-size:1.02rem}.e small{color:var(--muted)}
+.linha{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.selo{display:inline-block;padding:1px 9px;border-radius:99px;font-size:.78rem;font-weight:700;background:#efe6cf;color:#6b4f12}
+.st-pendente{color:#b26b00}.st-aprovado{color:var(--ok)}.st-recusado{color:var(--bad)}
+select{font:inherit;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
+.msg{font-size:.88rem}
+</style>
+</head>
+<body>
+<header><b>Cadastros: pedidos de acesso</b><a href="/admin/">← Painel ADM</a></header>
+<main>
+<div class="card"><p class="aviso" style="margin:0">Pedidos feitos em <a href="/cadastro/" target="_blank">centralconsultorsaude.com.br/cadastro</a>. Você recebe um aviso no celular a cada pedido novo. Ao <b>Aprovar</b>, a Central cria o acesso e manda o convite por e-mail (a pessoa cria a senha e entra). Assinatura entra em teste grátis (Turma de Janeiro até 31/12). Planos Plus e Prime usam o plano com IA até a migração dos 3 planos.</p></div>
+<div class="tabs" id="tabs"><button data-f="pendente" class="on">Pendentes</button><button data-f="aprovado">Aprovados</button><button data-f="recusado">Recusados</button><button data-f="">Todos</button></div>
+<div id="lista"><div class="card">Carregando…</div></div>
+</main>
+<script>
+(function(){
+  var L=document.getElementById("lista"), filtro="pendente", dados=[];
+  var PL={essencial:"Essencial · R$ 97",plus:"Plus · R$ 197",prime:"Prime · R$ 297"};
+  function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function quando(t){ try{ return new Date(t).toLocaleString("pt-BR",{timeZone:"America/Sao_Paulo",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}); }catch(e){ return t; } }
+  function fone(t){ t=String(t||""); return t.length>=10?"("+t.slice(0,2)+") "+t.slice(2,t.length-4)+"-"+t.slice(-4):t; }
+  async function carregar(){
+    var s=await window.CentralAuth.sessao();
+    if(!s){ L.innerHTML='<div class="card">Entre no <a href="/admin/">Painel ADM</a> primeiro e volte para esta página.</div>'; return; }
+    var r=await window.CentralAuth.rpc("solicitacoes_lista");
+    if(r.error){ L.innerHTML='<div class="card" style="color:var(--bad)">Não consegui carregar agora.</div>'; return; }
+    dados=r.data||[]; desenhar();
+  }
+  function desenhar(){
+    var n=dados.filter(function(x){return x.status==="pendente"}).length;
+    document.querySelector('[data-f="pendente"]').textContent="Pendentes ("+n+")";
+    var d=dados.filter(function(x){return !filtro||x.status===filtro});
+    L.innerHTML=d.length?d.map(function(x){
+      var wa="https://wa.me/55"+x.telefone;
+      return '<div class="e"><div class="linha"><b>'+esc(x.nome)+'</b><span class="selo">'+esc(PL[x.plano]||x.plano)+'</span><small class="st-'+x.status+'">'+esc(x.status)+'</small></div>'+
+        '<small>'+esc(x.email)+' · <a href="'+wa+'" target="_blank" rel="noopener">'+fone(x.telefone)+'</a>'+(x.cidade?' · '+esc(x.cidade):'')+' · pedido em '+quando(x.criado_em)+(x.decidido_em?' · decidido em '+quando(x.decidido_em):'')+'</small>'+
+        (x.mensagem?'<small>“'+esc(x.mensagem)+'”</small>':'')+(x.obs?'<small>Obs.: '+esc(x.obs)+'</small>':'')+
+        (x.status==="pendente"?'<div class="linha"><select data-pl="'+x.id+'"><option value="essencial"'+(x.plano==="essencial"?" selected":"")+'>Essencial</option><option value="plus"'+(x.plano==="plus"?" selected":"")+'>Plus</option><option value="prime"'+(x.plano==="prime"?" selected":"")+'>Prime</option></select><button data-ap="'+x.id+'">Aprovar e mandar convite</button><button class="sec" data-rc="'+x.id+'">Recusar</button><span class="msg" id="m'+x.id+'"></span></div>':'')+
+      '</div>';
+    }).join(""):'<div class="card aviso">Nenhum pedido aqui.</div>';
+    [].forEach.call(L.querySelectorAll("[data-ap]"),function(b){ b.onclick=function(){ agir(b,"aprovar_solicitacao"); }; });
+    [].forEach.call(L.querySelectorAll("[data-rc]"),function(b){ b.onclick=function(){ agir(b,"recusar_solicitacao"); }; });
+  }
+  async function agir(b,acao){
+    var id=Number(b.getAttribute(acao==="aprovar_solicitacao"?"data-ap":"data-rc")), m=document.getElementById("m"+id);
+    var x=dados.find(function(y){return y.id===id});
+    if(acao==="aprovar_solicitacao"&&!confirm("Aprovar "+x.nome+" e mandar o convite para "+x.email+"?")) return;
+    var obs=null; if(acao==="recusar_solicitacao"){ obs=prompt("Recusar "+x.nome+"? Motivo (opcional, só você vê):",""); if(obs===null) return; }
+    b.disabled=true; m.textContent="Enviando…";
+    var sel=L.querySelector('[data-pl="'+id+'"]');
+    var r=await window.CentralAuth.funcao("admin-consultores",{acao:acao,id:id,plano:sel?sel.value:undefined,obs:obs});
+    var erro=r&&(r.error||(r.data&&r.data.ok===false&&r.data.erro));
+    if(erro){ var t=""; try{ t=(await r.error.context.json()).erro; }catch(e){} m.textContent="Não deu certo: "+(t||(r.data&&r.data.erro)||r.error.message); m.style.color="var(--bad)"; b.disabled=false; return; }
+    m.textContent=acao==="aprovar_solicitacao"?"Convite enviado ✓":"Recusado"; m.style.color="var(--ok)";
+    setTimeout(carregar,900);
+  }
+  [].forEach.call(document.querySelectorAll("#tabs button"),function(b){ b.onclick=function(){ filtro=b.getAttribute("data-f"); [].forEach.call(document.querySelectorAll("#tabs button"),function(x){x.classList.toggle("on",x===b)}); desenhar(); }; });
+  carregar();
+})();
+</script>
+</body>
+</html>
