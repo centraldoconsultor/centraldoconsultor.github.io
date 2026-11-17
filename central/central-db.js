@@ -284,3 +284,13 @@
   }, true);
   window.addEventListener("unhandledrejection", function (e) { var r = e && e.reason; enviar("Promise: " + ((r && r.message) || r || "rejeitada"), r && r.stack ? r.stack : null); });
 })();
+
+/* 16/11: uso das telas (Painel ADM › Consultores: dias de uso e telas mais usadas). Uma marca por tela aberta. */
+(function () {
+  var NOMES = { "funil.html": "Funil", "followup.html": "Follow-up", "esteira.html": "Esteira", "posvenda.html": "Pós-venda", "clientes.html": "Clientes", "painel.html": "Meta", "cotador.html": "Cotador", "comissoes.html": "Comissões", "cronograma.html": "Cronograma", "feedback.html": "Feedback" };
+  var p = location.pathname, tela = /\/teste-ia\/?$/.test(p) ? "Teste da IA" : (NOMES[p.split("/").pop()] || null);
+  if (!tela || /^#(p[a-z0-9]{8}$|q-)/.test(location.hash || "")) return;
+  setTimeout(function () {
+    try { window.CentralAuth.sessao().then(function (s) { if (s) window.CentralAuth.rpc("registrar_tela", { tela: tela }).catch(function () {}); }, function () {}); } catch (e) {}
+  }, 3000);
+})();
