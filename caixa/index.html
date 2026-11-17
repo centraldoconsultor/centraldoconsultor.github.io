@@ -198,13 +198,13 @@ header button{background:rgba(255,255,255,.12)}
 <h1>Consultores</h1>
 </header>
 <main>
-<p class="aviso" style="padding:14px 16px;text-align:left">Só você vê esta tela. Cada consultor vê apenas as próprias conversas. Plano Essencial = sem IA; Com IA = IA sugerindo e respondendo.</p>
+<p class="aviso" style="padding:14px 16px;text-align:left">Só você vê esta tela. Cada consultor vê apenas as próprias conversas. Essencial = sem IA; Plus = IA sugere e o consultor confirma; Prime = IA automática.</p>
 <div id="admLista"><div class="aviso">Carregando…</div></div>
 <form class="of-form" id="admForm">
 <b>Convidar consultor</b>
 <label>Nome<input id="admNome" required></label>
 <label>E-mail<input id="admEmail" type="email" required></label>
-<label>Plano<select id="admPlano" style="padding:9px;border:1px solid var(--linha);border-radius:8px;font:inherit;background:var(--fundo);color:var(--texto)"><option value="essencial">Essencial (sem IA)</option><option value="ia">Com IA</option></select></label>
+<label>Plano<select id="admPlano" style="padding:9px;border:1px solid var(--linha);border-radius:8px;font:inherit;background:var(--fundo);color:var(--texto)"><option value="essencial">Essencial (sem IA)</option><option value="plus">Plus (IA sugere)</option><option value="prime">Prime (IA automática)</option></select></label>
 <button class="ok" type="submit">Enviar convite por e-mail</button>
 <span id="admMsg" class="aviso" style="padding:0;text-align:left"></span>
 </form>
@@ -318,7 +318,7 @@ async function abrirOfertas() {
   if (!$("ofIni").value) $("ofIni").value = h;
   if (!$("ofFim").value) $("ofFim").value = fimMes.toLocaleDateString("en-CA");
   // v2.4: ofertas das operadoras (cadastradas pelo administrador) valem para todos; plano Essencial só consulta
-  const soConsulta = EU.plano !== "ia" && EU.papel !== "dono";
+  const soConsulta = !["ia", "plus", "prime"].includes(EU.plano) && EU.papel !== "dono";
   $("ofForm").style.display = soConsulta ? "none" : "";
   $("ofAviso").textContent = EU.papel === "dono"
     ? "As ofertas que você cadastra aqui ou no Painel Admin são ofertas das operadoras e valem para todos os consultores. A IA só cita ofertas ativas e dentro da validade, com as mesmas palavras daqui. Nunca passa valor de mensalidade."
@@ -372,8 +372,8 @@ const { consultores } = await adm({ acao: "listar" });
 $("admLista").innerHTML = consultores.map((c) => {
 const situ = c.papel === "dono" ? "Administrador" : (c.ultimo_acesso ? "Último acesso " + quando(c.ultimo_acesso) : "Convite enviado " + quando(c.convidado_em) + " · ainda não entrou");
 const zap = c.phone_number_id ? "WhatsApp conectado" : "WhatsApp não conectado";
-const plano = c.papel === "dono" ? '<b>' + (c.plano === "ia" ? "Com IA" : "Essencial") + '</b>'
-: '<select data-plano="' + c.id + '" style="padding:6px;border:1px solid var(--linha);border-radius:8px;font:inherit;background:var(--fundo);color:var(--texto)"><option value="essencial"' + (c.plano !== "ia" ? " selected" : "") + '>Essencial</option><option value="ia"' + (c.plano === "ia" ? " selected" : "") + '>Com IA</option></select>';
+const plano = c.papel === "dono" ? '<b>' + (({ia:"Prime",prime:"Prime",plus:"Plus"})[c.plano] || "Essencial") + '</b>'
+: '<select data-plano="' + c.id + '" style="padding:6px;border:1px solid var(--linha);border-radius:8px;font:inherit;background:var(--fundo);color:var(--texto)"><option value="essencial"' + (c.plano === "essencial" ? " selected" : "") + '>Essencial</option><option value="plus"' + (c.plano === "plus" ? " selected" : "") + '>Plus</option><option value="prime"' + ((c.plano === "prime" || c.plano === "ia") ? " selected" : "") + '>Prime</option></select>';
 const reenviar = c.papel === "dono" ? "" : '<button data-reenviar="' + c.id + '">' + (c.ultimo_acesso ? "Enviar link de senha" : "Reenviar convite") + '</button>';
 return '<div class="of-item"><div class="meio"><b>' + esc(c.nome || c.email) + '</b> · ' + esc(c.email) + '<small>' + esc(situ) + ' · ' + zap + '</small></div>' + plano + reenviar + '</div>';
 }).join("");
@@ -392,7 +392,7 @@ async function convidarConsultor(e) {
 e.preventDefault();
 const nome = $("admNome").value.trim(), email = $("admEmail").value.trim(), plano = $("admPlano").value;
 if (!nome || !email) return;
-if (!confirm("Enviar convite para " + email + " (plano " + (plano === "ia" ? "Com IA" : "Essencial") + ")?")) return;
+if (!confirm("Enviar convite para " + email + " (plano " + (({ plus: "Plus", prime: "Prime", ia: "Prime" })[plano] || "Essencial") + ")?")) return;
 $("admMsg").textContent = "Enviando…";
 try { await adm({ acao: "convidar", nome, email, plano }); $("admMsg").textContent = "Convite enviado para " + email + "."; $("admNome").value = ""; $("admEmail").value = ""; await carregarAdmin(); }
 catch (err) { $("admMsg").textContent = "Não foi possível: " + err.message; }
@@ -408,7 +408,7 @@ EU.regras_operadoras = regras; $("pfRegrasMsg").textContent = regras ? "Regras s
 // v3.5: horario de atendimento da IA (cada consultor do plano com IA define o seu)
 const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 function mostrarHorario() {
-$("pfHorario").style.display = EU.plano !== "ia" ? "none" : "";
+$("pfHorario").style.display = (["ia", "prime"].includes(EU.plano) || EU.papel === "dono") ? "" : "none";
 $("hrIni").value = String(EU.ia_inicio || "07:00").slice(0, 5); $("hrFim").value = String(EU.ia_fim || "21:00").slice(0, 5);
 const ds = Array.isArray(EU.ia_dias) ? EU.ia_dias.map(Number) : [0, 1, 2, 3, 4, 5, 6];
 $("hrDias").innerHTML = [1, 2, 3, 4, 5, 6, 0].map((d) => '<label style="display:flex;gap:4px;align-items:center"><input type="checkbox" value="' + d + '"' + (ds.includes(d) ? " checked" : "") + ">" + DIAS_SEMANA[d] + "</label>").join("");
@@ -427,10 +427,10 @@ $("hrMsg").textContent = "Horário salvo: a IA atende das " + ini + " às " + fi
 }
 function abrirPerfil() {
 mostrarHorario();
-$("pfRegras").style.display = EU.plano !== "ia" ? "none" : ""; $("pfRegrasTxt").value = EU.regras_operadoras || ""; $("pfRegrasMsg").textContent = "";
+$("pfRegras").style.display = ["ia", "plus", "prime"].includes(EU.plano) ? "" : "none"; $("pfRegrasTxt").value = EU.regras_operadoras || ""; $("pfRegrasMsg").textContent = "";
 $("lista").style.display = "none"; $("perfil").style.display = "";
 $("pfNome").value = EU.nome || ""; $("pfCorretora").value = EU.corretora || ""; $("pfCidade").value = EU.cidade || ""; $("pfMsg").textContent = "";
-$("pfNumero").innerHTML = '<b>Plano: ' + (EU.plano === "ia" ? "Com IA" : "Essencial (sem IA)") + '</b>' + (EU.phone_number_id
+$("pfNumero").innerHTML = '<b>Plano: ' + (({ ia: "Prime", prime: "Prime", plus: "Plus (IA sugere, você confirma)" })[EU.plano] || "Essencial (sem IA)") + '</b>' + (EU.phone_number_id
 ? '<b>WhatsApp conectado</b><span class="aviso" style="padding:0;text-align:left">As mensagens do seu número chegam nesta Caixa. Para trocar de número, fale com o administrador.</span>'
 : '<b>WhatsApp ainda não conectado</b><span class="aviso" style="padding:0;text-align:left">Conecte o seu WhatsApp Business: ele continua funcionando no celular e as conversas novas chegam aqui.</span><a class="ok" href="../conectar/" style="text-align:center;padding:10px;border-radius:8px;text-decoration:none;font-weight:600">Conectar meu número</a>');
 }
@@ -450,7 +450,8 @@ async function iniciar() {
   if (!eu) { document.body.innerHTML = '<div class="login"><h2 style="margin-top:0">Conta sem cadastro de consultor</h2><p>Seu login existe, mas ainda não foi liberado como consultor. Fale com o administrador da Central.</p></div>'; return; }
   $("auto").checked = eu.modo_automatico === true;
   // v2.1: plano essencial (sem IA) esconde o que e da IA
-  if (eu.plano !== "ia") { $("auto").closest("label").style.display = "none"; const fIA = document.querySelector('#filtros [data-f="ia"]'); if (fIA) fIA.style.display = "none"; }
+  if (!["ia", "prime"].includes(eu.plano) && eu.papel !== "dono") $("auto").closest("label").style.display = "none"; // 17/11: Plus nao tem automatico
+  if (!["ia", "plus", "prime"].includes(eu.plano)) { const fIA = document.querySelector('#filtros [data-f="ia"]'); if (fIA) fIA.style.display = "none"; }
   $("auto").onchange = async (e) => {
     if (e.target.checked && !confirm("Ligar a IA automatica? Ela vai responder sozinha os leads novos ate o fecho da cotacao.")) { e.target.checked = false; return; }
     const { error: eAuto } = await db.from("consultores").update({ modo_automatico: e.target.checked }).eq("id", EU.id);
@@ -502,7 +503,7 @@ function situacao(ct) {
   if (ct.etiqueta === "BLOQUEADO") return "bloq";
   if (ct.etiqueta === "ENCERRADO" || ct.etiqueta === "FECHADO") return "fim";
   if (ct.etiqueta === "APP") return "app";
-if (EU && EU.plano !== "ia" && !ct.etiqueta) return "voce";
+if (EU && !["ia", "plus", "prime"].includes(EU.plano) && !ct.etiqueta) return "voce";
   const pend = dados.sugs.some((s) => s.contato_id === ct.id && ["pendente", "erro"].includes(s.status));
   if (pend || ct.etiqueta === "ASSUMIDO") return "voce";
   if (dados.funil.some((f) => f.contato_id === ct.id)) return "cotar";
