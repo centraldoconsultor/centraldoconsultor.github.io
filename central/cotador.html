@@ -592,8 +592,8 @@ R.mdnPrime=R.mdnMaster.concat(["mericar"]);
 R.athIdealGV=R.athIdeal.filter(s=>["Vitória","Vila Velha","Serra","Cariacica","Guarapari","Aracruz"].includes(H[s.split("|")[0]][1]));
 
 Object.assign(G,{
-  "medsr:pf":{label:"MedSênior pessoa física · a partir de 49 anos",taxa:""},
-  "medsr:em":{label:"MedSênior PME · a partir de 49 anos",taxa:""},
+  "medsr:pf":{label:"MedSênior pessoa física · a partir de 44 anos",taxa:""},
+  "medsr:em":{label:"MedSênior PME · a partir de 44 anos",taxa:""},
   "uvpf:pf":{label:"Pessoa física · equipe própria Unimed Vitória",taxa:""},
   "mdn:ad":{label:"Entidades ASMEFES, ASSEMES, CAEBS, CAEEPP, CASDOM, CAPLA e outras",taxa:""},
   "mdn:gvc":{label:"Empresarial Grande Vitória · compulsória",taxa:""},
@@ -645,11 +645,11 @@ Object.assign(CAR,{
   nsa:"Urgência 24h · consultas e exames simples 180 dias (24h com redução) · internação 180 dias · parto 300 dias."
 });
 
-const S49=[[49,53],[54,58],[59,200]];
+const S49=[[44,53],[54,58],[59,200]];
 const UNC_MUN=["Linhares","São Mateus","Nova Venécia","Boa Esperança","Conceição da Barra","Jaguaré","Montanha","Mucurici","Pedro Canário","Pinheiros","Ponto Belo","Rio Bananal","Sooretama","Vila Pavão"];
 const NSA_MUN=["Vitória","Vila Velha","Cariacica","Serra","Guarapari","São Mateus","Linhares","Colatina","Aracruz","Nova Venécia"];
 
-// ---- MedSênior (sem coparticipação, a partir de 49 anos) ----
+// ---- MedSênior (sem coparticipação, a partir de 44 anos; 44–48 com o preço da faixa 49–53, decisão do Diego 17/11) ----
 [["medsr:pf","pf",[[573.38,688.06,901.36],[717.02,860.42,1127.15],[1224.01,1468.81,1924.14],[1818.30,2181.96,2858.37]]],
  ["medsr:em","em",[[516.05,619.26,811.23],[645.31,774.37,1014.42],[1101.62,1321.94,1731.74],[1636.47,1963.76,2572.53]]]
 ].forEach(([g,mod,t])=>{
@@ -1016,14 +1016,14 @@ PERFIS.forEach(p=>p.g=p.g.filter(_vis));EMP.c=EMP.c.filter(_vis);EMP.l=EMP.l.fil
 /* ================= LÓGICA ================= */
 const brl = v => v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 function faixaIdx(age,f){
-  if(f==="s49") return age<49?-1:age<=53?0:age<=58?1:2;
+  if(f==="s49") return age<44?-1:age<=53?0:age<=58?1:2;
   if(f==="s44") return age<44?-1:age<=48?0:age<=53?1:age<=58?2:3;
   if(f===3) return age<=43?0:age<=58?1:2;
   if(age<=18) return 0; if(age>=59) return 9; return Math.floor((age-19)/5)+1;
 }
 const F10=["até 18","19–23","24–28","29–33","34–38","39–43","44–48","49–53","54–58","59+"];
 const F3=["0–43","44–58","59+"];
-const FS49=["49–53","54–58","59+"];
+const FS49=["44–53","54–58","59+"];
 const FS44=["44–48","49–53","54–58","59+"];
 const faixaLbl=(age,f)=>(f===3?F3:f==="s49"?FS49:f==="s44"?FS44:F10)[faixaIdx(age,f)];
 const FXL=["0 a 43 anos","44 a 58 anos","59 anos ou +"];
@@ -1207,7 +1207,7 @@ function renderResults(){
   const head=`<div class="res-head"><div><h2>${rows.length} opç${rows.length===1?"ão":"ões"} de plano</h2>
     <p>${esc(modTxt(st))}${st.hosp?" · atende "+esc(H[st.hosp][0]):""}</p>${(()=>{const B=beneNow(),base=PLANS.filter(p=>groupsNow().includes(p.grp)&&st.ops[p.op]);let out="";
       if(B.fx){const n=[...new Set(base.filter(p=>!fx3ok(p)).map(p=>OPS[p.op].nome+" "+pname(p)))];if(n.length)out+=`<div class="notice"><p><b>${n.length} ${n.length===1?"plano não aparece":"planos não aparecem"} em “3 faixas de idade”</b> porque a tabela é por idade de cada vida: ${esc(n.join(", "))}.</p><button type="button" class="btn gold" id="go-idade">Ver esses planos (informar idades)</button></div>`}
-      else{const n=[...new Set(base.filter(p=>!B.ages.every(a=>faixaIdx(a,p.f)>=0)).map(p=>OPS[p.op].nome))];if(n.length)out+=`<p class="hint" style="margin-top:4px">${esc(n.join(", "))}: aceita beneficiários só a partir de 44 ou 49 anos (conforme o plano); há idade abaixo disso nesta cotação.</p>`}
+      else{const n=[...new Set(base.filter(p=>!B.ages.every(a=>faixaIdx(a,p.f)>=0)).map(p=>OPS[p.op].nome))];if(n.length)out+=`<p class="hint" style="margin-top:4px">${esc(n.join(", "))}: aceita beneficiários só a partir de 44 anos; há idade abaixo disso nesta cotação.</p>`}
       return out})()}</div>
     <div class="sort"><label for="f-sort">Ordenar</label><select class="field" id="f-sort" style="width:auto;padding:6px 8px"><option value="preco" ${st.sort==="preco"?"selected":""}>Menor preço</option><option value="op" ${st.sort==="op"?"selected":""}>Operadora</option></select></div></div>`;
   if(!rows.length)return head+`<div class="empty">Nenhum plano com esses filtros. Tente outra acomodação ou retire o filtro de hospital.</div>`;
