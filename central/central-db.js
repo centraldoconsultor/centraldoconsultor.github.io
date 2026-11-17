@@ -263,3 +263,24 @@
     rpc: async function (nome, args) { var c = await sb(); return c.rpc(nome, args || {}); }
   };
 })();
+
+/* 16/11: registro de erros das telas (aparece no Painel ADM › Erros). Manda no máximo 5 por página aberta. */
+(function () {
+  var vistos = {}, enviados = 0;
+  function ignorar(m, d) { return !m || /ResizeObserver loop|^Script error\.?$|chrome-extension:|moz-extension:|safari-extension:|safari-web-extension:|Non-Error promise rejection|Load failed|NetworkError|Failed to fetch|AbortError/i.test(m + " " + (d || "")); }
+  function pagina() { var h = location.hash || ""; if (/^#(p[a-z0-9]{8}$|q-)/.test(h)) h = "#proposta"; return location.pathname + h.slice(0, 40); }
+  function enviar(m, d) {
+    try {
+      if (ignorar(m, d)) return;
+      var k = String(m).slice(0, 120); if (vistos[k] || enviados >= 5) return; vistos[k] = 1; enviados++;
+      setTimeout(function () {
+        try { if (window.CentralAuth && window.CentralAuth.rpc) window.CentralAuth.rpc("registrar_erro", { pagina: pagina(), mensagem: String(m).slice(0, 500), detalhe: d ? String(d).slice(0, 2000) : null, navegador: navigator.userAgent }).catch(function () {}); } catch (e) {}
+      }, 500);
+    } catch (e) {}
+  }
+  window.addEventListener("error", function (e) {
+    if (e && e.target && e.target !== window && (e.target.src || e.target.href)) return; /* arquivo que não carregou: ignora */
+    enviar(e.message || "erro", (e.filename || "") + ":" + (e.lineno || "") + ":" + (e.colno || "") + (e.error && e.error.stack ? "\n" + e.error.stack : ""));
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) { var r = e && e.reason; enviar("Promise: " + ((r && r.message) || r || "rejeitada"), r && r.stack ? r.stack : null); });
+})();
