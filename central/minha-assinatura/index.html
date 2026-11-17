@@ -37,7 +37,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-of
 .btn.sec{background:#fff;color:var(--ink);border:1px solid #cfc6b1}
 .btn.perigo{background:#fff;color:var(--bad);border:1px solid #e3b4ad}
 .btn[disabled]{opacity:.55;cursor:wait}
-.planos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.planos{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .plano{border:2px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:4px;background:#fff}
 .plano input{display:none}
 .plano.on{border-color:var(--gold);background:#fbf6ea}
@@ -59,7 +59,8 @@ details summary{cursor:pointer;font-weight:700;color:var(--bad)}
 (function () {
   var app = document.getElementById("app");
   var A = window.CentralAuth;
-  var NOME = { essencial: "Essencial", ia: "Com IA" }, PRECO = { essencial: 99, ia: 199 };
+  var NOME = { essencial: "Essencial", plus: "Plus", prime: "Prime" }, PRECO = { essencial: 97, plus: 197, prime: 297 };
+  var DESC = { essencial: "Central + Cotador", plus: "+ IA sugere, você confirma", prime: "Tudo: IA automática e áudio" };
   var STATUS = { teste: ["Teste grátis", ""], ativo: ["Ativa", "ok"], atrasado: ["Pagamento pendente", "bad"], bloqueado: ["Pausada por atraso", "bad"], cancelado: ["Cancelada", "bad"], cortesia: ["Cortesia", "ok"] };
   var MOTIVOS = ["O preço está alto para mim", "Não estou usando o suficiente", "Faltou alguma função", "Vou parar de vender planos", "Problemas técnicos", "Outro motivo"];
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
@@ -85,7 +86,7 @@ details summary{cursor:pointer;font-weight:700;color:var(--bad)}
 
   function desenhar(a) {
     var st = STATUS[a.status] || ["Sem assinatura", "bad"];
-    var plano = a.plano === "ia" ? "ia" : "essencial";
+    var plano = ({ essencial: 1, plus: 1, prime: 1 })[a.plano] ? a.plano : (a.plano === "ia" ? "prime" : "essencial");
     var cortesia = a.status === "cortesia";
     var canc = a.cancelamento;
     var h = '<h1>Minha assinatura</h1>';
@@ -114,8 +115,8 @@ details summary{cursor:pointer;font-weight:700;color:var(--bad)}
     }
 
     h += '<section class="card"><h2>Trocar de plano</h2><div class="planos">' +
-      ["essencial", "ia"].map(function (p) {
-        return '<label class="plano' + (p === plano ? " on" : "") + '"><input type="radio" name="pl" value="' + p + '"' + (p === plano ? " checked" : "") + '><b>' + NOME[p] + '</b><span>' + reais(PRECO[p]) + '/mês' + (p === "ia" ? " · IA no WhatsApp" : " · Central + Cotador") + '</span></label>';
+      ["essencial", "plus", "prime"].map(function (p) {
+        return '<label class="plano' + (p === plano ? " on" : "") + '"><input type="radio" name="pl" value="' + p + '"' + (p === plano ? " checked" : "") + '><b>' + NOME[p] + '</b><span>' + reais(PRECO[p]) + '/mês · ' + DESC[p] + '</span></label>';
       }).join("") + '</div><button class="btn sec" id="trocar" disabled>Trocar para este plano</button><p class="muted">A troca vale na hora. O novo valor entra na próxima mensalidade.</p><p class="msg" id="mPl"></p></section>';
 
     if (!canc && a.status !== "sem") {
