@@ -500,7 +500,7 @@ V["assinaturas"]=function(){
        '<button class="ghost" data-ass="dias|'+id+'" title="Dá mais dias sem cobrar">+ dias</button> '+
        (a.status==="cancelado"?'<button class="ghost" data-ass="reativar|'+id+'">Reativar</button>':'<button class="ghost" data-ass="cancelar|'+id+'">Cancelar</button>');
      return '<tr><td><b>'+esc(a.nome||a.email)+'</b><br><small style="color:var(--muted)">'+esc(a.email||"")+(a.telefone?" · "+esc(a.telefone):"")+'</small></td>'+
-       '<td>'+(a.plano==="ia"?"Com IA":"Essencial")+'<br><small style="color:var(--muted)">'+brl(a.valor)+'/mês</small></td>'+
+       '<td>'+(({ia:"Prime",prime:"Prime",plus:"Plus"})[a.plano]||"Essencial")+'<br><small style="color:var(--muted)">'+brl(a.valor)+'/mês</small></td>'+
        '<td>'+stPill(a.status)+'</td>'+
        '<td>'+(a.status==="cortesia"?"—":fData(venc)+'<br><small style="color:var(--muted)">'+(a.status==="teste"?"fim do teste ":"")+quandoV(venc)+'</small>')+'</td>'+
        '<td>'+fData(a.ultimo_pagamento)+(a.forma?'<br><small style="color:var(--muted)">'+esc(a.forma)+'</small>':"")+'</td>'+
@@ -533,14 +533,14 @@ V["contas"]=function(){
   if(CONTAS===null){ carregarContas(); }
   var lista=CONTAS||[];
   var ativos=lista.filter(function(c){return c.papel!=="dono";});
-  return cab("Contas e acesso","Quem tem login na Central e na Caixa, com o plano de cada um. Essencial = sem IA; Com IA = IA no WhatsApp e sugestões de mensagem. Cada consultor vê só os próprios dados.")+
+  return cab("Contas e acesso","Quem tem login na Central e na Caixa, com o plano de cada um. Essencial (R$ 97) = sem IA; Plus (R$ 197) = IA sugere e o consultor confirma; Prime (R$ 297) = IA automática e áudio. Cada consultor vê só os próprios dados.")+
    (contasErro?'<div class="notice">Não foi possível carregar: '+esc(contasErro)+'</div>':"")+
-   '<div class="kpis">'+kpi("Consultores com login",ativos.length,"",1)+kpi("Já entraram",ativos.filter(function(c){return c.ultimo_acesso;}).length,"pelo menos uma vez")+kpi("Plano Com IA",ativos.filter(function(c){return c.plano==="ia";}).length,"consultores")+kpi("WhatsApp conectado",ativos.filter(function(c){return c.phone_number_id;}).length,"números")+'</div>'+
+   '<div class="kpis">'+kpi("Consultores com login",ativos.length,"",1)+kpi("Já entraram",ativos.filter(function(c){return c.ultimo_acesso;}).length,"pelo menos uma vez")+kpi("Plus e Prime",ativos.filter(function(c){return c.plano!=="essencial";}).length,"consultores")+kpi("WhatsApp conectado",ativos.filter(function(c){return c.phone_number_id;}).length,"números")+'</div>'+
    (CONTAS===null?'<div class="tbl"><div class="empty">Carregando…</div></div>':
    '<div class="tbl"><table><thead><tr><th>Consultor</th><th>Situação</th><th>WhatsApp</th><th>Plano</th><th></th></tr></thead><tbody>'+
    lista.map(function(c){
      var situ=c.papel==="dono"?'<span class="pill info">Administrador</span>':(c.ultimo_acesso?'<span class="pill ok">Último acesso '+quando(c.ultimo_acesso)+'</span>':'<span class="pill warn">Convite '+quando(c.convidado_em)+' · ainda não entrou</span>');
-     var plano=c.papel==="dono"?'<b>'+(c.plano==="ia"?"Com IA":"Essencial")+'</b>':'<select data-plano="'+esc(c.id)+'" style="font:500 .88rem var(--body);padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg)"><option value="essencial"'+(c.plano!=="ia"?" selected":"")+'>Essencial</option><option value="ia"'+(c.plano==="ia"?" selected":"")+'>Com IA</option></select>';
+     var plano=c.papel==="dono"?'<b>'+(({ia:"Prime",prime:"Prime",plus:"Plus"})[c.plano]||"Essencial")+'</b>':'<select data-plano="'+esc(c.id)+'" style="font:500 .88rem var(--body);padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg)"><option value="essencial"'+(c.plano==="essencial"?" selected":"")+'>Essencial</option><option value="plus"'+(c.plano==="plus"?" selected":"")+'>Plus</option><option value="prime"'+((c.plano==="prime"||c.plano==="ia")?" selected":"")+'>Prime</option></select>';
      var acao=c.papel==="dono"?"":'<button class="ghost" data-reenviar="'+esc(c.id)+'">'+(c.ultimo_acesso?"Enviar link de senha":"Reenviar convite")+'</button>';
      return '<tr><td><b>'+esc(c.nome||c.email)+'</b><br><small style="color:var(--muted)">'+esc(c.email)+'</small></td><td>'+situ+'</td><td>'+(c.phone_number_id?'<span class="pill ok">Conectado</span>':'<span class="pill">Não conectado</span>')+'</td><td>'+plano+'</td><td class="act">'+acao+'</td></tr>';
    }).join("")+'</tbody></table></div>')+
