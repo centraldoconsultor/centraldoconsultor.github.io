@@ -240,6 +240,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // v2.3: link do e-mail (convite ou esqueci a senha) leva para a tela de definir senha
 const tipoLink = new URLSearchParams(location.hash.slice(1)).get("type");
 const db = createClient("https://tqhrjivlfpexmhkwakwl.supabase.co", "sb_publishable_vI455mCunOwgHkEaPra01w_05Ynugib");
+// 16/11: uso da tela (Painel ADM › Consultores)
+setTimeout(() => { db.auth.getSession().then(({ data }) => { if (data && data.session) db.rpc("registrar_tela", { tela: "Caixa" }).then(() => {}, () => {}); }, () => {}); }, 3000);
 // 16/11: registro de erros da tela (Painel ADM › Erros); no máximo 5 por página aberta
 { const vistos = {}; let enviados = 0;
   const ignorar = (m, d) => !m || /ResizeObserver loop|^Script error\.?$|chrome-extension:|moz-extension:|safari-extension:|safari-web-extension:|Non-Error promise rejection|Load failed|NetworkError|Failed to fetch|AbortError/i.test(m + " " + (d || ""));
