@@ -161,8 +161,8 @@ var S={
     {k:"nome",l:"Nome",t:"text",req:1},
     {k:"telefone",l:"WhatsApp",t:"text"},
     {k:"email",l:"E-mail",t:"text"},
-    {k:"plano",l:"Plano",t:"select",o:["Essencial","Com IA"]},
-    {k:"status",l:"Status",t:"select",o:["Piloto","Teste grátis","Ativo","Cancelado"]},
+    {k:"plano",l:"Plano",t:"select",o:["Essencial","Plus","Prime"]},
+    {k:"status",l:"Status",t:"select",o:["Piloto","Cortesia","Teste grátis","Ativo","Cancelado"]},
     {k:"inicio",l:"Início",t:"date"},
     {k:"diasUso",l:"Dias de uso no mês",t:"number"},
     {k:"propostas",l:"Propostas lançadas",t:"number"},
@@ -193,7 +193,7 @@ var S={
     {k:"titulo",l:"Título",t:"text",full:1,req:1},
     {k:"tipo",l:"Tipo",t:"select",o:["Reajuste","Novidade","Manutenção","Piloto"]},
     {k:"data",l:"Data",t:"date"},
-    {k:"para",l:"Para quem",t:"select",o:["Todos","Piloto","Plano Essencial","Plano Com IA"]},
+    {k:"para",l:"Para quem",t:"select",o:["Todos","Piloto","Plano Essencial","Plano Plus","Plano Prime"]},
     {k:"status",l:"Status",t:"select",o:["Rascunho","Enviado"]},
     {k:"texto",l:"Texto do aviso",t:"textarea",full:1}]},
   feedback:{titulo:"Feedback semanal",fields:[
@@ -205,7 +205,7 @@ var S={
     {k:"melhorar",l:"O que melhorar",t:"textarea",full:1}]},
   assinaturas:{titulo:"Assinatura",fields:[
     {k:"consultor",l:"Consultor / cliente",t:"consultor",req:1},
-    {k:"plano",l:"Plano",t:"select",o:["Essencial","Com IA"]},
+    {k:"plano",l:"Plano",t:"select",o:["Essencial","Plus","Prime"]},
     {k:"valor",l:"Valor mensal (R$)",t:"number",step:"0.01"},
     {k:"vencimento",l:"Próximo vencimento",t:"date"},
     {k:"status",l:"Status",t:"select",o:["Em teste","Em dia","Atrasado","Cancelado"]},
@@ -299,13 +299,13 @@ function statusReajuste(r){
   if(d<=15)return {cls:"warn",txt:"Em "+d+" dia(s): pedir tabela",d:d};
   return {cls:"info",txt:"Em "+d+" dias",d:d};
 }
-function incluidas(plano){return plano==="Com IA"?Number(CFG.inclIA)||0:0;}
+function incluidas(plano){return (plano==="Plus"||plano==="Prime"||plano==="Com IA")?Number(CFG.inclIA)||0:0;}
 function excedente(m){
   var c=D.consultores.find(function(x){return x.id===m.consultor;});var pl=c?c.plano:"";
   var inc=incluidas(pl),a=Number(m.automaticas)||0;var extra=Math.max(0,a-inc);
-  return {inc:inc,extra:extra,valor:pl==="Com IA"?extra*(Number(CFG.excedente)||0):0};
+  return {inc:inc,extra:extra,valor:(pl==="Plus"||pl==="Prime"||pl==="Com IA")?extra*(Number(CFG.excedente)||0):0};
 }
-function pillStatus(s){var m={"Feito":"ok","Em andamento":"info","Bloqueado":"bad","A fazer":"","Ativo":"ok","Piloto":"info","Teste grátis":"warn","Cancelado":"bad","Em dia":"ok","Atrasado":"bad","Em teste":"warn","Vigente":"ok","Agendada":"info","Substituída":"","Enviado":"ok","Rascunho":"warn","Sim":"ok","Talvez":"warn","Não":"bad"};return '<span class="pill '+(m[s]||"")+'">'+esc(s||"—")+'</span>';}
+function pillStatus(s){var m={"Feito":"ok","Em andamento":"info","Bloqueado":"bad","A fazer":"","Ativo":"ok","Piloto":"info","Cortesia":"info","Teste grátis":"warn","Cancelado":"bad","Em dia":"ok","Atrasado":"bad","Em teste":"warn","Vigente":"ok","Agendada":"info","Substituída":"","Enviado":"ok","Rascunho":"warn","Sim":"ok","Talvez":"warn","Não":"bad"};return '<span class="pill '+(m[s]||"")+'">'+esc(s||"—")+'</span>';}
 function alertas(){
   var a=[];
   D.reajustes.forEach(function(r){var s=statusReajuste(r);if(s.cls==="bad"||s.cls==="warn")a.push({cls:s.cls,txt:"<b>"+esc(r.operadora)+"</b>: reajuste em "+fData(r.data)+". "+esc(s.txt)+".",go:"reajustes"});});
