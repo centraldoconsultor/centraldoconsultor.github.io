@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Quero usar a Central · Central do Consultor</title>
+<meta name="description" content="Peça seu acesso à Central do Consultor: funil, cotador, esteira, pós-venda e IA no WhatsApp para consultores de plano de saúde do ES.">
+<meta property="og:title" content="Central do Consultor · Peça seu acesso">
+<meta property="og:description" content="A central de controle e pós-venda do consultor de plano de saúde do Espírito Santo.">
+<meta property="og:image" content="https://centralconsultorsaude.com.br/img/og.png">
+<link rel="icon" href="/img/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+:root{--navy:#0e2a52;--ink:#0e1f3d;--gold:#b08a3e;--gold2:#d9bf85;--bg:#f4efe3;--card:#fffdf8;--line:#e3dccb;--muted:#5d6579;--ok:#1f6b45;--bad:#8f2d22}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 'Figtree','Segoe UI',system-ui,sans-serif}
+header{background:var(--navy);border-bottom:3px solid var(--gold)}
+header .in{max-width:560px;margin:0 auto;padding:16px;display:flex;align-items:center;gap:12px}
+.mk{width:40px;height:40px;border-radius:50%;background:#0a1f3f;border:1px solid var(--gold);color:var(--gold2);display:grid;place-items:center;font:700 14px 'Sora',sans-serif;flex:none}
+header b{color:#f4efe3;font:700 15px 'Sora',sans-serif;letter-spacing:.04em}
+main{max-width:560px;margin:0 auto;padding:22px 16px 60px}
+h1{font:700 1.6rem/1.25 'Sora',sans-serif;margin:0 0 8px}
+.sub{color:var(--muted);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px}
+label{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:.92rem}
+input,select,textarea{font:inherit;padding:12px 13px;border:1px solid #cfc6b1;border-radius:10px;background:#fff;color:var(--ink);width:100%}
+textarea{min-height:70px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:1px}
+.planos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pl{border:2px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;background:#fff;display:flex;flex-direction:column;gap:2px;font-weight:400}
+.pl input{display:none}.pl b{font:700 .98rem 'Sora',sans-serif}.pl span{color:var(--muted);font-size:.8rem;line-height:1.35}.pl .pr{color:var(--ink);font-weight:700;font-size:.9rem}
+.pl.on{border-color:var(--gold);background:#fbf6ea}
+.aceite{flex-direction:row;align-items:flex-start;gap:10px;font-weight:400;font-size:.88rem;color:var(--muted)}
+.aceite input{width:auto;margin-top:3px}
+button{border:0;border-radius:12px;padding:14px;font:700 16px 'Figtree',sans-serif;background:var(--navy);color:#f4efe3;cursor:pointer}
+button[disabled]{opacity:.6;cursor:wait}
+.msg{display:none;border-radius:10px;padding:11px 13px;font-size:.92rem}.msg.bad{display:block;background:#f8e4e1;color:var(--bad)}
+.ok{text-align:center;display:none}.ok .mk{margin:0 auto 12px;width:56px;height:56px;font-size:18px}
+.ok h2{font:700 1.3rem 'Sora',sans-serif;margin:0 0 8px}
+.rod{margin-top:22px;text-align:center;color:var(--muted);font-size:.85rem}.rod a{color:var(--navy)}
+@media (max-width:460px){.planos{grid-template-columns:1fr}.pl{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:4px 8px}}
+</style>
+</head>
+<body>
+<header><div class="in"><span class="mk">CC</span><b>CENTRAL DO CONSULTOR</b></div></header>
+<main>
+  <div id="form">
+    <h1>Quero usar a Central</h1>
+    <p class="sub">Deixe seus dados. Nossa equipe confere e libera seu acesso; você recebe o convite no e-mail para criar sua senha.</p>
+    <form class="card" id="f" novalidate>
+      <label>Nome e sobrenome<input id="nome" autocomplete="name" required maxlength="120"></label>
+      <label>E-mail<input id="email" type="email" autocomplete="email" inputmode="email" required maxlength="120"></label>
+      <label>WhatsApp<input id="tel" type="tel" autocomplete="tel" inputmode="tel" placeholder="(27) 90000-0000" required></label>
+      <label>Cidade (opcional)<input id="cidade" autocomplete="address-level2" maxlength="80" placeholder="Ex.: Vila Velha"></label>
+      <div>
+        <div style="font-weight:600;font-size:.92rem;margin-bottom:6px">Plano de interesse</div>
+        <div class="planos" id="planos">
+          <label class="pl on"><input type="radio" name="pl" value="essencial" checked><b>Essencial</b><span class="pr">R$ 97/mês</span><span>Central + Cotador</span></label>
+          <label class="pl"><input type="radio" name="pl" value="plus"><b>Plus</b><span class="pr">R$ 197/mês</span><span>+ IA sugere respostas no WhatsApp</span></label>
+          <label class="pl"><input type="radio" name="pl" value="prime"><b>Prime</b><span class="pr">R$ 297/mês</span><span>Tudo, com IA automática</span></label>
+        </div>
+      </div>
+      <label>Quer contar algo? (opcional)<textarea id="msg" maxlength="500" placeholder="Ex.: trabalho com Unimed e Bluzz, uns 20 leads por semana"></textarea></label>
+      <label class="aceite"><input type="checkbox" id="aceite"> <span>Li e aceito os <a href="/termos/" target="_blank">Termos de Uso</a> e a <a href="/privacidade/" target="_blank">Política de Privacidade</a>.</span></label>
+      <p class="msg" id="erro"></p>
+      <button id="enviar" type="submit">Pedir meu acesso</button>
+    </form>
+  </div>
+  <div class="ok card" id="pronto">
+    <span class="mk">CC</span>
+    <h2>Pedido recebido!</h2>
+    <p class="sub" id="prontoTxt" style="margin:0">Vamos conferir seus dados e liberar seu acesso. O convite chega no seu e-mail (olhe também o lixo eletrônico).</p>
+  </div>
+  <p class="rod">Já tem acesso? <a href="/central/">Entrar na Central</a> · Dúvidas: <a href="mailto:central.consultor@outlook.com">central.consultor@outlook.com</a></p>
+</main>
+<script>
+(function () {
+  var URL_SB = "https://tqhrjivlfpexmhkwakwl.supabase.co", CHAVE = "sb_publishable_vI455mCunOwgHkEaPra01w_05Ynugib";
+  var f = document.getElementById("f"), erro = document.getElementById("erro"), bt = document.getElementById("enviar");
+  function so(s) { return String(s || "").replace(/\D/g, ""); }
+  function falha(t) { erro.className = "msg bad"; erro.textContent = t; }
+  var tel = document.getElementById("tel");
+  tel.addEventListener("input", function () {
+    var d = so(tel.value).slice(0, 11);
+    tel.value = d.length > 6 ? "(" + d.slice(0, 2) + ") " + d.slice(2, d.length - 4) + "-" + d.slice(-4) : d.length > 2 ? "(" + d.slice(0, 2) + ") " + d.slice(2) : d;
+  });
+  [].forEach.call(document.querySelectorAll("input[name=pl]"), function (i) {
+    i.onchange = function () { [].forEach.call(document.querySelectorAll(".pl"), function (l) { l.classList.toggle("on", l.querySelector("input").checked); }); };
+  });
+  var q = new URLSearchParams(location.search).get("plano");
+  if (q && /^(essencial|plus|prime)$/.test(q)) { var r = document.querySelector("input[name=pl][value=" + q + "]"); r.checked = true; r.onchange(); }
+  f.onsubmit = async function (e) {
+    e.preventDefault(); erro.className = "msg";
+    var nome = document.getElementById("nome").value.trim(), email = document.getElementById("email").value.trim(), t = so(tel.value);
+    if (nome.split(/\s+/).length < 2) return falha("Informe nome e sobrenome.");
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return falha("Confira o e-mail.");
+    if (t.length < 10 || t.length > 11) return falha("Digite o WhatsApp com DDD.");
+    if (!document.getElementById("aceite").checked) return falha("Para continuar, aceite os Termos e a Política de Privacidade.");
+    bt.disabled = true; bt.textContent = "Enviando…";
+    try {
+      var r = await fetch(URL_SB + "/rest/v1/rpc/solicitar_acesso", {
+        method: "POST", headers: { "Content-Type": "application/json", apikey: CHAVE, Authorization: "Bearer " + CHAVE },
+        body: JSON.stringify({ p_nome: nome, p_email: email, p_telefone: t, p_cidade: document.getElementById("cidade").value.trim() || null,
+          p_plano: document.querySelector("input[name=pl]:checked").value, p_mensagem: document.getElementById("msg").value.trim() || null })
+      });
+      var j = await r.json().catch(function () { return {}; });
+      if (!r.ok) throw new Error((j && j.message) || "Não deu certo agora. Tente de novo.");
+      if (j && j.ja_pendente) document.getElementById("prontoTxt").textContent = "Já temos um pedido seu em análise. Assim que for liberado, o convite chega no seu e-mail.";
+      document.getElementById("form").style.display = "none";
+      document.getElementById("pronto").style.display = "flex";
+      window.scrollTo(0, 0);
+    } catch (x) { falha(x.message); bt.disabled = false; bt.textContent = "Pedir meu acesso"; }
+  };
+})();
+</script>
+</body>
+</html>
