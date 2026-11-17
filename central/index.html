@@ -196,7 +196,7 @@ iframe{position:absolute;inset:0;width:1px;min-width:100%;height:100%;border:0;b
     {id:"posvenda",label:"Pós-venda",file:"posvenda.html"},
     {id:"clientes",label:"Clientes",file:"clientes.html"},
     {id:"hoje",label:"Meta",file:"painel.html"},
-    {id:"cotador",label:"Cotador",file:"cotador.html"},
+    {id:"cotador",label:"Cotador",file:"cotador.html?v=20261117"},
     {id:"comissoes",label:"Comissões",file:"comissoes.html"},
     {id:"cronograma",label:"Cronograma",file:"cronograma.html",parent:"hoje",hide:true},
     {id:"rotina",label:"Rotina",hide:true}, /* consultor, 10/11: Rotina foi para dentro de META */
@@ -305,7 +305,7 @@ iframe{position:absolute;inset:0;width:1px;min-width:100%;height:100%;border:0;b
     el.innerHTML='<div class="in"><h1>Layout dos consultores</h1><p>Estas são as telas que cada consultor usa. Abra qualquer uma para ver o layout como eles veem. Aqui aparecem só os seus dados de teste: os dados dos consultores ficam na área de cada um. Para voltar, use <b>Painel</b> no menu.</p>'+cards+'</div>';
     return el;
   }
-  function proposta(){ window.__modoProposta=true; document.body.classList.add("modo-proposta"); main.innerHTML=""; var f=document.createElement("iframe"); f.title="Proposta"; f.src="cotador.html"+location.hash; main.appendChild(f); }
+  function proposta(){ window.__modoProposta=true; document.body.classList.add("modo-proposta"); main.innerHTML=""; var f=document.createElement("iframe"); f.title="Proposta"; f.src="cotador.html?v=20261117"+location.hash; main.appendChild(f); }
   function fromHash(){ if(/^#(p[a-z0-9]{8}$|q-)/.test(location.hash||"")){ proposta(); return; } var h=(location.hash||"").replace("#",""); if(h==="rotina") h="hoje";
     if(window.__souDono){ document.getElementById("topnav").innerHTML=navHtml(); document.getElementById("botnav").innerHTML=navHtml(); if(!h) h="monitor"; }
     show(h||"prospeccao"); }
