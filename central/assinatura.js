@@ -1,4 +1,4 @@
-/* Central do Consultor: aviso de teste grátis, mensalidade pendente e bloqueio por atraso (v2, 16/11/2026: aviso do teste só nos últimos 9 dias + link Minha assinatura)
+/* Central do Consultor: aviso de teste grátis, mensalidade pendente e bloqueio por atraso (v3, 16/11/2026: aviso do teste só nos últimos 9 dias + link Minha assinatura + pedido de CPF/CNPJ de cobrança a partir de 40 dias do vencimento)
    Uso: CentralAssinatura.verificar(function (nome, args) { return clienteSupabase.rpc(nome, args); }) */
 (function () {
   var SUPORTE = "mailto:dilima17@icloud.com?subject=Central%20do%20Consultor%20-%20pagamento";
@@ -59,6 +59,12 @@
       faixa("<span><b>Mensalidade pendente</b> desde " + esc(br(a.proximo_vencimento)) + ". " +
         (resta > 0 ? "O acesso será pausado em " + resta + (resta === 1 ? " dia" : " dias") + "." : "O acesso será pausado hoje.") + "</span>" +
         (link ? ' <a class="btn" href="' + esc(link) + '" target="_blank" rel="noopener">Pagar agora</a>' : ""), true, null);
+      return a;
+    }
+    /* 16/11 (Diego): cadastro da cobrança em dezembro → pede CPF/CNPJ a partir de 40 dias do 1º vencimento (turma de janeiro: 01/12) */
+    if ((a.status === "teste" || a.status === "ativo") && a.tem_documento === false && !link && venc !== null && venc >= 0 && venc <= 40) {
+      faixa("<span><b>Falta cadastrar seus dados de cobrança.</b> Sua primeira mensalidade vence em " + esc(br(a.proximo_vencimento)) + ". Leva 1 minuto.</span>" +
+        ' <a class="btn" href="/central/minha-assinatura/">Cadastrar agora</a>', false, "cc-ass-doc-" + a.proximo_vencimento);
       return a;
     }
     if (a.status === "teste") {
