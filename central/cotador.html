@@ -791,17 +791,19 @@ for(const g of ["g1","g2"]) for(const [k,nm,rede,ab] of BVS_PROD){
 /* ===== Benevix empresarial (SBS), Bluzz via Unity e Best Senior ===== */
 Object.assign(OPS,{
   unb:{nome:"Bluzz Saúde",canal:"Unity",logo:"blz",oper:"blz",versao:"Informe empresarial compulsório de janeiro/2026"},
-  bst:{nome:"Best Senior",canal:"",logo:"bst",oper:"bst",versao:"Tabela de valores individuais (informe 2025)"}
+  bst:{nome:"Best Senior",canal:"",logo:"bst",oper:"bst",versao:"Tabela de novembro/2026"}
 });
 OPS.bvs.versao="Adesão 15/09/2025 · Empresarial 20/04/2026";
 Object.assign(G,{
   "bvs:em":{label:"Linha SBS Empresarial · CAEB e FEMICRO-ES",taxa:""},
   "unb:emt":{label:"CAEB empresarial · copart. total",taxa:""},
   "unb:emp":{label:"CAEB empresarial · copart. parcial",taxa:""},
-  "bst:pf":{label:"Best Senior pessoa física · a partir de 44 anos",taxa:""}
+  "bst:pf":{label:"Best Senior pessoa física · a partir de 44 anos",taxa:""},
+  "bst:em":{label:"Best Senior empresarial · a partir de 44 anos",taxa:""}
 });
-Object.assign(CAR,{bst:"Carências contratuais; consulte as condições de aproveitamento com o consultor."});
-R.bst=[];
+Object.assign(CAR,{bst:"Carência contratual: urgência/emergência 24 h; consultas e exames simples 30 dias; complexos I 90 dias; complexos II 120 dias; especiais, terapias e alta complexidade 180 dias; saúde mental, internações e internação psiquiátrica 180 dias; CPT 730 dias."});
+R.bst=["praiacosta","merivit","meriserra","mericar","merisaomateus","saoluiz","saofrancisco"];
+R.bstSelect=["praiacosta","saoluiz","saofrancisco","merivit|PS e ambulatório","meriserra|PS e ambulatório","mericar|somente ambulatório"];
 // SBS empresarial via Benevix (Amplo e Amplo Reembolso com os mesmos valores da Quali)
 [["SBS Empresarial Way",[210.53,500.34,1207.49],[272.01,650.36,1573.51],"athWay",CP.sbs,"Espírito Santo"],
  ["SBS Empresarial Amplo",[262.89,624.39,1506.45],[351.76,841.22,2035.50],"athPremium",CP.sbs,"Espírito Santo"],
@@ -817,16 +819,18 @@ P("unb","unb:emt","em","Bluzz Ambulatorial","AMB",3,[118.86,160.46,160.46],"blzA
  ["unb:emp",CP.blzP,[["Bluzz Care","E",[225.45,550.20,1342.42],"blzCare"],["Bluzz Care Plus","E",[236.05,575.97,1405.41],"blzCarePlus"],["Bluzz Care Plus","A",[306.85,748.77,1827.03],"blzCarePlus"],["Bluzz Executivo","E",[260.99,636.88,1553.95],"blzExec"],["Bluzz Executivo","A",[339.27,827.95,2020.14],"blzExec"]]]
 ].forEach(([g,cp,rows])=>rows.forEach(([nm,ac,p,rede])=>P("unb",g,"em",nm,ac,3,p,rede,cp,UNB_AB)));
 // Best Senior (pessoa física, a partir de 44 anos, sem coparticipação)
-const BST_NOTA="A Best Senior não divulga a rede no informe; consulte os hospitais com o consultor.";
-P("bst","bst:pf","pf","Best Select","E","s44",[505.55,585.12,643.63,920.39],"bst","Sem coparticipação.","Espírito Santo",{nota:BST_NOTA});
-P("bst","bst:pf","pf","Best Essencial","E","s44",[609.09,704.96,775.45,1108.91],"bst","Sem coparticipação.","Espírito Santo",{nota:BST_NOTA});
-P("bst","bst:pf","pf","Best Master","A","s44",[792.95,917.76,1009.52,1443.61],"bst","Sem coparticipação.","Espírito Santo",{nota:BST_NOTA});
+const BST_NOTA="Rede Meridional (hospitais, laboratórios Pretti/Meridional e Cremasco). Urgência e emergência em outros estados pela rede Abramge. Descontos em farmácias Santa Lúcia e Pague Menos e na Óticas Diniz.";
+const BST_AB="Espírito Santo (rede Meridional)";
+[["bst:pf","pf",[[ "Best Select","E",[531.93,615.65,677.22,968.42],"bstSelect"],["Best Essencial","E",[640.88,741.75,815.93,1166.77],"bst"],["Best Master","A",[834.33,965.66,1062.19,1518.95],"bst"]]],
+ ["bst:em","em",[[ "Best Select","E",[505.33,584.87,643.36,919.99],"bstSelect"],["Best Essencial","E",[608.83,704.66,775.13,1108.44],"bst"],["Best Master","A",[792.62,917.37,1009.09,1442.99],"bst"]]]
+].forEach(([g,mod,rows])=>rows.forEach(([nm,ac,p,rede])=>P("bst",g,mod,nm,ac,"s44",p,rede,"Sem coparticipação.",BST_AB,{nota:BST_NOTA})));
 /* ===== Campanhas do mês (somem sozinhas depois da data final) ===== */
 const SBS_ITENS=["Carência zero para consultas e exames (PRC 1004.1)","Sem coparticipação em consultas eletivas e no pronto-socorro da rede própria São Bernardo Samp durante todo o contrato","Telemedicina sem coparticipação nos 6 primeiros meses","Inclusão de irmãos até 68 anos como dependentes","Odonto Pleno incluso"];
 const SBS_REGRA="Empresas de 1 a 29 vidas (entidade CAEBS). Propostas assinadas e protocoladas até 31/12/2026. Não vale para inclusão de funcionários em contratos já existentes.";
 const BLZ_REGRA="Contratos novos, empresariais ou por adesão, assinados e protocolados até 15/12/2026, com vigência em 01/01/2027. Não vale para migração de plano.";
 const UNI_ITENS=["Carência zero para consultas e exames (não inclui terapias, internações, cirurgias, parto e procedimentos ligados à CPT)"];
 const PROMOS=[
+  {nome:"Black Friday Best Senior",ate:"20261130",match:p=>p.op==="bst",desc:{1:20,2:20,3:20},itens:["Carência zero (24 h) para consultas, exames, terapias e procedimentos dos grupos II a VIII, conforme análise contratual","Internações, saúde mental e CPT seguem a carência normal"],regra:"Novas contratações de 04/11 a 30/11/2026. 20% de desconto em cada uma das 3 primeiras mensalidades. Carência zero vale para novos beneficiários sem plano anterior em outra operadora."},
   {nome:"Black Friday Quali",ate:"20261231",match:p=>["ath:em","bvs:em"].includes(p.grp)&&/Way/.test(p.name),desc:{2:70,3:50},itens:SBS_ITENS,regra:SBS_REGRA},
   {nome:"Black Friday Quali",ate:"20261231",match:p=>["ath:em","bvs:em"].includes(p.grp)&&/Amplo/.test(p.name),desc:{2:80,3:80},itens:SBS_ITENS,regra:SBS_REGRA},
   {nome:"Campanha Bluzz Saúde",ate:"20261215",match:p=>OPS[p.op].oper==="blz"&&p.ac!=="AMB",desc:{3:50},itens:["Carência zero para consultas e todos os tipos de exames (exceto terapias, parto, internações, CPT, cirurgias e procedimentos ambulatoriais)"],regra:BLZ_REGRA},
@@ -839,7 +843,7 @@ const promoFor=(p,dia)=>PROMOS.find(x=>(dia||hojeISO())<=x.ate&&x.match(p))||nul
 const dataBR=v=>v.slice(6,8)+"/"+v.slice(4,6)+"/"+v.slice(0,4);
 function promoHTML(pr,total){
   const ks=Object.keys(pr.desc).map(Number).sort((a,b)=>a-b);
-  const rows=ks.length?`<table class="promo-t num"><tr><td>1ª mensalidade</td><td>${brl(total)}</td></tr>${ks.map(k=>`<tr class="off"><td>${k}ª mensalidade <span class="pct">−${pr.desc[k]}%</span></td><td><s>${brl(total)}</s> ${brl(total*(1-pr.desc[k]/100))}</td></tr>`).join("")}<tr><td>A partir da ${ks[ks.length-1]+1}ª</td><td>${brl(total)}</td></tr></table>`:"";
+  const rows=ks.length?`<table class="promo-t num">${ks[0]===1?"":`<tr><td>1ª mensalidade</td><td>${brl(total)}</td></tr>`}${ks.map(k=>`<tr class="off"><td>${k}ª mensalidade <span class="pct">−${pr.desc[k]}%</span></td><td><s>${brl(total)}</s> ${brl(total*(1-pr.desc[k]/100))}</td></tr>`).join("")}<tr><td>A partir da ${ks[ks.length-1]+1}ª</td><td>${brl(total)}</td></tr></table>`:"";
   return `<div class="promo"><div class="promo-h"><span class="promo-tag">Campanha</span><b>${esc(pr.nome)}</b><small>válida até ${dataBR(pr.ate)}</small></div>${rows}${pr.itens.length?`<ul class="promo-i">${pr.itens.map(i=>`<li>${esc(i)}</li>`).join("")}</ul>`:""}<p class="promo-r">${esc(pr.regra)}</p></div>`;
 }
 /* Rede Unimed Vitória por plano: guia médico oficial (guiamedico.unimedvitoria.com.br), consulta de 06/11/2026, somente hospitais */
@@ -1002,7 +1006,7 @@ PERFIS.push(
 EMP.c=EMP.c.concat(["mdn:gvc","mdn:nc","unc:em","medsr:em","uac:comp","ezb:emt","ezb:emp"]);
 EMP.l=EMP.l.concat(["mdn:gvl","mdn:nl","unc:em","medsr:em","uac:liv","ezb:emt","ezb:emp"]);
 const PFG=["medsr:pf","uvpf:pf","bst:pf"];
-EMP.c.push("bvs:em","unb:emt","unb:emp");EMP.l.push("bvs:em","unb:emt","unb:emp");
+EMP.c.push("bvs:em","unb:emt","unb:emp","bst:em");EMP.l.push("bvs:em","unb:emt","unb:emp","bst:em");
 /* Operadoras retiradas do cotador (os planos ficam no fim da lista só para manter os links antigos) */
 const OCULTAS=["unc","nsa"];OCULTAS.forEach(k=>OPS[k].oculto=true);
 const _vis=g=>!OCULTAS.includes(g.split(":")[0]);
