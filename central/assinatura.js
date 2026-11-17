@@ -1,7 +1,7 @@
 /* Central do Consultor: aviso de teste grátis, mensalidade pendente e bloqueio por atraso (v3, 16/11/2026: aviso do teste só nos últimos 9 dias + link Minha assinatura + pedido de CPF/CNPJ de cobrança a partir de 40 dias do vencimento)
    Uso: CentralAssinatura.verificar(function (nome, args) { return clienteSupabase.rpc(nome, args); }) */
 (function () {
-  var SUPORTE = "mailto:dilima17@icloud.com?subject=Central%20do%20Consultor%20-%20pagamento";
+  var SUPORTE = "mailto:central.consultor@outlook.com?subject=Central%20do%20Consultor%20-%20pagamento";
   function hojeSP() { var p = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date()); return new Date(p + "T00:00:00"); }
   function diasAte(d) { return d ? Math.round((new Date(d + "T00:00:00") - hojeSP()) / 86400000) : null; }
   function br(d) { return d ? d.split("-").reverse().join("/") : ""; }
