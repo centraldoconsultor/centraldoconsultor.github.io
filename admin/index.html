@@ -455,7 +455,7 @@ V["avisos"]=function(){
      {l:"Status",f:function(r){return pillStatus(r.status);}}],rows,"Nenhum aviso ainda.");
 };
 V["piloto"]=function(){
-  var cs=D.consultores.filter(function(c){return c.status==="Piloto";}).sort(porNome);
+  var cs=D.consultores.filter(function(c){return c.status==="Piloto"||c.status==="Teste grátis";}).sort(porNome); /* 16/11: Turma de Janeiro também responde o feedback */
   var resumo=cs.map(function(c){var f=D.feedback.filter(function(x){return x.consultor===c.id;}).sort(function(a,b){return String(b.semana).localeCompare(String(a.semana));});
     var ns=f.map(function(x){return Number(x.nota);}).filter(function(n){return n>0;});var med=ns.length?(ns.reduce(function(a,b){return a+b;},0)/ns.length).toFixed(1).replace(".",","):"—";
     return '<tr><td><b>'+esc(c.nome)+'</b></td><td class="num">'+f.length+'</td><td class="num">'+med+'</td><td>'+(f[0]?fData(f[0].semana):"—")+'</td><td>'+(f[0]&&f[0].pagaria?pillStatus(f[0].pagaria):"—")+'</td></tr>';}).join("");
