@@ -216,7 +216,7 @@
       var d = r.data || {};
       if (r.error || d.ok === false) {
         var st = r.error && r.error.context && r.error.context.status;
-        if (st === 403 || d.erro === "plano") throw erro("unavailable", "A sugestão por IA faz parte do plano Com IA.");
+        if (st === 403 || d.erro === "plano") throw erro("unavailable", "A sugestão por IA faz parte dos planos Plus e Prime.");
         if (st === 429) throw erro("rate_limited", "Muitos pedidos seguidos.");
         throw erro("unavailable", "Não consegui sugerir agora. Tente de novo.");
       }
@@ -245,7 +245,7 @@
     use: function (n) {
       if (n === "db") return Promise.resolve(DB);
       if (n === "user") return usuario();
-      if (n === "sample") return carregarEu().then(function (eu) { return eu && eu.plano === "ia" ? amostra() : null; });
+      if (n === "sample") return carregarEu().then(function (eu) { return eu && ["ia", "plus", "prime"].indexOf(eu.plano) >= 0 ? amostra() : null; });
       if (n === "downloads") return Promise.resolve(baixar);
       return Promise.resolve(null);
     }
