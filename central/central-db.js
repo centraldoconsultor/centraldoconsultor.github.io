@@ -304,3 +304,12 @@
     setTimeout(function () { window.CentralAuth.sessao().then(function (s) { if (s) window.CentralAuth.rpc("registrar_tela", { tela: "App instalado" }).catch(function () {}); }, function () {}); }, 3500);
   } catch (e) {}
 })();
+
+/* 17/11: no iPhone, campo com letra menor que 16px faz a tela dar zoom e "cortar" o lado direito. Mantem 16px no celular. */
+(function () {
+  try {
+    var s = document.createElement("style");
+    s.textContent = "@media (max-width:820px){input,select,textarea{font-size:16px!important}}";
+    (document.head || document.documentElement).appendChild(s);
+  } catch (e) {}
+})();

@@ -22,7 +22,7 @@
     f.onclick = function (e) { if (e.target === f) f.remove(); };
     document.addEventListener("keydown", function k(e) { if (e.key === "Escape") { f.remove(); document.removeEventListener("keydown", k); } });
     document.body.appendChild(f);
-    var email = "", nome = (document.getElementById("ccNome") || {}).textContent || "", a = {};
+    var email = "", nome = String((document.getElementById("ccNome") || {}).textContent || "").split(" · ")[0], a = {};
     try { var s = await A.sessao(); email = (s && (s.user ? s.user.email : s.email)) || ""; } catch (e) {}
     try { var r = await A.rpc("minha_assinatura"); a = (r && r.data) || {}; } catch (e) {}
     var plano = NOME[a.plano] || "—", st = ST[a.status] || "—";
