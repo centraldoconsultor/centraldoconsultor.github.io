@@ -304,7 +304,7 @@ const OPS = {
   ath:{nome:"São Bernardo Samp", adm:"Athena · QualiSaúde", versao:"Tabela de 05/10/2026"},
   blz:{nome:"Bluzz Saúde", adm:"Egrégora Administradora", versao:"Informe de 16/07/2026"},
   mer:{nome:"Meridional Saúde", adm:"Egrégora Administradora", versao:"Informe de 08/07/2026"},
-  uni:{nome:"Unimed Vitória", adm:"Mediatorie", versao:"Tabela de 08/06/2026"}
+  uni:{nome:"Unimed Vitória", adm:"Mediatorie", versao:"Tabela de 08/06/2026 + reajuste 12% (17/11/2026)"}
 };
 
 /* Rede hospitalar: id -> [nome, cidade] */
@@ -538,14 +538,14 @@ P("mer","mer:ad","ad","Meridional Prime","A",10,[350.45,392.50,439.60,509.94,601
 // ---- Unimed Vitória · Empresarial (Mediatorie) ----
 const UNI_AB="Grande Vitória e região (19 municípios)";
 const UNI_NOTA="Rede própria Unimed Vitória e rede credenciada; lista completa no guia médico da operadora.";
-P("uni","uni:comp","em","Personal Ambulatorial","AMB",10,b3(118.86,160.46,160.46),"uniPropria",CP.uniAmb,"Aracruz, Cariacica, Viana, Guarapari, Serra, Vila Velha e Vitória");
-P("uni","uni:comp","em","Personal Smart","E",10,b3(222.93,543.96,1327.32),"uniPropria",CP.uniSmart,"Aracruz, Cariacica, Viana, Guarapari, Serra, Vila Velha e Vitória",{nota:UNI_NOTA});
-P("uni","uni:comp","em","Perfil Regional","E",10,b3(285.08,695.62,1697.33),"uniRegional",CP.uni,"Grande Vitória, Anchieta, Domingos Martins e Marechal Floriano");
-P("uni","uni:comp","em","Perfil Regional","A",10,b3(370.61,904.33,2206.51),"uniRegional",CP.uni,"Grande Vitória, Anchieta, Domingos Martins e Marechal Floriano");
-P("uni","uni:comp","em","Participativo Estadual","E",10,b3(366.98,895.45,2179.42),"uniPropria",CP.uni,UNI_AB,{nota:UNI_NOTA});
-P("uni","uni:comp","em","Participativo Estadual","A",10,b3(442.91,1007.31,2265.21),"uniPropria",CP.uni,UNI_AB,{nota:UNI_NOTA});
-P("uni","uni:comp","em","Premium Nacional","E",10,b3(460.70,1124.15,2742.84),"uniPropria",CP.uni,"Atendimento em todo o Sistema Unimed",{nota:UNI_NOTA});
-P("uni","uni:comp","em","Premium Nacional","A",10,b3(552.84,1348.96,3291.38),"uniPropria",CP.uni,"Atendimento em todo o Sistema Unimed",{nota:UNI_NOTA});
+P("uni","uni:comp","em","Personal Ambulatorial","AMB",10,b3(133.12,179.72,179.72),"uniPropria",CP.uniAmb,"Aracruz, Cariacica, Viana, Guarapari, Serra, Vila Velha e Vitória");
+P("uni","uni:comp","em","Personal Smart","E",10,b3(249.68,609.24,1486.60),"uniPropria",CP.uniSmart,"Aracruz, Cariacica, Viana, Guarapari, Serra, Vila Velha e Vitória",{nota:UNI_NOTA});
+P("uni","uni:comp","em","Perfil Regional","E",10,b3(319.29,779.09,1901.01),"uniRegional",CP.uni,"Grande Vitória, Anchieta, Domingos Martins e Marechal Floriano");
+P("uni","uni:comp","em","Perfil Regional","A",10,b3(415.08,1012.85,2471.29),"uniRegional",CP.uni,"Grande Vitória, Anchieta, Domingos Martins e Marechal Floriano");
+P("uni","uni:comp","em","Participativo Estadual","E",10,b3(411.02,1002.90,2440.95),"uniPropria",CP.uni,UNI_AB,{nota:UNI_NOTA});
+P("uni","uni:comp","em","Participativo Estadual","A",10,b3(496.06,1128.19,2537.04),"uniPropria",CP.uni,UNI_AB,{nota:UNI_NOTA});
+P("uni","uni:comp","em","Premium Nacional","E",10,b3(515.98,1259.05,3071.98),"uniPropria",CP.uni,"Atendimento em todo o Sistema Unimed",{nota:UNI_NOTA});
+P("uni","uni:comp","em","Premium Nacional","A",10,b3(619.18,1510.84,3686.35),"uniPropria",CP.uni,"Atendimento em todo o Sistema Unimed",{nota:UNI_NOTA});
 P("uni","uni:liv","em","Personal Smart","E",10,b3(248.33,606.00,1478.57),"uniPropria",CP.uniSmart,"Aracruz, Cariacica, Viana, Guarapari, Serra, Vila Velha e Vitória",{nota:UNI_NOTA});
 P("uni","uni:liv","em","Perfil Regional","E",10,[238.83,267.49,307.63,338.36,399.27,459.17,596.93,776.00,1039.81,1424.55],"uniRegional",CP.uni,"Grande Vitória, Anchieta, Domingos Martins e Marechal Floriano");
 P("uni","uni:liv","em","Perfil Regional","A",10,[310.48,347.72,399.91,439.89,519.07,596.93,776.00,1008.78,1351.75,1851.92],"uniRegional",CP.uni,"Grande Vitória, Anchieta, Domingos Martins e Marechal Floriano");
