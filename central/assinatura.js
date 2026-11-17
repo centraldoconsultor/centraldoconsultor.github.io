@@ -1,4 +1,4 @@
-/* Central do Consultor: aviso de teste grátis, mensalidade pendente e bloqueio por atraso (v1, 14/11/2026)
+/* Central do Consultor: aviso de teste grátis, mensalidade pendente e bloqueio por atraso (v2, 16/11/2026: aviso do teste só nos últimos 9 dias + link Minha assinatura)
    Uso: CentralAssinatura.verificar(function (nome, args) { return clienteSupabase.rpc(nome, args); }) */
 (function () {
   var SUPORTE = "mailto:dilima17@icloud.com?subject=Central%20do%20Consultor%20-%20pagamento";
@@ -52,7 +52,7 @@
     var r; try { r = await rpc("minha_assinatura"); } catch (e) { return null; }
     var a = r && r.data; if (!a || !a.status) return null;
     var venc = diasAte(a.proximo_vencimento), link = linkPag(a);
-    var pagar = link ? ' <a class="btn" href="' + esc(link) + '" target="_blank" rel="noopener">Assinar agora</a>' : " O link de pagamento chega por e-mail e WhatsApp.";
+    var pagar = link ? ' <a class="btn" href="' + esc(link) + '" target="_blank" rel="noopener">Ver pagamento</a>' : ' <a class="btn" href="/central/minha-assinatura/">Minha assinatura</a>';
     if (a.status === "bloqueado" || (a.status === "cancelado" && (venc === null || venc < 0))) { bloquear(a); return a; }
     if (a.status === "atrasado" || (a.status === "teste" && venc !== null && venc < 0) || (a.status === "ativo" && venc !== null && venc < 0)) {
       var resta = venc === null ? 0 : Math.max(0, 3 + venc + 1);
@@ -63,6 +63,7 @@
     }
     if (a.status === "teste") {
       var dt = diasAte(a.teste_ate || a.proximo_vencimento);
+      if (dt !== null && dt > 9) return a; /* 16/11 (Diego): lembrete só perto do fim (turma de janeiro: só em janeiro) */
       var txt = dt === 0 ? "Seu teste grátis acaba <b>hoje</b>." : "Seu teste grátis acaba em <b>" + dt + (dt === 1 ? " dia" : " dias") + "</b> (" + esc(br(a.teste_ate || a.proximo_vencimento)) + ").";
       faixa("<span>" + txt + "</span>" + pagar, false, "cc-ass-teste-" + (a.teste_ate || ""));
       return a;
