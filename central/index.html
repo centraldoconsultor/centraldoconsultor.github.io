@@ -651,4 +651,53 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(
   }); }).catch(function(){});
 })();
 </script>
+<script>
+/* 16/11: PRIMEIROS PASSOS para consultor novo. Os itens se marcam sozinhos conforme ele usa o sistema. Some quando tudo estiver feito ou se ele fechar. */
+(function(){
+  var A=window.CentralAuth; if(!A||!A.rpc) return;
+  if(/^#(p[a-z0-9]{8}$|q-)/.test(location.hash||"")) return;
+  var ITENS=[
+    {k:"app",t:"Instale o app no celular",d:"No iPhone: abra no Safari, toque em Compartilhar › Adicionar à Tela de Início. No Android: Chrome › menu ⋮ › Adicionar à tela inicial. Depois abra a Central pelo ícone.",a:null},
+    {k:"dados",t:"Preencha seus dados",d:"No Cotador, toque em Meus dados: nome, WhatsApp e foto. Eles aparecem na proposta do cliente.",a:"#cotador"},
+    {k:"metas",t:"Informe suas metas",d:"Em Meta, coloque quantas vidas quer fechar no mês.",a:"#hoje"},
+    {k:"avisos",t:"Ligue os avisos",d:"Na Caixa (botão WhatsApp), toque em Ativar avisos. Você fica sabendo quando o cliente abrir a cotação.",a:"/caixa/"},
+    {k:"cotacao",t:"Faça sua primeira cotação",d:"No Cotador, marque os planos e toque em Gerar cotação. Depois copie o link para o cliente.",a:"#cotador"},
+    {k:"proposta",t:"Cadastre sua primeira proposta",d:"Na Esteira, toque em Nova proposta quando o cliente fechar.",a:"#esteira"}
+  ];
+  function chave(u){return "cc-passos-fechado-"+u;}
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  async function carregar(){
+    var s=await A.sessao(); if(!s) return; var uid=s.user&&s.user.id;
+    try{ if(localStorage.getItem(chave(uid))) return; }catch(e){}
+    var r=await A.rpc("primeiros_passos"); var p=r&&r.data; if(!p||p.dono) return;
+    var feitos=ITENS.filter(function(i){return p[i.k];}).length;
+    if(feitos===ITENS.length){ try{ localStorage.setItem(chave(uid),"1"); }catch(e){} return; }
+    montar(p,feitos,uid);
+  }
+  function montar(p,feitos,uid){
+    var css=document.createElement("style");
+    css.textContent="#ppBtn{position:fixed;right:14px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:9000;border:0;border-radius:999px;background:#0e2a52;color:#f4efe3;font:700 14px/1 system-ui,-apple-system,sans-serif;padding:12px 16px;box-shadow:0 6px 20px rgba(0,0,0,.25);border:2px solid #d9bf85;cursor:pointer}"+
+      "@media(min-width:900px){#ppBtn{bottom:20px}}"+
+      "#ppBox{position:fixed;right:14px;left:14px;bottom:calc(140px + env(safe-area-inset-bottom));z-index:9001;max-width:420px;margin-left:auto;background:#fff;color:#14213a;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.3);padding:16px 16px 10px;font:14px/1.45 system-ui,-apple-system,sans-serif;max-height:70vh;overflow:auto;display:none}"+
+      "@media(min-width:900px){#ppBox{bottom:76px}}@media(prefers-color-scheme:dark){#ppBox{background:#182233;color:#e8ecf2}}"+
+      "#ppBox h3{margin:0 0 4px;font-size:16px}#ppBox .pp-bar{height:6px;border-radius:9px;background:rgba(127,127,127,.2);margin:8px 0 12px;overflow:hidden}#ppBox .pp-bar i{display:block;height:100%;background:#d9bf85}"+
+      "#ppBox li{list-style:none;display:flex;gap:10px;padding:9px 0;border-top:1px solid rgba(127,127,127,.2)}#ppBox ul{margin:0;padding:0}"+
+      "#ppBox .pp-ck{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid #d9bf85;display:grid;place-items:center;font-size:13px;font-weight:700}#ppBox .ok .pp-ck{background:#1e6b4f;border-color:#1e6b4f;color:#fff}"+
+      "#ppBox .ok b{text-decoration:line-through;opacity:.6}#ppBox small{display:block;opacity:.75}#ppBox a{color:inherit;font-weight:700}#ppBox .pp-x{float:right;border:0;background:none;font-size:20px;cursor:pointer;color:inherit}#ppBox .pp-nao{border:0;background:none;color:inherit;opacity:.6;font-size:12px;margin-top:8px;cursor:pointer;text-decoration:underline}";
+    document.head.appendChild(css);
+    var btn=document.createElement("button"); btn.id="ppBtn"; btn.type="button"; btn.textContent="🚀 Primeiros passos "+feitos+"/"+ITENS.length;
+    var box=document.createElement("div"); box.id="ppBox"; box.setAttribute("role","dialog"); box.setAttribute("aria-label","Primeiros passos");
+    box.innerHTML='<button class="pp-x" type="button" aria-label="Fechar">×</button><h3>Seus primeiros passos</h3><div>'+feitos+' de '+ITENS.length+' feitos. Eles se marcam sozinhos.</div><div class="pp-bar"><i style="width:'+Math.round(feitos/ITENS.length*100)+'%"></i></div><ul>'+
+      ITENS.map(function(i){ var ok=!!p[i.k]; var link=i.a?(' <a href="'+i.a+'"'+(i.a.charAt(0)==="/"?' target="_blank" rel="noopener"':'')+'>Abrir ›</a>'):''; return '<li class="'+(ok?"ok":"")+'"><span class="pp-ck">'+(ok?"✓":"")+'</span><div><b>'+esc(i.t)+'</b>'+(ok?'':'<small>'+esc(i.d)+link+'</small>')+'</div></li>'; }).join("")+
+      '</ul><button class="pp-nao" type="button">Não mostrar mais</button>';
+    document.body.appendChild(btn); document.body.appendChild(box);
+    btn.onclick=function(){ box.style.display=box.style.display==="block"?"none":"block"; };
+    box.querySelector(".pp-x").onclick=function(){ box.style.display="none"; };
+    box.querySelector(".pp-nao").onclick=function(){ try{ localStorage.setItem(chave(uid),"1"); }catch(e){} box.remove(); btn.remove(); };
+    box.querySelectorAll("a[href^='#']").forEach(function(a){ a.addEventListener("click",function(){ box.style.display="none"; }); });
+    if(document.getElementById("travaFb")) btn.style.display="none";
+  }
+  setTimeout(carregar,2500);
+})();
+</script>
 </body></html>

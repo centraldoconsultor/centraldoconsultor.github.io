@@ -294,3 +294,13 @@
     try { window.CentralAuth.sessao().then(function (s) { if (s) window.CentralAuth.rpc("registrar_tela", { tela: tela }).catch(function () {}); }, function () {}); } catch (e) {}
   }, 3000);
 })();
+
+/* 16/11: marca que o consultor abriu a Central pelo app instalado (primeiros passos) */
+(function () {
+  try {
+    if (window !== window.top) return;
+    var app = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+    if (!app) return;
+    setTimeout(function () { window.CentralAuth.sessao().then(function (s) { if (s) window.CentralAuth.rpc("registrar_tela", { tela: "App instalado" }).catch(function () {}); }, function () {}); }, 3500);
+  } catch (e) {}
+})();
