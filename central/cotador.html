@@ -799,7 +799,8 @@ Object.assign(G,{
   "unb:emt":{label:"CAEB empresarial · copart. total",taxa:""},
   "unb:emp":{label:"CAEB empresarial · copart. parcial",taxa:""},
   "bst:pf":{label:"Best Senior pessoa física · a partir de 44 anos",taxa:""},
-  "bst:em":{label:"Best Senior empresarial · a partir de 44 anos",taxa:""}
+  "bst:em":{label:"Best Senior empresarial · a partir de 44 anos",taxa:""},
+  "unb:sen":{label:"Bluzz Linha Sênior 44+ · coletivo por adesão (Unity)",taxa:"Entidade e taxa associativa: a confirmar com a Unity."}
 });
 Object.assign(CAR,{bst:"Carência contratual: urgência/emergência 24 h; consultas e exames simples 30 dias; complexos I 90 dias; complexos II 120 dias; especiais, terapias e alta complexidade 180 dias; saúde mental, internações e internação psiquiátrica 180 dias; CPT 730 dias."});
 R.bst=["praiacosta","merivit","meriserra","mericar","merisaomateus","saoluiz","saofrancisco"];
@@ -824,6 +825,10 @@ const BST_AB="Espírito Santo (rede Meridional)";
 [["bst:pf","pf",[[ "Best Select","E",[531.93,615.65,677.22,968.42],"bstSelect"],["Best Essencial","E",[640.88,741.75,815.93,1166.77],"bst"],["Best Master","A",[834.33,965.66,1062.19,1518.95],"bst"]]],
  ["bst:em","em",[[ "Best Select","E",[505.33,584.87,643.36,919.99],"bstSelect"],["Best Essencial","E",[608.83,704.66,775.13,1108.44],"bst"],["Best Master","A",[792.62,917.37,1009.09,1442.99],"bst"]]]
 ].forEach(([g,mod,rows])=>rows.forEach(([nm,ac,p,rede])=>P("bst",g,mod,nm,ac,"s44",p,rede,"Sem coparticipação.",BST_AB,{nota:BST_NOTA})));
+// Bluzz Linha Sênior 44+ via Unity (informe nov/2026; entidade, carências e registro ANS a confirmar)
+const SEN_CP="Coparticipação: especialista na clínica Bluzz R$ 30 · consulta na rede R$ 50 · pronto-socorro R$ 80 · exames simples R$ 1,50 a R$ 25 · intermediários R$ 50 · complexos R$ 150 · procedimentos ambulatoriais R$ 100 · internações isentas · limite de R$ 500/mês por beneficiário.";
+const SEN_NOTA="Informe Unity nov/2026 · público a partir de 44 anos · sem obstetrícia. Entidade, carências e registro ANS a confirmar com a Unity.";
+[["Bluzz Care Sênior","E",[454.44,526.38,579.02,827.99],"blzCare","Sem coparticipação."],["Bluzz Care Plus Sênior","E",[499.88,579.02,636.92,910.79],"blzCarePlus",SEN_CP],["Bluzz Care Plus Sênior","A",[599.86,694.82,764.30,1092.94],"blzCarePlus",SEN_CP],["Bluzz Executivo Sênior","E",[624.86,723.77,796.15,1138.48],"blzExec",SEN_CP],["Bluzz Executivo Sênior","A",[749.83,868.53,955.38,1366.18],"blzExec",SEN_CP]].forEach(([nm,ac,p,rede,cp])=>P("unb","unb:sen","ad",nm,ac,"s44",p,rede,cp,"Produto regional (ES)",{nota:SEN_NOTA}));
 /* ===== Campanhas do mês (somem sozinhas depois da data final) ===== */
 const SBS_ITENS=["Carência zero para consultas e exames (PRC 1004.1)","Sem coparticipação em consultas eletivas e no pronto-socorro da rede própria São Bernardo Samp durante todo o contrato","Telemedicina sem coparticipação nos 6 primeiros meses","Inclusão de irmãos até 68 anos como dependentes","Odonto Pleno incluso"];
 const SBS_REGRA="Empresas de 1 a 29 vidas (entidade CAEBS). Propostas assinadas e protocoladas até 31/12/2026. Não vale para inclusão de funcionários em contratos já existentes.";
@@ -1009,6 +1014,7 @@ EMP.c=EMP.c.concat(["mdn:gvc","mdn:nc","unc:em","medsr:em","uac:comp","ezb:emt",
 EMP.l=EMP.l.concat(["mdn:gvl","mdn:nl","unc:em","medsr:em","uac:liv","ezb:emt","ezb:emp"]);
 const PFG=["medsr:pf","uvpf:pf","bst:pf"];
 EMP.c.push("bvs:em","unb:emt","unb:emp","bst:em");EMP.l.push("bvs:em","unb:emt","unb:emp","bst:em");
+PERFIS.forEach(p=>{if(!p.g.includes("unb:sen"))p.g.push("unb:sen")});
 /* Operadoras retiradas do cotador (os planos ficam no fim da lista só para manter os links antigos) */
 const OCULTAS=["unc","nsa"];OCULTAS.forEach(k=>OPS[k].oculto=true);
 const _vis=g=>!OCULTAS.includes(g.split(":")[0]);
