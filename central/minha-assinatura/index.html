@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Minha assinatura · Central do Consultor</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/img/icone-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Sora:wght@600;700&display=swap">
+<style>
+:root{--navy:#0e2a52;--ink:#0e1f3d;--gold:#b08a3e;--gold2:#d9bf85;--bg:#f4efe3;--card:#fffdf8;--line:#e3dccb;--muted:#5d6579;--ok:#1f6b45;--bad:#8f2d22}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 'Figtree','Segoe UI',system-ui,sans-serif}
+header{background:var(--navy);color:#f4efe3;border-bottom:3px solid var(--gold)}
+header .in{max-width:640px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:12px}
+header .mk{width:38px;height:38px;border-radius:50%;background:#0a1f3f;color:var(--gold2);display:grid;place-items:center;font:700 13px 'Sora',sans-serif;border:1px solid var(--gold)}
+header b{font:700 15px 'Sora',sans-serif;letter-spacing:.02em}
+header a{margin-left:auto;color:var(--gold2);text-decoration:none;font-weight:600}
+main{max-width:640px;margin:0 auto;padding:18px 16px 60px;display:flex;flex-direction:column;gap:16px}
+h1{font:700 1.45rem 'Sora',sans-serif;margin:4px 0 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.card h2{font:700 1.05rem 'Sora',sans-serif;margin:0}
+.muted{color:var(--muted);font-size:.92rem;margin:0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kv{background:#f8f4ea;border-radius:10px;padding:10px 12px}
+.kv small{display:block;color:var(--muted);font-size:.8rem}
+.kv b{font-size:1.02rem}
+.selo{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.82rem;font-weight:700;background:#e7eef8;color:var(--navy)}
+.selo.ok{background:#e2f2e9;color:var(--ok)}.selo.bad{background:#f8e4e1;color:var(--bad)}
+label{font-weight:600;font-size:.9rem;display:flex;flex-direction:column;gap:5px}
+input,select,textarea{font:inherit;padding:11px 12px;border:1px solid #cfc6b1;border-radius:10px;background:#fff;color:var(--ink);width:100%}
+textarea{min-height:80px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:1px}
+.btn{display:inline-flex;justify-content:center;align-items:center;gap:6px;border:0;border-radius:10px;padding:12px 16px;font:700 15px 'Figtree',sans-serif;cursor:pointer;text-decoration:none;background:var(--navy);color:#f4efe3}
+.btn.ouro{background:var(--gold2);color:var(--ink)}
+.btn.sec{background:#fff;color:var(--ink);border:1px solid #cfc6b1}
+.btn.perigo{background:#fff;color:var(--bad);border:1px solid #e3b4ad}
+.btn[disabled]{opacity:.55;cursor:wait}
+.planos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.plano{border:2px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:4px;background:#fff}
+.plano input{display:none}
+.plano.on{border-color:var(--gold);background:#fbf6ea}
+.plano b{font:700 1rem 'Sora',sans-serif}.plano span{color:var(--muted);font-size:.85rem}
+.msg{border-radius:10px;padding:10px 12px;font-size:.92rem;display:none}
+.msg.ok{display:block;background:#e2f2e9;color:var(--ok)}.msg.bad{display:block;background:#f8e4e1;color:var(--bad)}
+.linha{display:flex;flex-wrap:wrap;gap:10px}
+details summary{cursor:pointer;font-weight:700;color:var(--bad)}
+@media (max-width:480px){.grid,.planos{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="in"><span class="mk">CC</span><b>MINHA ASSINATURA</b><a href="/central/">‹ Central</a></div></header>
+<main id="app">
+  <p class="muted" id="carregando">Carregando…</p>
+</main>
+<script src="/central/central-db.js?v=7"></script>
+<script>
+(function () {
+  var app = document.getElementById("app");
+  var A = window.CentralAuth;
+  var NOME = { essencial: "Essencial", ia: "Com IA" }, PRECO = { essencial: 99, ia: 199 };
+  var STATUS = { teste: ["Teste grátis", ""], ativo: ["Ativa", "ok"], atrasado: ["Pagamento pendente", "bad"], bloqueado: ["Pausada por atraso", "bad"], cancelado: ["Cancelada", "bad"], cortesia: ["Cortesia", "ok"] };
+  var MOTIVOS = ["O preço está alto para mim", "Não estou usando o suficiente", "Faltou alguma função", "Vou parar de vender planos", "Problemas técnicos", "Outro motivo"];
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function br(d) { return d ? String(d).slice(0, 10).split("-").reverse().join("/") : "—"; }
+  function reais(v) { return v == null ? "—" : "R$ " + Number(v).toFixed(2).replace(".", ","); }
+  function so(s) { return String(s || "").replace(/\D/g, ""); }
+  function msg(el, txt, ok) { el.className = "msg " + (ok ? "ok" : "bad"); el.textContent = txt; }
+  async function erroDe(r) {
+    if (r && r.error) {
+      try { var j = await r.error.context.json(); if (j && j.erro) return j.erro; } catch (e) {}
+      return r.error.message || "Não deu certo. Tente de novo.";
+    }
+    return r && r.data && r.data.erro;
+  }
+
+  async function iniciar() {
+    var s = null; try { s = await A.sessao(); } catch (e) {}
+    if (!s) { location.href = "/central/"; return; }
+    var r = await A.rpc("minha_assinatura");
+    var a = (r && r.data) || { status: "sem" };
+    desenhar(a);
+  }
+
+  function desenhar(a) {
+    var st = STATUS[a.status] || ["Sem assinatura", "bad"];
+    var plano = a.plano === "ia" ? "ia" : "essencial";
+    var cortesia = a.status === "cortesia";
+    var canc = a.cancelamento;
+    var h = '<h1>Minha assinatura</h1>';
+    h += '<section class="card"><div class="linha" style="align-items:center;justify-content:space-between"><h2>Plano ' + esc(NOME[plano]) + '</h2><span class="selo ' + st[1] + '">' + esc(st[0]) + '</span></div>';
+    h += '<div class="grid">';
+    h += '<div class="kv"><small>Mensalidade</small><b>' + (cortesia ? "Cortesia" : reais(a.valor || PRECO[plano])) + '</b></div>';
+    if (a.status === "teste") h += '<div class="kv"><small>Teste grátis até</small><b>' + br(a.teste_ate) + '</b></div>';
+    if (!cortesia) h += '<div class="kv"><small>Próximo vencimento</small><b>' + br(a.proximo_vencimento) + '</b></div>';
+    if (a.ultimo_pagamento) h += '<div class="kv"><small>Último pagamento</small><b>' + br(a.ultimo_pagamento) + '</b></div>';
+    h += '</div>';
+    if (canc) h += '<p class="msg bad" style="display:block">Você pediu o cancelamento em ' + br(canc.criado_em) + '. Seu acesso continua até ' + br(a.proximo_vencimento || a.teste_ate) + '. <a href="#" id="voltar" style="color:inherit;font-weight:700">Quero continuar com a Central</a></p>';
+    h += '</section>';
+
+    if (!cortesia && a.status !== "sem") {
+      h += '<section class="card" id="cob"><h2>Pagamento</h2>';
+      if (a.link_pagamento) {
+        h += '<p class="muted">Pix, boleto ou cartão. O link é seguro (Asaas).</p><a class="btn ouro" href="' + esc(a.link_pagamento) + '" target="_blank" rel="noopener">Abrir pagamento de ' + br(a.proximo_vencimento) + '</a>';
+        if (a.status === "teste") h += '<p class="muted">Você só paga a partir do vencimento. Os lembretes chegam perto da data.</p>';
+      } else {
+        h += '<p class="muted">Informe os dados para emitir sua cobrança mensal. A primeira vence em <b>' + br(a.proximo_vencimento) + '</b>' + (a.status === "teste" ? ", depois do teste grátis" : "") + '.</p>';
+        h += '<label>CPF ou CNPJ<input id="doc" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00"></label>';
+        h += '<label>WhatsApp<input id="tel" inputmode="tel" autocomplete="tel" placeholder="(27) 90000-0000"></label>';
+        h += '<button class="btn" id="gerar">Salvar e gerar cobrança</button>';
+      }
+      h += '<p class="msg" id="mCob"></p></section>';
+    }
+
+    h += '<section class="card"><h2>Trocar de plano</h2><div class="planos">' +
+      ["essencial", "ia"].map(function (p) {
+        return '<label class="plano' + (p === plano ? " on" : "") + '"><input type="radio" name="pl" value="' + p + '"' + (p === plano ? " checked" : "") + '><b>' + NOME[p] + '</b><span>' + reais(PRECO[p]) + '/mês' + (p === "ia" ? " · IA no WhatsApp" : " · Central + Cotador") + '</span></label>';
+      }).join("") + '</div><button class="btn sec" id="trocar" disabled>Trocar para este plano</button><p class="muted">A troca vale na hora. O novo valor entra na próxima mensalidade.</p><p class="msg" id="mPl"></p></section>';
+
+    if (!canc && a.status !== "sem") {
+      h += '<section class="card"><details><summary>Cancelar assinatura</summary><div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">' +
+        '<p class="muted">Seus dados ficam guardados. O acesso continua até o fim do período já pago.</p>' +
+        '<label>Por que você quer cancelar?<select id="mot"><option value="">Escolha um motivo</option>' + MOTIVOS.map(function (m) { return "<option>" + esc(m) + "</option>"; }).join("") + '</select></label>' +
+        '<label>Quer contar mais? (opcional)<textarea id="det" maxlength="1000" placeholder="O que faria você ficar?"></textarea></label>' +
+        '<button class="btn perigo" id="cancelar">Pedir cancelamento</button><p class="msg" id="mCan"></p></div></details></section>';
+    }
+    h += '<p class="muted" style="text-align:center">Dúvidas? <a href="mailto:dilima17@icloud.com?subject=Central%20do%20Consultor%20-%20assinatura">Fale com o suporte</a></p>';
+    app.innerHTML = h;
+    ligar(a, plano);
+  }
+
+  function ligar(a, plano) {
+    var g = document.getElementById("gerar");
+    if (g) g.onclick = async function () {
+      var m = document.getElementById("mCob"), doc = so(document.getElementById("doc").value), tel = so(document.getElementById("tel").value);
+      if (doc.length !== 11 && doc.length !== 14) return msg(m, "Digite um CPF (11 números) ou CNPJ (14 números).");
+      if (tel.length < 10 || tel.length > 11) return msg(m, "Digite o WhatsApp com DDD.");
+      g.disabled = true; g.textContent = "Gerando…";
+      var r = await A.funcao("asaas", { acao: "meu_link", documento: doc, telefone: tel });
+      var e = await erroDe(r);
+      if (e) { g.disabled = false; g.textContent = "Salvar e gerar cobrança"; return msg(m, e); }
+      msg(m, "Pronto! Cobrança criada.", true);
+      setTimeout(iniciar, 800);
+    };
+    [].forEach.call(document.querySelectorAll("input[name=pl]"), function (i) {
+      i.onchange = function () {
+        [].forEach.call(document.querySelectorAll(".plano"), function (l) { l.classList.toggle("on", l.querySelector("input").checked); });
+        document.getElementById("trocar").disabled = i.value === plano;
+      };
+    });
+    document.getElementById("trocar").onclick = async function () {
+      var b = this, m = document.getElementById("mPl"), novo = document.querySelector("input[name=pl]:checked").value;
+      if (novo === plano) return;
+      if (!confirmar("Trocar para o plano " + NOME[novo] + " (" + reais(PRECO[novo]) + "/mês)?")) return;
+      b.disabled = true;
+      var r = await A.rpc("pedir_assinatura", { p_tipo: "trocar_plano", p_plano: novo, p_motivo: null, p_detalhe: null });
+      if (r.error) { b.disabled = false; return msg(m, r.error.message || "Não deu certo."); }
+      if (a.link_pagamento || a.status !== "cortesia") { try { await A.funcao("asaas", { acao: "meu_link" }); } catch (e) {} }
+      avisar(r.data && r.data.id);
+      msg(m, "Plano trocado para " + NOME[novo] + ".", true);
+      setTimeout(iniciar, 900);
+    };
+    var c = document.getElementById("cancelar");
+    if (c) c.onclick = async function () {
+      var m = document.getElementById("mCan"), mot = document.getElementById("mot").value, det = document.getElementById("det").value.trim();
+      if (!mot) return msg(m, "Escolha um motivo.");
+      if (!confirmar("Confirmar o pedido de cancelamento?")) return;
+      c.disabled = true;
+      var r = await A.rpc("pedir_assinatura", { p_tipo: "cancelar", p_plano: null, p_motivo: mot, p_detalhe: det || null });
+      if (r.error) { c.disabled = false; return msg(m, r.error.message || "Não deu certo."); }
+      avisar(r.data && r.data.id);
+      iniciar();
+    };
+    var v = document.getElementById("voltar");
+    if (v) v.onclick = async function (e) {
+      e.preventDefault();
+      var r = await A.rpc("pedir_assinatura", { p_tipo: "voltar", p_plano: null, p_motivo: null, p_detalhe: null });
+      if (!r.error) { avisar(r.data && r.data.id); iniciar(); }
+    };
+  }
+  function confirmar(t) { return window.confirm(t); }
+  function avisar(id) { if (id) A.funcao("asaas", { acao: "avisar_pedido", id: id }).catch(function () {}); }
+
+  iniciar().catch(function () { app.innerHTML = '<p class="msg bad" style="display:block">Não consegui carregar. Recarregue a página.</p>'; });
+})();
+</script>
+</body>
+</html>
