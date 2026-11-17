@@ -240,6 +240,14 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // v2.3: link do e-mail (convite ou esqueci a senha) leva para a tela de definir senha
 const tipoLink = new URLSearchParams(location.hash.slice(1)).get("type");
 const db = createClient("https://tqhrjivlfpexmhkwakwl.supabase.co", "sb_publishable_vI455mCunOwgHkEaPra01w_05Ynugib");
+// 16/11: registro de erros da tela (Painel ADM › Erros); no máximo 5 por página aberta
+{ const vistos = {}; let enviados = 0;
+  const ignorar = (m, d) => !m || /ResizeObserver loop|^Script error\.?$|chrome-extension:|moz-extension:|safari-extension:|safari-web-extension:|Non-Error promise rejection|Load failed|NetworkError|Failed to fetch|AbortError/i.test(m + " " + (d || ""));
+  const enviar = (m, d) => { try { if (ignorar(m, d)) return; const k = String(m).slice(0, 120); if (vistos[k] || enviados >= 5) return; vistos[k] = 1; enviados++;
+    setTimeout(() => { db.rpc("registrar_erro", { pagina: location.pathname, mensagem: String(m).slice(0, 500), detalhe: d ? String(d).slice(0, 2000) : null, navegador: navigator.userAgent }).then(() => {}, () => {}); }, 500); } catch (e) {} };
+  window.addEventListener("error", (e) => { if (e && e.target && e.target !== window && (e.target.src || e.target.href)) return; enviar(e.message || "erro", (e.filename || "") + ":" + (e.lineno || "") + ":" + (e.colno || "") + (e.error && e.error.stack ? "\n" + e.error.stack : "")); }, true);
+  window.addEventListener("unhandledrejection", (e) => { const r = e && e.reason; enviar("Promise: " + ((r && r.message) || r || "rejeitada"), r && r.stack ? r.stack : null); });
+}
 window.__ccDb = db; // v4.2 avisos no celular
 
 const $ = (id) => document.getElementById(id);
