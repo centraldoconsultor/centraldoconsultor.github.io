@@ -1664,4 +1664,14 @@ loadPerfil();
 </script>
 
 
+<script>
+/* 16/11: o Cotador publica a lista de planos (catálogo) para a IA escolher os planos pelo nome. Só grava quando quem abre é o dono e a lista mudou. */
+(function(){ setTimeout(async function(){ try{
+  if(!window.CentralAuth||!window.CentralAuth.rpc||typeof PLANS==="undefined") return;
+  var s=await window.CentralAuth.sessao(); if(!s) return;
+  var cat=PLANS.map(function(p){return [p.i,p.op,p.grp,p.mod,p.name,p.ac]}); var j=JSON.stringify(cat),h=0;
+  for(var i=0;i<j.length;i++){h=(h*31+j.charCodeAt(i))|0}
+  await window.CentralAuth.rpc("salvar_catalogo_cotador",{catalogo:cat,versao:cat.length+"-"+(h>>>0).toString(36)});
+}catch(e){} },4000); })();
+</script>
 </body></html>
