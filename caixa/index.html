@@ -234,6 +234,7 @@ header button{background:rgba(255,255,255,.12)}
   </form>
 </div>
 
+<script src="audio.js?v=1"></script>
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 // v2.4 (14/11/2026): ofertas das operadoras valem para todos os consultores; Essencial vê só para consulta
@@ -451,6 +452,7 @@ async function iniciar() {
   $("auto").checked = eu.modo_automatico === true;
   // v2.1: plano essencial (sem IA) esconde o que e da IA
   if (!["ia", "prime"].includes(eu.plano) && eu.papel !== "dono") $("auto").closest("label").style.display = "none"; // 17/11: Plus nao tem automatico
+  montarMic(eu);
   if (!["ia", "plus", "prime"].includes(eu.plano)) { const fIA = document.querySelector('#filtros [data-f="ia"]'); if (fIA) fIA.style.display = "none"; }
   $("auto").onchange = async (e) => {
     if (e.target.checked && !confirm("Ligar a IA automatica? Ela vai responder sozinha os leads novos ate o fecho da cotacao.")) { e.target.checked = false; return; }
@@ -562,6 +564,7 @@ function desenharConversa(rolar) {
     const ehIA = enviadasIA.has(m.texto);
     return `<div class="b ${ehIA ? "ia" : "eu"}">${ehIA ? '<span class="selo">IA</span>' : ""}${corpo(m)}<small>${hora(m.criado_em)}</small></div>`;
   }).join("") || `<div class="vazio">Sem mensagens.</div>`;
+  ligarAudios();
   if (rolar !== false) $("cMsgs").scrollTop = $("cMsgs").scrollHeight;
 
   const ultLead = [...ms].reverse().find((m) => m.direcao === "entrada");
@@ -574,7 +577,38 @@ function desenharConversa(rolar) {
 function corpo(m) {
 if (!m.arquivo_path) return esc(m.texto ?? "[" + m.tipo + "]");
 const nome = m.arquivo_nome || m.arquivo_path.split("/").pop();
+// 17/11: audio (recebido ou gravado) toca aqui mesmo
+if (m.tipo === "audio" || /^audio\//.test(m.arquivo_mime || "") || /\.(ogg|oga|opus|mp3|m4a|aac|amr|wav)$/i.test(nome)) {
+  return '<span class="aud" data-p="' + esc(m.arquivo_path) + '" data-m="' + esc(m.arquivo_mime || "") + '">🎧 carregando áudio…</span> <a href="#" class="arq" data-p="' + esc(m.arquivo_path) + '" data-n="' + esc(nome) + '" style="font-size:.8em">baixar</a>' + (m.texto ? "\n" + esc(m.texto) : "");
+}
 return '<a href="#" class="arq" data-p="' + esc(m.arquivo_path) + '" data-n="' + esc(nome) + '">📎 ' + esc(nome) + '</a>' + (m.texto ? "\n" + esc(m.texto) : "");
+}
+
+async function ligarAudios() {
+  for (const s of document.querySelectorAll("#cMsgs .aud[data-p]")) {
+    const p = s.dataset.p; s.removeAttribute("data-p");
+    const { data } = await db.storage.from("arquivos").createSignedUrl(p, 3600);
+    if (!data?.signedUrl) { s.textContent = "🎧 áudio (use baixar)"; continue; }
+    s.replaceWith(window.CaixaAudio ? window.CaixaAudio.player(data.signedUrl, s.dataset.m || undefined) : Object.assign(document.createElement("audio"), { controls: true, src: data.signedUrl }));
+  }
+}
+
+async function enviarAudio(arq, info) {
+  if (!arq || !aberta) return;
+  if (!confirm("Enviar este áudio de " + Math.round(info?.duracao || 0) + "s para o contato?")) return;
+  const path = aberta + "/envio-" + Date.now() + "-" + arq.name;
+  const up = await db.storage.from("arquivos").upload(path, arq, { contentType: arq.type });
+  if (up.error) { alert("Não subiu: " + up.error.message); return; }
+  const { data, error } = await db.functions.invoke("enviar-arquivo", { body: { contato_id: aberta, path, nome: arq.name, mime: arq.type } });
+  if (error || data?.ok === false) alert("Não enviou: " + (data?.erro || error?.message));
+  await carregar();
+}
+
+function montarMic(eu) {
+  if (!window.CaixaAudio || document.getElementById("bMic")) return;
+  if (!["ia", "prime"].includes(eu.plano) && eu.papel !== "dono") return; // 17/11: audio e do Prime
+  const w = window.CaixaAudio.botao(enviarAudio); w.id = "bMic";
+  $("bClipe").after(w);
 }
 
 async function abrirArquivo(e) {
