@@ -79,7 +79,8 @@
   var velho = /github\.io$/.test(location.hostname);
   var ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
   var instalado = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-  var novoSemApp = !velho && ios && !instalado && location.pathname.indexOf("/caixa") === 0;
+  var semAviso = !("Notification" in window) || Notification.permission !== "granted";
+  var novoSemApp = !velho && ios && (!instalado || semAviso) && location.pathname.indexOf("/caixa") === 0;
   if (!velho && !novoSemApp) return;
   try { if (!velho && localStorage.getItem("ccFaixaFechada") === "1") return; } catch (e) {}
   function montar() {
@@ -88,7 +89,7 @@
     d.style.cssText = "position:sticky;top:0;z-index:10000;background:#b08a3e;color:#0e1f3d;font:14px/1.45 system-ui,-apple-system,sans-serif;padding:10px 14px;box-shadow:0 2px 8px rgba(0,0,0,.2)";
     d.innerHTML = velho
       ? "<b>📲 A Caixa mudou de endereço</b><br>Para continuar recebendo os avisos no celular, instale a Caixa nova (uma vez só):<br>1) Abra <a href='" + NOVO + "' style='color:#0e1f3d;font-weight:700'>centralconsultorsaude.com.br/caixa</a> no Safari<br>2) Toque em Compartilhar › <b>Adicionar à Tela de Início</b><br>3) Abra pelo ícone novo, entre e toque em <b>🔔 Ativar avisos</b><br><span style='opacity:.85'>Depois pode apagar este ícone antigo.</span>"
-      : "<b>📲 Receba os avisos no celular</b><br>Toque em Compartilhar › <b>Adicionar à Tela de Início</b>, abra pelo ícone, entre e toque em <b>🔔 Ativar avisos</b>. <a href='#' id='ccFaixaX' style='color:#0e1f3d;font-weight:700;margin-left:6px'>Fechar</a>";
+      : "<b>📲 Receba os avisos no celular</b><br>A Caixa mudou de endereço. Se você abriu pelo ícone antigo: abra <b>centralconsultorsaude.com.br/caixa</b> no Safari, toque em Compartilhar › <b>Adicionar à Tela de Início</b>, abra pelo ícone novo, entre e toque em <b>🔔 Ativar avisos</b>. Depois pode apagar o ícone antigo. <a href='#' id='ccFaixaX' style='color:#0e1f3d;font-weight:700;margin-left:6px'>Fechar</a>";
     document.body.insertBefore(d, document.body.firstChild);
     var x = document.getElementById("ccFaixaX");
     if (x) x.onclick = function (e) { e.preventDefault(); try { localStorage.setItem("ccFaixaFechada", "1"); } catch (er) {} d.remove(); };
