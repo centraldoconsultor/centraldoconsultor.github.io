@@ -469,6 +469,7 @@ if (eAuto) { alert("Não foi possível mudar: " + eAuto.message); e.target.check
   $("bEncerrar").onclick = () => { if (confirm("Encerrar esta conversa? Ela sai da lista principal e a IA nao responde mais esse contato.")) etiquetar("ENCERRADO"); };
 $("bBloquear").onclick = () => { if (confirm("Bloquear este contato? A IA para de responder, você não recebe mais avisos dele e os arquivos que ele mandar não são baixados. Dá para desbloquear depois.")) etiquetar("BLOQUEADO"); };
 $("bDesbloq").onclick = () => etiquetar(null);
+window.CXI = { db, eu: () => EU, aberta: () => aberta }; // usado por docs.js (so Diego)
   $("bOfertas").onclick = abrirOfertas;
 $("bPerfil").onclick = abrirPerfil;
 $("pfRegras").onsubmit = salvarRegras;
@@ -675,6 +676,6 @@ async function enviarManual(e) {
 }
 </script>
 <script src="avisos.js?v=1" defer></script>
-<script src="docs.js?v=1" defer></script>
+<script src="docs.js?v=2" defer></script>
 </body>
 </html>

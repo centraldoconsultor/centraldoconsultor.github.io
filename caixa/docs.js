@@ -6,8 +6,8 @@
   const escD = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   let ultimo = null;
 
-  function souDiego() { try { return typeof EU !== "undefined" && EU && EU.id === DIEGO; } catch (e) { return false; } }
-  function contatoAberto() { try { return typeof aberta !== "undefined" ? aberta : null; } catch (e) { return null; } }
+  function souDiego() { try { const e = window.CXI && window.CXI.eu(); return !!e && e.id === DIEGO; } catch (e) { return false; } }
+  function contatoAberto() { try { return window.CXI ? window.CXI.aberta() : null; } catch (e) { return null; } }
 
   setInterval(() => {
     const b = $d("bDocs"); if (!b) return;
@@ -17,7 +17,7 @@
   }, 800);
 
   async function chamar(corpo) {
-    const { data } = await db.auth.getSession();
+    const { data } = await window.CXI.db.auth.getSession();
     const r = await fetch(URL_CONF, { method: "POST", headers: { "content-type": "application/json", Authorization: "Bearer " + (data?.session?.access_token ?? "") }, body: JSON.stringify(corpo) });
     return r.json();
   }
@@ -29,7 +29,7 @@
 
   async function abrir() {
     const p = $d("cDocs"); const id = contatoAberto(); if (!p || !id) return;
-    const { data: ct } = await db.from("contatos").select("documentacao").eq("id", id).maybeSingle();
+    const { data: ct } = await window.CXI.db.from("contatos").select("documentacao").eq("id", id).maybeSingle();
     const d = ct?.documentacao ?? {};
     p.innerHTML = `<div class="resumo" style="font-size:14px">
       <b>📄 Conferir documentos</b>
