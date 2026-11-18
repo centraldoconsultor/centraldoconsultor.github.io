@@ -356,7 +356,9 @@ button,select,input,textarea{font:inherit;color:inherit}
   (function(){ var dl=document.getElementById("dlPlanos"), h="";
     PLANOS.forEach(function(x){ PKEY[x.k]=x; h+='<option value="'+esc(x.k)+'"></option>'; });
     dl.innerHTML=h; })();
-  function faixaIdx(age,f){ if(f==="s49") return age<49?-1:age<=53?0:age<=58?1:2; if(f===3) return age<=43?0:age<=58?1:2; if(age<=18) return 0; if(age>=59) return 9; return Math.floor((age-19)/5)+1; }
+  /* 18/11: lista real de planos (publicada pelo Cotador) no lugar da tabela de exemplo */
+  (function(){ try{ var A=parent&&parent.CentralAuth; if(!A||!A.rpc) return; A.rpc("planos_esteira").then(function(r){ var L=r&&r.data; if(!Array.isArray(L)||L.length<10) return; PLANOS=L; PKEY={}; var dl=document.getElementById("dlPlanos"), h=""; PLANOS.forEach(function(x){ PKEY[x.k]=x; h+='<option value="'+esc(x.k)+'"></option>'; }); dl.innerHTML=h; }).catch(function(){}); }catch(e){} })();
+  function faixaIdx(age,f){ if(f==="s49") return age<44?-1:age<=53?0:age<=58?1:2; if(f==="s44") return age<44?-1:age<=48?0:age<=53?1:age<=58?2:3; if(f===3) return age<=43?0:age<=58?1:2; if(age<=18) return 0; if(age>=59) return 9; return Math.floor((age-19)/5)+1; }
   function premPorVida(opid,mes){ var o=S.ops.filter(function(x){return x.id===opid})[0]; if(!o||!o.valores) return null; var best=null,bk=""; for(var k in o.valores){ if(k<=mes&&k>=bk&&o.valores[k]!=null){bk=k;best=+o.valores[k]} } return best; }
   function fmt2(n){ return (Math.round(n*100)/100).toFixed(2).replace(".",","); }
   function q1(k,id){ return document.querySelector('[data-e="'+k+'"][data-id="'+id+'"]'); }
@@ -367,7 +369,7 @@ button,select,input,textarea{font:inherit;color:inherit}
     var note=document.querySelector('[data-calc="'+id+'"]'); if(!x){ if(note) note.textContent=""; return; }
     var ages=String((q1("idades",id)||{}).value||"").split(/[^0-9]+/).filter(Boolean).map(Number);
     var vidas=ages.length||Math.max(1,parseInt((q1("vidas",id)||{}).value)||1), tot=0, aviso="";
-    if(ages.length){ ages.forEach(function(a){ var i=faixaIdx(a,x.f); if(i<0){ i=0; aviso=" · MedSênior é a partir de 49 anos"; } tot+=x.v[i]; }); setF("vidas",id,String(vidas)); }
+    if(ages.length){ ages.forEach(function(a){ var i=faixaIdx(a,x.f); if(i<0){ i=0; aviso=" · planos sênior são a partir de 44 anos"; } tot+=x.v[i]; }); setF("vidas",id,String(vidas)); }
     else { tot=x.v[0]*vidas; aviso=" · sem idades: calculei pela 1ª faixa; informe as idades para o valor exato"; }
     setF("mensalidade",id,fmt2(tot));
     var p=S.all.filter(function(z){return z._id===id})[0], mes=(q1("enviada",id)||{}).value||(p&&p.datas&&p.datas.enviada)||today; mes=String(mes).slice(0,7);
@@ -563,7 +565,7 @@ button,select,input,textarea{font:inherit;color:inherit}
     var x=PKEY[f.dataset.key||""]; var info=$("fPlanoInfo"); if(!x){ return; }
     var ages=String(f.idades.value||"").split(/[^0-9]+/).filter(Boolean).map(Number);
     var vidas=ages.length||Math.max(1,parseInt(f.vidas.value)||1), tot=0, av="";
-    if(ages.length){ f.vidas.value=vidas; ages.forEach(function(a){ var i=faixaIdx(a,x.f); if(i<0){i=0;av=" · MedSênior é a partir de 49 anos";} tot+=x.v[i]; }); }
+    if(ages.length){ f.vidas.value=vidas; ages.forEach(function(a){ var i=faixaIdx(a,x.f); if(i<0){i=0;av=" · planos sênior são a partir de 44 anos";} tot+=x.v[i]; }); }
     else { tot=x.v[0]*vidas; av=" · sem idades: calculei pela 1ª faixa"; }
     f.mensalidade.value=fmt2(tot);
     if(f.adStatus.value==="sim" && !f.dataset.adManual){ f.adValor.value=fmt2(Math.round(tot*0.95*100)/100); }

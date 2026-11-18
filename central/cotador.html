@@ -1373,6 +1373,9 @@ async function loadPerfil(){
   try{const db=window.__C?await window.__C.use("db"):null;if(!db){PERFIL_LIDO=true;return}
     const sn=await db.doc("config/perfil").get();
     if(sn.exists){const p=sn.data();Object.assign(cfg,{corretor:p.corretor||"",corretora:p.corretora||"",fone:p.fone||"",email:p.email||""});FOTO_CORRETOR=p.foto||AVATAR_PADRAO;saveCfg();PERFIL_OK=true}
+    else { /* 18/11: primeiro acesso deste login: nao herda dados de outro login neste aparelho; parte do perfil do consultor */
+      let eu=null,em=""; try{eu=parent.CentralAuth&&await parent.CentralAuth.eu();const ss=parent.CentralAuth&&await parent.CentralAuth.sessao();em=(ss&&ss.user&&ss.user.email)||""}catch(e){}
+      Object.assign(cfg,{corretor:(eu&&eu.nome)||"",corretora:(eu&&eu.corretora)||"",fone:String((eu&&(eu.whatsapp||eu.telefone||eu.fone))||"").replace(/\D/g,""),email:(eu&&eu.email)||em});FOTO_CORRETOR=AVATAR_PADRAO;saveCfg(); }
   }catch(e){}
   PERFIL_LIDO=true;
   if(!parseHash(location.hash)&&!/^#p[a-z0-9]{8}$/.test(location.hash)){route();if(!PERFIL_OK)openCfg(true)}
@@ -1685,6 +1688,11 @@ loadPerfil();
   var cat=PLANS.map(function(p){return [p.i,p.op,p.grp,p.mod,p.name,p.ac]}); var j=JSON.stringify(cat),h=0;
   for(var i=0;i<j.length;i++){h=(h*31+j.charCodeAt(i))|0}
   await window.CentralAuth.rpc("salvar_catalogo_cotador",{catalogo:cat,versao:cat.length+"-"+(h>>>0).toString(36)});
+      /* 18/11: planos com precos para a Esteira de todos os consultores (so o dono grava) */
+      var ACN={E:"Enfermaria",A:"Apartamento",AMB:"Ambulatorial"},MDN={ad:"Adesão",em:"Empresarial",pf:"Pessoa física"},vis={};
+      var est=PLANS.filter(function(p){return Array.isArray(p.p)&&typeof p.p[0]==="number"}).map(function(p){var o=(typeof OPS!=="undefined"&&OPS[p.op])||{};var canal=(o.canal&&o.canal!=="Pessoa física")?o.canal:"";var nm=p.name+" · "+(ACN[p.ac]||p.ac);var ent=(p.mod==="ad"&&p.grp&&p.grp.indexOf(":")>0)?", "+p.grp.split(":")[1].toUpperCase():"";var k=nm+" — "+(o.nome||p.op)+" ("+(canal?canal+", ":"")+(MDN[p.mod]||p.mod)+ent+")";if(vis[k])return null;vis[k]=1;return {k:k,p:nm,a:canal?canal+" · "+(o.nome||""):(o.nome||""),f:p.f,v:p.p,o:"",t:""}}).filter(Boolean);
+      var je=JSON.stringify(est),he=0; for(var q=0;q<je.length;q++){he=(he*31+je.charCodeAt(q))|0}
+      await window.CentralAuth.rpc("salvar_planos_esteira",{planos:est,versao:est.length+"-"+(he>>>0).toString(36)});
 }catch(e){} },4000); })();
 </script>
 </body></html>
