@@ -172,7 +172,7 @@ details.box[open] summary{margin-bottom:10px}
   <details class="box">
     <summary>Mensagens de cada lembrete</summary>
     <div class="tpl" id="tplBox"></div>
-    <div class="actions" style="margin-top:10px"><button class="btn primary" type="button" id="saveTpl">Salvar mensagens</button><button class="btn ghost" type="button" id="resetTpl">Voltar ao texto original</button><span class="note" id="tplMsg">Use {nome}, {plano}, {operadora} e {mes}: a Central troca pelos dados de cada cliente.</span></div>
+    <div class="actions" style="margin-top:10px"><button class="btn primary" type="button" id="saveTpl">Salvar mensagens</button><button class="btn ghost" type="button" id="resetTpl">Voltar ao texto original</button><span class="note" id="tplMsg">Use {nome}, {plano}, {operadora}, {mes} e {link} (página de boas-vindas do plano, com sua foto e WhatsApp de Meus dados no Cotador): a Central troca pelos dados de cada cliente.</span></div>
   </details>
 </div>
 <div class="toast" id="toast" hidden role="status"><span id="toastTxt"></span><button type="button" id="toastUndo">Desfazer</button></div>
@@ -197,7 +197,7 @@ details.box[open] summary{margin-bottom:10px}
     {k:"d30",l:"30 dias · indicação",d:30,ind:true}
   ];
   var DEF={
-    bv:"Oi, {nome}! Seja muito bem-vindo(a) ao seu plano {plano}. 🎉 Ele já está ativo. Qualquer dúvida sobre hospitais, carência, aplicativo ou reembolso, é só me chamar aqui. Conte comigo!\n\n[Seu nome] · Corretora",
+    bv:"Olá, {nome}! Seja muito bem-vindo(a) ao seu novo plano de saúde! 🎉\nPreparei uma página com tudo para você começar: como baixar o app, fazer o primeiro acesso e ver sua carteirinha:\n{link}\nQualquer dúvida, estou à disposição por aqui. 😊",
     cart:"Oi, {nome}! Tudo certo com o plano? Já recebeu a carteirinha e conseguiu entrar no aplicativo da {operadora}? Se precisar de ajuda para baixar o app ou marcar a primeira consulta, me avisa que eu te ajudo.",
     d30:"Oi, {nome}! Já faz um mês que o seu plano está ativo. Como está sendo? Conseguiu usar os hospitais e consultas direitinho?\n\nSe estiver gostando do atendimento, tem alguém da família, amigo ou colega de trabalho que também esteja precisando de plano de saúde? Vou cuidar da pessoa com o mesmo carinho. 😊",
     d90:"Oi, {nome}! Passando para saber como está o plano depois desses 3 meses. Está tudo certo? Se conhecer alguém procurando plano de saúde ou odonto, pode me indicar que eu faço uma cotação sem compromisso.",
@@ -225,7 +225,31 @@ details.box[open] summary{margin-bottom:10px}
   }
   function msgFor(p,k){
     var b=base(p), mes=""; if(b){ var d=new Date(b+"T12:00:00"); mes=MESES[d.getMonth()]+" de "+(d.getFullYear()+1); }
-    return (S.tpl[k]||DEF[k]).replace(/\{nome\}/g,firstName(p.cliente)).replace(/\{plano\}/g,p.produto||"de saúde").replace(/\{operadora\}/g,opOf(p)).replace(/\{mes\}/g,mes);
+    return (S.tpl[k]||DEF[k]).replace(/\{nome\}/g,firstName(p.cliente)).replace(/\{plano\}/g,p.produto||"de saúde").replace(/\{operadora\}/g,opOf(p)).replace(/\{mes\}/g,mes).replace(/\{link\}/g,linkBV(p))+(k==="bv"&&!/\{link\}/.test(S.tpl[k]||DEF[k])?"\n\nComo usar o seu plano: "+linkBV(p):"");
+  }
+  /* 21/11: pagina de boas-vindas por plano, com o cartao publico do consultor (propostas/<codigo>, lido sem login por ler_proposta) */
+  var BV={code:"",ok:false};
+  function planoKey(p){ var t=(String(p.administradora||"")+" "+String(p.produto||"")).toLowerCase();
+    if(/meds[eê]nior/.test(t)) return "medsenior"; if(/best/.test(t)) return "bestsenior"; if(/bluzz/.test(t)) return "bluzz";
+    if(/s[aã]o bernardo|samp|sbs|athena/.test(t)) return "samp"; if(/unimed|vitoriamed|participativo|perfil regional|personal smart|premium nacional/.test(t)) return "unimed"; return "inicio"; }
+  function linkBV(p){ return "https://centralconsultorsaude.com.br/boas-vindas/#"+planoKey(p)+(BV.code?"-"+BV.code:""); }
+  function genCode(){ var a="abcdefghijkmnpqrstuvwxyz23456789",c="",r=crypto.getRandomValues(new Uint8Array(8)); r.forEach(function(x){c+=a[x%a.length]}); return c; }
+  function prepBV(db){
+    var raw=window.claude; if(!raw||!raw.use) return;
+    Promise.all([db.collection("config").doc("boasvindas").get(),db.collection("config").doc("perfil").get(),raw.use("db")]).then(function(r){
+      var bv=r[0]&&r[0].exists?r[0].data():{}, pf=r[1]&&r[1].exists?r[1].data():{}, rdb=r[2], code=bv.code;
+      var novo=!/^[a-z0-9]{8}$/.test(code||""); if(novo) code=genCode();
+      var perfil=Promise.resolve(pf);
+      if(!pf.corretor&&window.CentralAuth) perfil=window.CentralAuth.eu().then(function(eu){ return {corretor:(eu&&eu.nome)||"",corretora:(eu&&eu.corretora)||"",fone:String((eu&&(eu.whatsapp||eu.telefone||eu.fone))||"")}; },function(){return pf});
+      return perfil.then(function(pf){
+        var card={bv:1,n:pf.corretor||"",c:pf.corretora||"",w:String(pf.fone||"").replace(/\D/g,""),atualizado:today};
+        if(pf.foto) card.f=pf.foto;
+        return rdb.doc("propostas/"+code).set(card).then(function(){
+          BV.code=code; BV.ok=true; render();
+          if(novo) return db.collection("config").doc("boasvindas").set({code:code,criado:today});
+        });
+      });
+    }).catch(function(){});
   }
   function fone(t){ var n=String(t||"").replace(/\D/g,""); if(!n) return ""; return n.length<=11?"55"+n:n; }
 
@@ -334,11 +358,11 @@ details.box[open] summary{margin-bottom:10px}
   var cl=(window.__C||(window.__C||window.claude)); if(!cl||!cl.use) return;
   cl.use("db").then(function(db){
     if(!db){ clearTimeout(timer); $("list").innerHTML='<div class="empty">Entre na Central com seu e-mail e senha para ver o pós-venda.</div>'; return; }
-    S.db=db;
+    S.db=db; prepBV(db);
     db.collection("propostas").onSnapshot(function(s){ S.loaded=true; clearTimeout(timer); S.p=s.docs.map(function(d){var o=Object.assign({},d.data());o._id=d.id;return o}); render(); },function(){ clearTimeout(timer); $("list").innerHTML='<div class="empty">Não consegui ler os contratos.</div>'; });
     db.collection("posvenda").onSnapshot(function(s){ var m={}; s.docs.forEach(function(d){ m[d.id]=Object.assign({},d.data()); }); S.pv=m; render(); },function(){});
     db.collection("leads").where("origem","==","Indicação").onSnapshot(function(s){ S.leads=s.docs.map(function(d){var o=Object.assign({},d.data());o._id=d.id;return o}); render(); },function(){});
-    db.collection("config").doc("posvenda").onSnapshot(function(d){ var v=d&&d.exists&&d.data(); if(v){ S.tpl=Object.assign({},DEF,v); fillTpl(); render(); } },function(){});
+    db.collection("config").doc("posvenda").onSnapshot(function(d){ var v=d&&d.exists&&d.data(); if(v&&v.bv&&/\[Seu nome\]/.test(v.bv)){ v=Object.assign({},v); delete v.bv; } if(v){ S.tpl=Object.assign({},DEF,v); fillTpl(); render(); } },function(){});
   });
 })();
 </script>
