@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="description" content="Como baixar o app, fazer o primeiro acesso e usar o seu plano de saúde.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Boas-vindas ao seu plano de saúde">
+<meta property="og:description" content="Como baixar o app, fazer o primeiro acesso e usar o seu plano.">
+<meta property="og:locale" content="pt_BR">
+<meta name="theme-color" content="#0e2a52">
+<title>Boas-vindas ao seu plano de saúde</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0e2a52; --navy2:#16386b; --gold:#b08a3e; --gold-soft:#f4ecdc;
+    --ink:#1c2533; --muted:#5b6678; --line:#e3e6ec; --bg:#f7f6f2; --card:#fff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55;font-size:16px}
+  a{color:var(--navy2)}
+  .wrap{max-width:680px;margin:0 auto;padding:0 18px}
+  header.top{background:var(--navy);color:#fff;padding:28px 0 26px}
+  header.top .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#d9c391;font-weight:600}
+  header.top h1{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:30px;line-height:1.15;margin:8px 0 8px}
+  header.top p{margin:0;color:#d6deea;font-size:15px}
+  nav.planos{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line)}
+  nav.planos .wrap{display:flex;gap:8px;overflow-x:auto;padding-top:10px;padding-bottom:10px;scrollbar-width:none}
+  nav.planos a{flex:none;text-decoration:none;font-size:14px;font-weight:500;color:var(--muted);padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:#fff}
+  nav.planos a.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  main{padding:22px 0 10px}
+  .plano{display:none}
+  .plano.on{display:block}
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px;border-top:4px solid var(--gold)}
+  .hero h2{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:24px;margin:0 0 4px;color:var(--navy)}
+  .hero .sub{color:var(--muted);font-size:14px;margin:0 0 12px}
+  .hero p{margin:0}
+  section.bloco{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+  section.bloco h3{font-size:15px;margin:0 0 10px;color:var(--navy);display:flex;align-items:center;gap:9px}
+  section.bloco h3 .n{flex:none;width:24px;height:24px;border-radius:50%;background:var(--gold-soft);color:var(--gold);font-size:12px;font-weight:600;display:grid;place-items:center}
+  section.bloco ul{margin:0;padding-left:18px}
+  section.bloco li{margin:4px 0}
+  section.bloco p{margin:0 0 8px}
+  section.bloco p:last-child{margin-bottom:0}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  td{padding:7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+  td:last-child{text-align:right;font-weight:600;white-space:nowrap;padding-left:12px}
+  tr:last-child td{border-bottom:0}
+  .nota{font-size:13px;color:var(--muted);margin-top:8px}
+  .alerta{background:#fff7e6;border:1px solid #f0d9a8;border-radius:10px;padding:10px 12px;font-size:14px}
+  .contato{background:var(--navy);color:#fff;border-radius:14px;padding:20px;margin:18px 0 8px}
+  .contato h3{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:20px;margin:0 0 6px}
+  .contato p{margin:0 0 12px;color:#d6deea;font-size:15px}
+  .contato .num{font-size:20px;font-weight:600;letter-spacing:.02em;color:#fff;margin-bottom:12px}
+  .btn{display:inline-block;background:var(--gold);color:#fff;text-decoration:none;font-weight:600;padding:11px 18px;border-radius:10px;font-size:15px}
+  .lojas{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+  .loja{display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:#111;color:#fff;border-radius:10px;padding:9px 14px;font-size:14px;font-weight:600}
+  .loja svg{width:18px;height:18px;fill:#fff}
+  ol.passos{margin:0;padding:0;list-style:none;counter-reset:p}
+  ol.passos li{counter-increment:p;position:relative;padding:6px 0 6px 34px;margin:0}
+  ol.passos li::before{content:counter(p);position:absolute;left:0;top:6px;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;font-weight:600;display:grid;place-items:center}
+  .contato .quem{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+  .foto{flex:none;width:72px;height:72px;border-radius:50%;border:3px solid var(--gold);background:var(--navy2);display:grid;place-items:center;overflow:hidden;font-family:Fraunces,Georgia,serif;font-size:26px;color:#fff}
+  .foto img{width:100%;height:100%;object-fit:cover;object-position:50% 25%}
+  .contato .quem b{display:block;font-size:18px}
+  .contato .quem span{font-size:13px;color:#d9c391;letter-spacing:.04em}
+  footer{color:var(--muted);font-size:12px;padding:16px 0 34px;text-align:center}
+  .inicio .lista{display:grid;gap:10px}
+  .inicio .lista a{display:block;text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;color:var(--ink)}
+  .inicio .lista a b{color:var(--navy);display:block}
+  .inicio .lista a span{font-size:14px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="kicker" id="kicker">Boas-vindas do seu consultor</div>
+    <h1>Seja bem-vindo(a) ao seu plano de saúde!</h1>
+    <p>Obrigado pela confiança. Aqui está o essencial para você começar a usar o seu plano com tranquilidade.</p>
+  </div>
+</header>
+
+<nav class="planos" aria-label="Escolha o plano">
+  <div class="wrap">
+    <a href="#inicio" data-p="inicio">Início</a>
+    <a href="#unimed" data-p="unimed">Unimed Vitória</a>
+    <a href="#bluzz" data-p="bluzz">Bluzz Saúde</a>
+    <a href="#samp" data-p="samp">São Bernardo Samp</a>
+    <a href="#medsenior" data-p="medsenior">MedSênior</a>
+    <a href="#bestsenior" data-p="bestsenior">Best Sênior</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <!-- INÍCIO -->
+  <div class="plano inicio" id="p-inicio">
+    <div class="hero">
+      <h2>Qual é o seu plano?</h2>
+      <p class="sub">Toque no seu plano para ver as boas-vindas e as orientações.</p>
+      <div class="lista">
+        <a href="#unimed"><b>Unimed Vitória</b><span>Perfil Regional, Participativo Estadual ou Vitoriamed</span></a>
+        <a href="#bluzz"><b>Bluzz Saúde</b><span>Executivo</span></a>
+        <a href="#samp"><b>São Bernardo Samp</b><span>Way, Amplo ou Vital</span></a>
+        <a href="#medsenior"><b>MedSênior</b><span>Planos a partir de 44 anos</span></a>
+        <a href="#bestsenior"><b>Best Sênior</b><span>Planos a partir de 44 anos</span></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- UNIMED -->
+  <div class="plano" id="p-unimed">
+    <div class="hero">
+      <h2>Bem-vindo(a) à Unimed Vitória</h2>
+      <p class="sub">Perfil Regional · Participativo Estadual · Vitoriamed</p>
+      <p>Você agora conta com a rede própria da Unimed Vitória e uma das maiores redes credenciadas do Espírito Santo. Guarde esta página: ela vai te ajudar nos primeiros passos.</p>
+    </div>
+
+    <section class="bloco">
+      <h3><span class="n">1</span>Primeiro acesso ao app</h3>
+      <div class="lojas"><a class="loja" href="https://play.google.com/store/apps/details?id=br.com.unimed.vitoria.mobile.cliente" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M6 3l14 9-14 9z"/></svg>Android · Google Play</a><a class="loja" href="https://apps.apple.com/br/app/unimed-vit%C3%B3ria-cliente/id1092980080" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M7 2h10a2 2 0 012 2v16a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2zm0 3v13h10V5zm5 14.2a1 1 0 100 2 1 1 0 000-2z"/></svg>iPhone · App Store</a></div>
+      <ol class="passos">
+        <li>Toque no botão do seu celular acima e instale o app <b>Unimed Vitória Cliente</b>.</li>
+        <li>Abra o app e toque em <b>Primeiro acesso</b>, <b>Criar conta</b> ou <b>Cadastre-se</b>.</li>
+        <li>Informe o <b>CPF do beneficiário</b> e os dados pedidos (e-mail e celular).</li>
+        <li>Confirme o <b>código</b> que chega por e-mail ou SMS e crie uma <b>senha só sua</b>.</li>
+        <li>Pronto! Abra a <b>carteirinha virtual</b> — cada dependente tem a sua.</li>
+      </ol>
+      <p class="nota">Se o app disser que não encontrou seu cadastro, é porque o plano ainda está sendo ativado. Me chame que eu acompanho. Nunca passe sua senha ou código para ninguém — nem para mim.</p>
+      <p class="nota">No app você também tem guia médico, teleconsulta e acompanhamento de autorizações.</p>
+    </section>
+
+    <section class="bloco">
+      <h3><span class="n">2</span>Onde ser atendido</h3>
+      <ul>
+        <li><b>Hospital Unimed Vitória</b> — com pronto-socorro infantil</li>
+        <li><b>Hospital Dia e Maternidade Unimed</b></li>
+        <li><b>Unimed Diagnóstico</b> (exames) e <b>Centro de Especialidades</b></li>
+        <li><b>Unimed Oncologia</b></li>
+        <li>Rede credenciada, como São Francisco (Cariacica), Praia da Costa (Vila Velha) e Meridional Serra</li>
+      </ul>
+      <p class="nota">A rede pode variar conforme o seu produto. Na dúvida, consulte o guia médico do app.</p>
+    </section>
+
+    <section class="bloco">
+      <h3><span class="n">3</span>Coparticipação</h3>
+      <p>No seu plano você paga uma pequena parte quando usa:</p>
+      <table>
+        <tr><td>Consulta eletiva</td><td>R$ 42,76</td></tr>
+        <tr><td>Pronto-socorro</td><td>R$ 69,49</td></tr>
+        <tr><td>Exames e terapias (conforme o grupo)</td><td>R$ 0 a R$ 69,49</td></tr>
+        <tr><td>Limite mensal por pessoa</td><td>R$ 310,04</td></tr>
+      </table>
+      <p class="nota">Os valores de coparticipação vêm junto com a mensalidade. O limite mensal protege você de surpresas.</p>
+    </section>
+
+    <section class="bloco">
+      <h3><span class="n">4</span>Carências do contrato</h3>
+      <table>
+        <tr><td>Urgência e emergência</td><td>24 horas</td></tr>
+        <tr><td>Consultas e exames simples</td><td>30 dias</td></tr>
+        <tr><td>Exames especializados, terapias e internação</td><td>180 dias</td></tr>
+        <tr><td>Parto</td><td>300 dias</td></tr>
+        <tr><td>Doenças preexistentes declaradas</td><td>24 meses</td></tr>
+      </table>
+      <p class="nota">Se você entrou com redução ou aproveitamento de carência, valem as condições da sua proposta. Me chame para confirmar.</p>
+    </section>
+
+    <section class="bloco">
+      <h3><span class="n">5</span>Mensalidade</h3>
+      <p>A fatura vence todo <b>dia 10</b>. A primeira pode vir proporcional aos dias de uso (pró-rata).</p>
+    </section>
+
+    <section class="bloco">
+      <h3><span class="n">6</span>Remoção de emergência</h3>
+      <p>Seu plano inclui remoção de emergência sem custo.</p>
+    </section>
+  </div>
+
+  <!-- BLUZZ -->
+  <div class="plano" id="p-bluzz">
+    <div class="hero">
+      <h2>Bem-vindo(a) à Bluzz Saúde</h2>
+      <p class="sub">Plano Executivo</p>
+      <p>Você agora conta com as clínicas próprias da Bluzz e com hospitais de referência da Grande Vitória. Veja como aproveitar o seu plano.</p>
+    </div>
+
+    <section class="bloco">
+      <h3><span class="n">1</span>Primeiro acesso ao app</h3>
+      <div class="lojas"><a class="loja" href="https://play.google.com/store/apps/details?id=br.com.mobilesaude.bluzzsaude" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M6 3l14 9-14 9z"/></svg>Android · Google Play</a><a class="loja" href="https://apps.apple.com/br/app/bluzz-sa%C3%BAde/id6736368407" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M7 2h10a2 2 0 012 2v16a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2zm0 3v13h10V5zm5 14.2a1 1 0 100 2 1 1 0 000-2z"/></svg>iPhone · App Store</a></div>
+      <ol class="passos">
+        <li>Toque no botão do seu celular acima e instale o app <b>Bluzz Saúde</b>.</li>
+        <li>Abra o app e toque em <b>Primeiro acesso</b>, <b>Criar conta</b> ou <b>Cadastre-se</b>.</li>
+        <li>Informe o <b>CPF do beneficiário</b> e os dados pedidos (e-mail e celular).</li>
+        <li>Confirme o <b>código</b> que chega por e-mail ou SMS e crie uma <b>senha só sua</b>.</li>
+        <li>Pronto! Abra a <b>carteirinha virtual</b> — cada dependente tem a sua.</li>
+      </ol>
+      <p class="nota">Se o app disser que não encontrou seu cadastro, é porque o plano ainda está sendo ativado. Me chame que eu acompanho. Nunca passe sua senha ou código para ninguém — nem para mim.</p>
+    </section>
+
+    <section class="bloco">
+      <h3><span class="n">2</span>Comece pelas clínicas Bluzz</h3>
+      <p>Consultas com o <b>médico Bluzz</b> e com os <b>especialistas Bluzz</b> são isentas de coparticipação e não têm carência. É o melhor caminho para começar.</p>
+    </section>
+
+    <section class="bloco">
+      <h3><span class="n">3</span>Hospitais da rede</h3>
+      <ul>
+        <li><b>Vitória:</b> Pro Matre, Santa Casa, Santa Rita, Meridional Vitória, Instituto de Urologia, Aube, HOES (olhos)</li>
+        <li><b>Vila Velha:</b> Evangélico, Meridional Praia da Costa, São Luiz</li>
+        <li><b>Serra e Cariacica:</b> Meridional Serra, Meridional Cariacica, São Francisco</li>
+        <li><b>Linhares:</b> São Pedro, Linhares Medical Center</li>
+      </ul>
+    </section>
+
+    <section class="bloco">
+      <h3><span class="n">4</span>Coparticipação</h3>
+      <p>Você paga uma pequena parte por consulta na rede credenciada, exames e terapias. Existe um <b>limite mensal de R$ 500</b> de coparticipação.</p>
+    </section>
+
+    <section class="bloco">
+      <h3><span class="n">5</span>Carências do contrato</h3>
+      <table>
+        <tr><td>Urgência e emergência</td><td>24 horas</td></tr>
+        <tr><td>Consulta com médico Bluzz</td><td>Isenta</td></tr>
+        <tr><td>Exames simples</td><td>Isentos</td></tr>
+        <tr><td>Consulta na rede credenciada</td><td>30 dias</td></tr>
+        <tr><td>Exames intermediários</td><td>90 dias</td></tr>
+        <tr><td>Exames complexos, terapias e internação</td><td>180 dias</td></tr>
+        <tr><td>Parto</td><td>300 dias</td></tr>
+      </table>
+      <p class="nota">Se você entrou com aproveitamento de carência, valem as condições da sua proposta.</p>
+    </section>
+
+    <section class="bloco">
+      <h3><span class="n">6</span>Mensalidade</h3>
+      <p>A primeira mensalidade vem proporcional aos dias do mês de início (pró-rata). A data de vencimento segue a sua vigência — confira no seu boleto ou me chame.</p>
+    </section>
+  </div>
+
+  <!-- SAMP -->
+  <div class="plano" id="p-samp">
+    <div class="hero">
+      <h2>Bem-vindo(a) à São Bernardo Samp</h2>
+      <p class="sub">Way · Amplo · Vital</p>
+      <p>Você agora tem acesso a uma rede ampla em todo o Espírito Santo, com hospitais na Grande Vitória e no interior. Veja os primeiros passos.</p>
+    </div>
+
+    <section class="bloco">
+      <h3><span class="n">1</span>Primeiro acesso ao app</h3>
+      <div class="lojas"><a class="loja" href="https://onelink.to/sbsamp.app" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M6 3l14 9-14 9z"/></svg>Baixar o app (Android e iPhone)</a></div>
+      <ol class="passos">
+        <li>Toque no botão do seu celular acima e instale o app <b>SB Samp</b>.</li>
+        <li>Abra o app e toque em <b>Primeiro acesso</b>, <b>Criar conta</b> ou <b>Cadastre-se</b>.</li>
+        <li>Informe o <b>CPF do beneficiário</b> e os dados pedidos (e-mail e celular).</li>
+        <li>Confirme o <b>código</b> que chega por e-mail ou SMS e crie uma <b>senha só sua</b>.</li>
+        <li>Pronto! Abra a <b>carteirinha virtual</b> — cada dependente tem a sua.</li>
+      </ol>
+      <p class="nota">Se o app disser que não encontrou seu cadastro, é porque o plano ainda está sendo ativado. Me chame que eu acompanho. Nunca passe sua senha ou código para ninguém — nem para mim.</p>
+    </section>
+
+    <section class="bloco">
+      <h3><span class="n">2</span>Hospitais na Grande Vitória</h3>
+      <ul>
+        <li><b>Vitória:</b> Santa Rita, Santa Casa, Santa Paula, Maternidade Santa Úrsula, Clínica de Acidentados</li>
+        <li><b>Vila Velha:</b> Evangélico, Santa Mônica, Praia da Costa, Meridional São Luiz</li>
+        <li><b>Serra:</b> Vitória Apart Hospital, Hospital Metropolitano</li>
+        <li><b>Cariacica:</b> São Francisco de Assis, Meridional Cariacica</li>
+        <li><b>Guarapari:</b> São Pedro</li>
+      </ul>
+      <p class="nota">A rede varia conforme o produto contratado. Confira no app.</p>
+    </section>
+
+    <section class="bloco">
+      <h3><span class="n">3</span>Coparticipação (Way e Amplo)</h3>
+      <table>
+        <tr><td>Consulta em consultório</td><td>R$ 25</td></tr>
+        <tr><td>Consulta em pronto atendimento</td><td>R$ 35</td></tr>
+        <tr><td>Exames simples</td><td>30% (até R$ 40)</td></tr>
+        <tr><td>Exames especiais</td><td>30% (até R$ 100)</td></tr>
+        <tr><td>Internações</td><td>Isento</td></tr>
+        <tr><td>Teto mensal</td><td>R$ 450</td></tr>
+      </table>
+      <p class="nota">SBS Vital: consulta R$ 20, pronto atendimento R$ 25, teto mensal R$ 250.</p>
+    </section>
+
+    <section class="bloco">
+      <h3><span class="n">4</span>Odontologia</h3>
+      <p>Seu plano inclui atendimento de <b>urgência e emergência odontológica</b>.</p>
+    </section>
+
+    <section class="bloco">
+      <h3><span class="n">5</span>Vencimento do boleto</h3>
+      <table>
+        <tr><td>Vigência no dia 01</td><td>Boleto dia 05</td></tr>
+        <tr><td>Vigência no dia 10</td><td>Boleto dia 10</td></tr>
+        <tr><td>Vigência no dia 20</td><td>Boleto dia 20</td></tr>
+      </table>
+    </section>
+
+    <section class="bloco">
+      <h3><span class="n">6</span>Carências</h3>
+      <p>Urgência e emergência a partir de <b>24 horas</b>. As demais carências dependem da condição em que você entrou (com ou sem plano anterior). Me chame que eu confirmo as suas.</p>
+    </section>
+  </div>
+
+  <!-- MEDSENIOR -->
+  <div class="plano" id="p-medsenior">
+    <div class="hero">
+      <h2>Bem-vindo(a) à MedSênior</h2>
+      <p class="sub">Plano para quem tem a partir de 44 anos</p>
+      <p>Você agora faz parte de um plano pensado para cuidar da sua saúde com atenção e acompanhamento. Veja os primeiros passos.</p>
+    </div>
+    <section class="bloco">
+      <h3><span class="n">1</span>Primeiro acesso ao app</h3>
+      <div class="lojas"><a class="loja" href="https://play.google.com/store/apps/details?id=br.com.medseniorbeneficiario" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M6 3l14 9-14 9z"/></svg>Android · Google Play</a><a class="loja" href="https://apps.apple.com/br/app/meds%C3%AAnior-benefici%C3%A1rio/id1555117925" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M7 2h10a2 2 0 012 2v16a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2zm0 3v13h10V5zm5 14.2a1 1 0 100 2 1 1 0 000-2z"/></svg>iPhone · App Store</a></div>
+      <ol class="passos">
+        <li>Toque no botão do seu celular acima e instale o app <b>MedSênior Beneficiário</b>.</li>
+        <li>Abra o app e toque em <b>Primeiro acesso</b>, <b>Criar conta</b> ou <b>Cadastre-se</b>.</li>
+        <li>Informe o <b>CPF do beneficiário</b> e os dados pedidos (e-mail e celular).</li>
+        <li>Confirme o <b>código</b> que chega por e-mail ou SMS e crie uma <b>senha só sua</b>.</li>
+        <li>Pronto! Abra a <b>carteirinha virtual</b> — cada dependente tem a sua.</li>
+      </ol>
+      <p class="nota">Se o app disser que não encontrou seu cadastro, é porque o plano ainda está sendo ativado. Me chame que eu acompanho. Nunca passe sua senha ou código para ninguém — nem para mim.</p>
+      <p class="nota">No app você vê a carteirinha, suas carências, boletos e o informe para o Imposto de Renda.</p>
+    </section>
+    <section class="bloco">
+      <h3><span class="n">2</span>Urgência</h3>
+      <p>Em caso de urgência ou emergência, procure o pronto atendimento da rede indicada no app e apresente sua carteirinha e um documento com foto.</p>
+    </section>
+    <section class="bloco">
+      <h3><span class="n">3</span>Carências e mensalidade</h3>
+      <p>As carências, a data de vencimento e as regras de uso estão na sua proposta. Qualquer dúvida, me chame que eu te explico.</p>
+    </section>
+  </div>
+
+  <!-- BEST SENIOR -->
+  <div class="plano" id="p-bestsenior">
+    <div class="hero">
+      <h2>Bem-vindo(a) à Best Sênior</h2>
+      <p class="sub">Plano para quem tem a partir de 44 anos</p>
+      <p>Você agora conta com um plano focado no cuidado contínuo da sua saúde. Veja os primeiros passos.</p>
+    </div>
+    <section class="bloco">
+      <h3><span class="n">1</span>Carteirinha</h3>
+      <p>Assim que sua carteirinha estiver disponível, eu te aviso. Guarde-a no celular e leve um documento com foto nos atendimentos.</p>
+    </section>
+    <section class="bloco">
+      <h3><span class="n">2</span>Urgência</h3>
+      <p>Em caso de urgência ou emergência, procure o pronto atendimento da rede do seu plano e apresente a carteirinha.</p>
+    </section>
+    <section class="bloco">
+      <h3><span class="n">3</span>Carências e mensalidade</h3>
+      <p>As carências, a data de vencimento e as regras de uso estão na sua proposta. Qualquer dúvida, me chame que eu te explico.</p>
+    </section>
+  </div>
+
+  <div class="contato" id="contato" hidden>
+    <div class="quem">
+      <div class="foto" id="foto"></div>
+      <div><b id="cNome">Seu consultor</b><span id="cCorr">Seu consultor de saúde</span></div>
+    </div>
+    <h3>Estou com você no pós-venda</h3>
+    <p>Dúvida com carteirinha, boleto, autorização ou rede? Me chame no WhatsApp.</p>
+    <div class="num" id="cFone"></div>
+    <a class="btn" id="cWa" href="#" target="_blank" rel="noopener">Falar no WhatsApp</a>
+  </div>
+
+  <div class="alerta">
+    <b>Dica:</b> nunca informe senhas ou códigos recebidos por SMS a quem ligar dizendo ser do plano. Na dúvida, fale comigo antes.
+  </div>
+</main>
+
+<footer class="wrap">
+  Informações de orientação preparadas pelo seu consultor. Valem as regras do contrato e da operadora.
+</footer>
+
+<script>
+  /* /boas-vindas/#<plano>-<codigo> · codigo = cartao publico do consultor (propostas/<codigo>, lido por ler_proposta) */
+  var SB_URL="https://tqhrjivlfpexmhkwakwl.supabase.co", SB_KEY="sb_publishable_vI455mCunOwgHkEaPra01w_05Ynugib";
+  var ids=['inicio','unimed','bluzz','samp','medsenior','bestsenior'], COD="", carregado=false;
+  function lerHash(){
+    var h=(location.hash||"").slice(1).toLowerCase(), m=/^([a-z]+)?(?:-([a-z0-9]{8}))?$/.exec(h)||[];
+    var p=m[1]||"inicio"; if(ids.indexOf(p)<0) p="inicio";
+    if(m[2]) COD=m[2];
+    return p;
+  }
+  function link(p){ return "#"+p+(COD?"-"+COD:""); }
+  function show(){
+    var h=lerHash();
+    ids.forEach(function(id){ document.getElementById('p-'+id).classList.toggle('on', id===h); });
+    document.querySelectorAll('a[href^="#"]').forEach(function(a){
+      var d=a.getAttribute('data-p')||a.getAttribute('href').slice(1).split('-')[0];
+      if(ids.indexOf(d)>=0){ a.setAttribute('data-p',d); a.setAttribute('href',link(d)); }
+    });
+    document.querySelectorAll('nav.planos a').forEach(function(a){ a.classList.toggle('on', a.dataset.p===h); });
+    var nav=document.querySelector('nav.planos a.on'); if(nav&&nav.scrollIntoView) nav.scrollIntoView({block:'nearest',inline:'center'});
+    if(COD&&!carregado){ carregado=true; consultor(); }
+  }
+  function consultor(){
+    fetch(SB_URL+"/rest/v1/rpc/ler_proposta",{method:"POST",headers:{"apikey":SB_KEY,"Content-Type":"application/json"},body:JSON.stringify({codigo:COD})})
+      .then(function(r){return r.ok?r.json():null}).then(function(d){
+        if(d&&typeof d==="object"&&d.dados) d=d.dados;
+        if(!d||!d.bv) return;
+        var nome=String(d.n||"").trim(), w=String(d.w||"").replace(/\D/g,"");
+        if(!nome&&!w) return;
+        document.getElementById('cNome').textContent=nome||"Seu consultor";
+        if(d.c) document.getElementById('cCorr').textContent=String(d.c);
+        if(nome) document.getElementById('kicker').textContent=nome+" · Consultor de planos de saúde";
+        var foto=document.getElementById('foto');
+        if(d.f&&/^data:image\/(jpeg|png|webp);base64,/.test(d.f)){ var im=new Image(); im.alt="Foto de "+(nome||"seu consultor"); im.src=d.f; foto.appendChild(im); }
+        else foto.textContent=(nome.split(/\s+/).map(function(x){return x.charAt(0)}).join("").slice(0,2)||"✓").toUpperCase();
+        if(w){ var n=w.length<=11?"55"+w:w, f=w.length>11?w.slice(-11):w;
+          document.getElementById('cFone').textContent=f.length===11?"("+f.slice(0,2)+") "+f.slice(2,7)+"-"+f.slice(7):f.length===10?"("+f.slice(0,2)+") "+f.slice(2,6)+"-"+f.slice(6):w;
+          document.getElementById('cWa').href="https://wa.me/"+n; }
+        else document.getElementById("cWa").style.display="none";
+        document.getElementById('contato').hidden=false;
+      }).catch(function(){});
+  }
+  window.addEventListener('hashchange', function(){ show(); window.scrollTo({top:0}); });
+  show();
+</script>
+</body>
+</html>
