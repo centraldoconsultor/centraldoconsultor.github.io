@@ -656,7 +656,7 @@ td.gapcell.done{color:var(--good)}
     if(!isCur&&key<today.slice(0,7)) set("mt-proj",feito>=meta.vidas?"ok":"miss",feito+" vidas","resultado final do mês");
     else if(proj==null) set("mt-proj","","—","sem dias registrados ainda");
     else set("mt-proj",proj>=meta.vidas?"ok":"miss",proj+" vidas","projeção do mês · média "+(Math.round(feito/base*10)/10).toString().replace(".",",")+"/dia útil");
-    var est=P.filter(function(p){ var e=((p.datas&&p.datas.enviada)||"").slice(0,7); var od=/odonto/i.test((p.produto||"")+" "+(p.administradora||""))&&!/(enfermaria|apartamento|ambulatorial|executivo|empresarial|participativo|premium|corporate|ades[aã]o)/i.test(p.produto||""); if(p.linha) od=p.linha==="odonto"; if(p.ramo) od=p.ramo==="odonto"; return e===key&&p.etapa!=="recusada"&&p.etapa!=="rascunho"&&!od&&!(window.CMES&&CMES.isAmb(p)); });
+    var est=P.filter(function(p){ var e=String((p.datas&&p.datas.enviada)||p.criadoEm||"").slice(0,7); return e===key&&p.etapa!=="recusada"&&p.etapa!=="rascunho"&&!(window.CMES&&(CMES.isOdonto(p)||CMES.isAmb(p))); });
     var ev=est.reduce(function(s,p){return s+num(p.vidas)},0);
     el("mt-est").textContent="Na Esteira: "+ev+" vidas de planos completos em "+est.length+" propostas cadastradas em "+MES[m]+". A meta conta essas vidas sozinha, pelo dia do cadastro na Esteira.";
   }
