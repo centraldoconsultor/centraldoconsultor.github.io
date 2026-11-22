@@ -245,7 +245,7 @@ button,select,input,textarea{font:inherit;color:inherit}
   <div class="tabs" role="tablist" aria-label="Etapas da esteira" id="tabs"></div>
   <div class="bar">
     <input type="search" id="q" placeholder="Buscar cliente, nº, documento, protocolo ou administradora" aria-label="Buscar">
-    <select id="ord" aria-label="Ordenar"><option value="parada">Mais paradas primeiro</option><option value="vig">Vigência mais próxima</option><option value="valor">Maior mensalidade</option><option value="nome">Nome</option></select>
+    <select id="ord" aria-label="Ordenar"><option value="cad">Ordem de cadastro</option><option value="cadr">Cadastro mais recente primeiro</option><option value="parada">Mais paradas primeiro</option><option value="vig">Vigência mais próxima</option><option value="valor">Maior mensalidade</option><option value="nome">Nome</option></select>
   </div>
   <p class="hint" id="hint"></p>
   <div class="toast" id="toast" hidden role="status"><span id="toastTxt"></span><button type="button" id="toastUndo">Desfazer</button></div>
@@ -482,6 +482,7 @@ button,select,input,textarea{font:inherit;color:inherit}
       return hay.indexOf(q)>=0 || (qd.length>=3 && (String(p.documento||"")+String(p.protocolo||"")).replace(/\D/g,"").indexOf(qd)>=0); });
     var o=$("ord").value;
     arr.sort(function(a,b){
+      if(o==="cad"||o==="cadr"){ var r=cadKey(a).localeCompare(cadKey(b))||((+a.codigo||0)-(+b.codigo||0))||String(a._id).localeCompare(String(b._id)); return o==="cad"?r:-r; }
       if(o==="vig") return (a.vigencia||"9").localeCompare(b.vigencia||"9");
       if(o==="valor") return (b.mensalidade||0)-(a.mensalidade||0);
       if(o==="nome") return a.cliente.localeCompare(b.cliente,"pt-BR");
@@ -504,7 +505,9 @@ button,select,input,textarea{font:inherit;color:inherit}
     S.alvo=null;
   }
   if(window.CMES) CMES.on(function(m){ if(m===S.mes) return; S.mes=m; S.open=null; if(S.all.length) fillMeses(); render(); });
-  $("q").addEventListener("input",render); $("ord").addEventListener("change",render);
+  function cadKey(p){ return String(p.criadoEm||(p.datas&&p.datas.enviada)||p.sincronizadoEm||"9999").slice(0,10); }
+  try{ var _o=localStorage.getItem("esteira-ord"); if(_o&&$("ord").querySelector('option[value="'+_o+'"]')) $("ord").value=_o; }catch(e){}
+  $("q").addEventListener("input",render); $("ord").addEventListener("change",function(){ try{localStorage.setItem("esteira-ord",this.value)}catch(e){} render(); });
   $("list").addEventListener("input",function(ev){ var el=ev.target.closest("[data-e]"); if(!el) return; S.ed=S.ed||{}; var id=el.getAttribute("data-id"); (S.ed[id]=S.ed[id]||{})[el.getAttribute("data-e")]=el.value; });
   $("list").addEventListener("change",function(ev){ var el=ev.target.closest("select[data-e]"); if(!el) return; S.ed=S.ed||{}; var id=el.getAttribute("data-id"); (S.ed[id]=S.ed[id]||{})[el.getAttribute("data-e")]=el.value; });
   $("list").addEventListener("click",function(ev){
