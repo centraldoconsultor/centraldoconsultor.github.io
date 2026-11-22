@@ -265,6 +265,21 @@ details.box[open] summary{margin-bottom:10px}
     });
     return out;
   }
+  /* 22/11: opção por consultor (config/followup.cotadorAuto, hoje só o Diego): toda cotação do Cotador vira registro no Follow-up,
+     sem telefone e com "confirmar"; o FINALIZAR DIA confere no WhatsApp se foi enviada e completa o número. */
+  var autoFeito={};
+  function autoSync(){
+    if(!S.auto||!S.db||!S.loadedF||!S.loadedQ) return;
+    var seen={}; Object.keys(S.f).forEach(function(id){ var x=S.f[id]; if(x.cotadorId) seen["c:"+x.cotadorId]=1; seen["n:"+norm(x.nome)+"|"+x.cotadoEm]=1; });
+    var byKey={};
+    S.q.forEach(function(q){ var d=qDate(q.criada); if(!d||!q.cliente) return; if(S.autoDesde&&d<S.autoDesde) return; if(diff(d,today)>JANELA) return;
+      var k=norm(q.cliente)+"|"+d; if(!byKey[k]||String(q.criada)>String(byKey[k].criada)) byKey[k]=q; });
+    Object.keys(byKey).forEach(function(k){ var q=byKey[k], id="c-"+q.id;
+      if(seen["c:"+q.id]||seen["n:"+k]||S.f[id]||autoFeito[id]) return; autoFeito[id]=1;
+      S.db.collection("followups").doc(id).set({nome:q.cliente,telefone:"",cotadoEm:qDate(q.criada),plano:planOf(q.zap),link:q.link||"",bene:q.bene||"",modal:q.modal||"",
+        status:"aberto",toques:{},fonte:"Cotador (automático)",cotadorId:q.id,cotacaoEnviada:true,confirmar:true,criadoEm:today,atualizadoEm:today}).catch(function(){ delete autoFeito[id]; });
+    });
+  }
   function step(x){
     if(x.status&&x.status!=="aberto") return null;
     var t=x.toques||{}, i, k, due;
@@ -316,7 +331,7 @@ details.box[open] summary{margin-bottom:10px}
     if(b==="fim") chip='<span class="chip '+(x.status==="fechou"?"o":"w")+'">'+({fechou:"fechou",perdido:"sem interesse",ignorado:"removido"}[x.status]||x.status)+'</span>';
     var t=x.toques||{};
     var h='<article class="card'+(b==="hoje"&&s.due<today?" late":b==="fim"||b==="sem"?" muted":b==="resp"?" done":"")+'" data-id="'+esc(x._id)+'">'+
-      '<div class="top"><div style="min-width:0"><div class="nm">'+esc(x.nome)+'</div><div class="meta"><span>'+"cotação em "+br(x.cotadoEm)+' · há '+age+' dia'+(age===1?"":"s")+'</span>'+(x.bene?'<span>'+esc(x.bene)+'</span>':'')+'<span>'+esc(x.fonte||"")+'</span>'+(x.vistoUlt?'<span title="O cliente abriu o link da cotação">👀 viu '+new Date(x.vistoUlt).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+(x.vistos>1?' · '+x.vistos+' vezes':'')+'</span>':'')+KS.map(function(q){ var v=t[q[0]]; return v&&v!=="pulado"?'<span>'+KL[q[0]]+' dia ✓ '+br(v)+'</span>':''; }).join("")+'</div></div><div class="actions">'+chip+'</div></div>'+
+      '<div class="top"><div style="min-width:0"><div class="nm">'+esc(x.nome)+'</div><div class="meta"><span>'+"cotação em "+br(x.cotadoEm)+' · há '+age+' dia'+(age===1?"":"s")+'</span>'+(x.bene?'<span>'+esc(x.bene)+'</span>':'')+'<span>'+esc(x.fonte||"")+'</span>'+(x.confirmar&&!x.telefone?'<span class="chip w" title="O FINALIZAR DIA confere no WhatsApp se a cotação foi enviada">confirmar envio</span>':'')+(x.vistoUlt?'<span title="O cliente abriu o link da cotação">👀 viu '+new Date(x.vistoUlt).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+(x.vistos>1?' · '+x.vistos+' vezes':'')+'</span>':'')+KS.map(function(q){ var v=t[q[0]]; return v&&v!=="pulado"?'<span>'+KL[q[0]]+' dia ✓ '+br(v)+'</span>':''; }).join("")+'</div></div><div class="actions">'+chip+'</div></div>'+
       (x.plano?'<div class="plan">'+esc(x.plano)+'</div>':'')+(x.motivo?'<div class="motivo"><b>Por que não fechou:</b> '+esc(x.motivo)+'</div>':'');
     var w=fone(x.telefone);
     h+='<div class="tel">WhatsApp: '+(x.telefone?'<b>'+esc(x.telefone)+'</b> <button class="btn ghost" type="button" data-act="edtel">alterar</button>':'<input data-tel placeholder="27 99999-9999" inputmode="tel" aria-label="WhatsApp de '+esc(x.nome)+'"><button class="btn" type="button" data-act="savetel">Salvar número</button>')+'</div>';
@@ -406,10 +421,10 @@ details.box[open] summary{margin-bottom:10px}
     var db=r[0], user=r[1];
     if(!db){ clearTimeout(timer); $("list").innerHTML='<div class="empty">Entre na Central com seu e-mail e senha para ver o follow-up.</div>'; return; }
     S.db=db;
-    db.collection("followups").onSnapshot(function(s){ S.loadedF=true; clearTimeout(timer); var f={}; s.docs.forEach(function(d){ f[d.id]=Object.assign({},d.data()); }); S.f=f; render(); },function(){ clearTimeout(timer); $("list").innerHTML='<div class="empty">Não consegui ler o follow-up.</div>'; });
-    db.collection("config").doc("followup").onSnapshot(function(d){ var v=d&&d.exists!==false&&d.data&&d.data(); if(v&&v.d2){ S.tpl={d2:v.d2,d7:v.d7||DEF.d7,d15:v.d15||DEF.d15,d30:v.d30||DEF.d30}; fillTpl(); render(); } },function(){});
+    db.collection("followups").onSnapshot(function(s){ S.loadedF=true; clearTimeout(timer); var f={}; s.docs.forEach(function(d){ f[d.id]=Object.assign({},d.data()); }); S.f=f; render(); autoSync(); },function(){ clearTimeout(timer); $("list").innerHTML='<div class="empty">Não consegui ler o follow-up.</div>'; });
+    db.collection("config").doc("followup").onSnapshot(function(d){ var v=d&&d.exists!==false&&d.data&&d.data(); S.auto=!!(v&&v.cotadorAuto); S.autoDesde=(v&&v.cotadorAutoDesde)||""; autoSync(); if(v&&v.d2){ S.tpl={d2:v.d2,d7:v.d7||DEF.d7,d15:v.d15||DEF.d15,d30:v.d30||DEF.d30}; fillTpl(); render(); } },function(){});
     if(user&&user.id) Promise.resolve(user.id()).then(function(uid){ if(!uid) return;
-      db.collection("data/users/"+uid).orderBy("criada","desc").limit(300).onSnapshot(function(s){ S.loadedQ=true; S.q=s.docs.map(function(d){var o=Object.assign({},d.data());o.id=d.id;return o}); render(); },function(){ S.loadedQ=true; render(); });
+      db.collection("data/users/"+uid).orderBy("criada","desc").limit(300).onSnapshot(function(s){ S.loadedQ=true; S.q=s.docs.map(function(d){var o=Object.assign({},d.data());o.id=d.id;return o}); render(); autoSync(); },function(){ S.loadedQ=true; render(); });
     });
   });
 })();
