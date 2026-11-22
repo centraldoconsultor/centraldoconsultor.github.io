@@ -408,7 +408,7 @@ details.box[open] summary{margin-bottom:10px}
     S.db=db;
     db.collection("followups").onSnapshot(function(s){ S.loadedF=true; clearTimeout(timer); var f={}; s.docs.forEach(function(d){ f[d.id]=Object.assign({},d.data()); }); S.f=f; render(); },function(){ clearTimeout(timer); $("list").innerHTML='<div class="empty">Não consegui ler o follow-up.</div>'; });
     db.collection("config").doc("followup").onSnapshot(function(d){ var v=d&&d.exists!==false&&d.data&&d.data(); if(v&&v.d2){ S.tpl={d2:v.d2,d7:v.d7||DEF.d7,d15:v.d15||DEF.d15,d30:v.d30||DEF.d30}; fillTpl(); render(); } },function(){});
-    if(user&&user.id) user.id().then(function(uid){ if(!uid) return;
+    if(user&&user.id) Promise.resolve(user.id()).then(function(uid){ if(!uid) return;
       db.collection("data/users/"+uid).orderBy("criada","desc").limit(300).onSnapshot(function(s){ S.loadedQ=true; S.q=s.docs.map(function(d){var o=Object.assign({},d.data());o.id=d.id;return o}); render(); },function(){ S.loadedQ=true; render(); });
     });
   });

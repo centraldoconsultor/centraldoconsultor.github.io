@@ -154,7 +154,7 @@ details.box[open] summary{margin-bottom:10px}
 
 <div class="wrap">
   <header>
-    <div><h1>Pós-venda</h1><p class="sub">Cada contrato implantado recebe, um de cada vez, a partir da vigência: boas-vindas, carteirinha e app (7 dias) e, aos 30 dias, como está o plano + pedido de indicação. Indicação registrada aqui vira lead no Funil.</p></div>
+    <div><h1>Pós-venda</h1><p class="sub">Cada contrato implantado recebe, um de cada vez, a partir da vigência: boas-vindas, carteirinha e app (7 dias) e, aos 30 dias, pesquisa de satisfação (nota de 0 a 10) + indicação e, aos 3 meses, link de indicação. Também avisa o reajuste anual 30 dias antes e o aniversário de cada beneficiário. Indicação registrada aqui ou pelo link vira lead no Funil.</p></div>
   </header>
   <div class="mes-strip" id="mesStrip" role="status"></div>
 
@@ -162,7 +162,7 @@ details.box[open] summary{margin-bottom:10px}
     <div class="kpi hot"><span class="k">Próximos 30 dias</span><span class="v" id="k1">—</span><span class="s" id="k1s">—</span></div>
     <div class="kpi"><span class="k">Vigência no mês</span><span class="v" id="k2">—</span><span class="s" id="k2s">—</span></div>
     <div class="kpi"><span class="k">Indicações recebidas</span><span class="v" id="k3">—</span><span class="s" id="k3s">—</span></div>
-    <div class="kpi"><span class="k">Pedidos de indicação</span><span class="v" id="k4">—</span><span class="s" id="k4s">feitos no 30º dia</span></div>
+    <div class="kpi"><span class="k">Avaliação média</span><span class="v" id="k4">—</span><span class="s" id="k4s">pesquisa de 30 dias</span></div>
   </section>
 
   <div class="tabs" role="tablist" aria-label="Listas" id="tabs"></div>
@@ -172,7 +172,8 @@ details.box[open] summary{margin-bottom:10px}
   <details class="box">
     <summary>Mensagens de cada lembrete</summary>
     <div class="tpl" id="tplBox"></div>
-    <div class="actions" style="margin-top:10px"><button class="btn primary" type="button" id="saveTpl">Salvar mensagens</button><button class="btn ghost" type="button" id="resetTpl">Voltar ao texto original</button><span class="note" id="tplMsg">Use {nome}, {plano}, {operadora}, {mes} e {link} (página de boas-vindas do plano, com sua foto e WhatsApp de Meus dados no Cotador): a Central troca pelos dados de cada cliente.</span></div>
+    <h3 style="margin:16px 0 6px;font-size:14px">Mês de reajuste de cada operadora</h3><p class="note" style="margin:0 0 8px">A Central avisa 30 dias antes. "Aniversário do contrato" usa o mês da vigência de cada cliente.</p><div class="tpl" id="rjBox"></div>
+    <div class="actions" style="margin-top:10px"><button class="btn primary" type="button" id="saveTpl">Salvar mensagens</button><button class="btn ghost" type="button" id="resetTpl">Voltar ao texto original</button><span class="note" id="tplMsg">Use {nome}, {plano}, {operadora}, {mes}, {link} (boas-vindas do plano), {pesquisa} (nota de 0 a 10 + indicação), {indicar} (link de indicação), {mesreajuste} e {aniversariante}: a Central troca pelos dados de cada cliente.</span></div>
   </details>
 </div>
 <div class="toast" id="toast" hidden role="status"><span id="toastTxt"></span><button type="button" id="toastUndo">Desfazer</button></div>
@@ -194,19 +195,27 @@ details.box[open] summary{margin-bottom:10px}
   var PASSOS=[
     {k:"bv",l:"Boas-vindas",d:0,ind:false},
     {k:"cart",l:"Carteirinha e app",d:7,ind:false},
-    {k:"d30",l:"30 dias · indicação",d:30,ind:true}
+    {k:"d30",l:"30 dias · pesquisa e indicação",d:30,ind:true},
+    {k:"d90",l:"3 meses · indicação",d:90,ind:true}
   ];
+  var EXTRA_TPL=[{k:"rea",l:"Reajuste anual (30 dias antes)"},{k:"bday",l:"Aniversário do beneficiário"}];
+  var OLD_D30="Oi, {nome}! Já faz um mês que o seu plano está ativo. Como está sendo? Conseguiu usar os hospitais e consultas direitinho?\n\nSe estiver gostando do atendimento, tem alguém da família, amigo ou colega de trabalho que também esteja precisando de plano de saúde? Vou cuidar da pessoa com o mesmo carinho. 😊";
+  var OLD_D90="Oi, {nome}! Passando para saber como está o plano depois desses 3 meses. Está tudo certo? Se conhecer alguém procurando plano de saúde ou odonto, pode me indicar que eu faço uma cotação sem compromisso.";
+  var MESES_RJ={"mediatorie":12,"unimed":12,"quali":5,"são bernardo":5,"sao bernardo":5,"samp":5};
   var DEF={
     bv:"Olá, {nome}! Seja muito bem-vindo(a) ao seu novo plano de saúde! 🎉\nPreparei uma página com tudo para você começar: como baixar o app, fazer o primeiro acesso e ver sua carteirinha:\n{link}\nQualquer dúvida, estou à disposição por aqui. 😊",
     cart:"Oi, {nome}! Tudo certo com o plano? Já recebeu a carteirinha e conseguiu entrar no aplicativo da {operadora}? Se precisar de ajuda para baixar o app ou marcar a primeira consulta, me avisa que eu te ajudo.",
-    d30:"Oi, {nome}! Já faz um mês que o seu plano está ativo. Como está sendo? Conseguiu usar os hospitais e consultas direitinho?\n\nSe estiver gostando do atendimento, tem alguém da família, amigo ou colega de trabalho que também esteja precisando de plano de saúde? Vou cuidar da pessoa com o mesmo carinho. 😊",
-    d90:"Oi, {nome}! Passando para saber como está o plano depois desses 3 meses. Está tudo certo? Se conhecer alguém procurando plano de saúde ou odonto, pode me indicar que eu faço uma cotação sem compromisso.",
+    d30:"Oi, {nome}! Já faz um mês que o seu plano está ativo. 😊 Como está sendo? Me ajuda com uma avaliação rápida, leva 10 segundos:\n{pesquisa}\n\nSe estiver gostando, tem alguém da família ou algum amigo que também precise de plano de saúde? Dá para indicar por esse mesmo link. Obrigado!",
+    d90:"Oi, {nome}! Passando para saber como está o plano depois desses 3 meses. Está tudo certo? Se conhecer alguém procurando plano de saúde, pode me indicar por aqui, leva 1 minuto:\n{indicar}",
+    rea:"Oi, {nome}! Passando para te avisar com antecedência: em {mesreajuste} acontece o reajuste anual do seu plano {operadora}. Assim que sair o percentual oficial, eu te mando e vejo com você se o plano continua sendo a melhor opção. Qualquer dúvida, estou por aqui!",
+    bday:"Feliz aniversário, {aniversariante}! 🎉 Desejo muita saúde, paz e alegria no seu novo ano. Conte sempre comigo! 😊",
     aniv:"Oi, {nome}! Seu plano completa 1 ano em {mes}. Quero revisar com você o reajuste e ver se o plano continua sendo a melhor opção para você. Podemos conversar esta semana?"
   };
-  var S={p:[],pv:{},leads:[],tpl:Object.assign({},DEF),tab:"prox",db:null,loaded:false,drafts:{},indOpen:null};
+  var S={p:[],pv:{},leads:[],pesq:[],rj:{},tpl:Object.assign({},DEF),tab:"prox",db:null,loaded:false,drafts:{},indOpen:null,newTk:{}};
   var TABS=[
     {id:"prox",l:"Próximos 30 dias",h:"Atrasados, de hoje e dos próximos 30 dias, cada um com a mensagem pronta. Mande e toque em Feito; nos lembretes de indicação, registre quem o cliente indicou (vira lead no Funil)."},
-    {id:"ind",l:"Indicações",h:"Indicações registradas e em que etapa do Funil cada uma está."}
+    {id:"ind",l:"Indicações",h:"Indicações registradas aqui ou pelo seu link, e em que etapa do Funil cada uma está."},
+    {id:"nps",l:"Avaliações",h:"Notas da pesquisa de 30 dias. Nota de 0 a 6 aparece também em Próximos 30 dias para você ligar para o cliente."}
   ];
   function firstName(n){ var w=String(n||"").trim().split(/\s+/)[0]||""; return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase(); }
   function opOf(p){ var a=String(p.administradora||""); var parts=a.split("·"); return (parts[parts.length-1]||a).trim()||"operadora"; }
@@ -223,9 +232,16 @@ details.box[open] summary{margin-bottom:10px}
     // Sequência fixa: só o primeiro lembrete ainda não feito; o próximo aparece quando este for feito ou pulado
     return st.filter(function(s){return !s.feito}).slice(0,1);
   }
-  function msgFor(p,k){
+  function tkOf(p){ var x=S.pv[p._id]||{}; if(x.tk) return x.tk; if(S.newTk[p._id]) return S.newTk[p._id];
+    var a="abcdefghijkmnpqrstuvwxyz23456789",t="",r=crypto.getRandomValues(new Uint8Array(6)); r.forEach(function(v){t+=a[v%a.length]}); S.newTk[p._id]=t;
+    setTimeout(function(){ if(!S.db||!S.newTk[p._id]) return; var o=Object.assign({},S.pv[p._id]||{},{tk:S.newTk[p._id]}); S.pv[p._id]=o; S.db.collection("posvenda").doc(p._id).set(o); },0); return t; }
+  function pubLink(dir,p){ return "https://centralconsultorsaude.com.br/"+dir+"/#"+(BV.code||"")+(p?"-"+tkOf(p):""); }
+  function msgFor(p,k,s){
     var b=base(p), mes=""; if(b){ var d=new Date(b+"T12:00:00"); mes=MESES[d.getMonth()]+" de "+(d.getFullYear()+1); }
-    return (S.tpl[k]||DEF[k]).replace(/\{nome\}/g,firstName(p.cliente)).replace(/\{plano\}/g,p.produto||"de saúde").replace(/\{operadora\}/g,opOf(p)).replace(/\{mes\}/g,mes).replace(/\{link\}/g,linkBV(p))+(k==="bv"&&!/\{link\}/.test(S.tpl[k]||DEF[k])?"\n\nComo usar o seu plano: "+linkBV(p):"");
+    var tx=(S.tpl[k]||DEF[k]);
+    if(/\{pesquisa\}/.test(tx)) tx=tx.replace(/\{pesquisa\}/g,pubLink("pesquisa",p)); if(/\{indicar\}/.test(tx)) tx=tx.replace(/\{indicar\}/g,pubLink("indicar",p));
+    tx=tx.replace(/\{mesreajuste\}/g,s&&s.mesrj||"").replace(/\{aniversariante\}/g,s&&s.quem||firstName(p.cliente));
+    return tx.replace(/\{nome\}/g,firstName(p.cliente)).replace(/\{plano\}/g,p.produto||"de saúde").replace(/\{operadora\}/g,opOf(p)).replace(/\{mes\}/g,mes).replace(/\{link\}/g,linkBV(p))+(k==="bv"&&!/\{link\}/.test(S.tpl[k]||DEF[k])?"\n\nComo usar o seu plano: "+linkBV(p):"");
   }
   /* 21/11: pagina de boas-vindas por plano, com o cartao publico do consultor (propostas/<codigo>, lido sem login por ler_proposta) */
   var BV={code:"",ok:false};
@@ -258,9 +274,11 @@ details.box[open] summary{margin-bottom:10px}
     // Um cartão por cliente: só o próximo lembrete em aberto (o seguinte aparece quando este for feito ou pulado)
     cs.forEach(function(p){ var s=pending(p).filter(function(x){return x.due})[0]; if(!s) return; if(s.due<=today) hoje.push({p:p,s:s}); else if(diff(today,s.due)<=30) prox.push({p:p,s:s}); });
     var semData=cs.filter(function(p){return !base(p)});
+    eventos(cs).forEach(function(e){ if(e.s.due<=today) hoje.push(e); else if(diff(today,e.s.due)<=30) prox.push(e); });
     hoje.sort(function(a,b){return a.s.due.localeCompare(b.s.due)}); prox.sort(function(a,b){return a.s.due.localeCompare(b.s.due)});
     var inds=[]; Object.keys(S.pv).forEach(function(id){ (S.pv[id].indicacoes||[]).forEach(function(i){ inds.push(Object.assign({de:id},i)); }); });
     var pedidos=0; Object.keys(S.pv).forEach(function(id){ var f=S.pv[id].feitos||{}; if(f.d30&&f.d30!=="pulado") pedidos++; if(f.d90&&f.d90!=="pulado") pedidos++; });
+    linkInds().forEach(function(i){ inds.push(i); });
     var late=hoje.filter(function(x){return x.s.due<today}).length;
     $("k1").textContent=hoje.length+prox.length+semData.length; $("k1s").textContent=hoje.length+" para hoje"+(late?" ("+late+" atrasado"+(late>1?"s":"")+")":"")+(semData.length?" · "+semData.length+" sem data":"");
     var M=window.CMES?CMES.get():today.slice(0,7), todos=S.p.filter(function(p){return p.etapa==="implantada"}), csm=todos.filter(function(p){return (window.CMES?CMES.mesProp(p):String((p.datas&&p.datas.enviada)||"").slice(0,7))===M});
@@ -268,16 +286,41 @@ details.box[open] summary{margin-bottom:10px}
     $("k2").textContent=csm.length; $("k2s").textContent=vs+" vidas saúde · "+vo+" odonto · "+todos.length+" clientes no total";
     var mes=today.slice(0,7), im=inds.filter(function(i){return String(i.em||"").slice(0,7)===mes}).length;
     $("k3").textContent=inds.length; $("k3s").textContent=im+" neste mês";
-    $("k4").textContent=pedidos;
-    var counts={prox:hoje.length+prox.length+semData.length,ind:inds.length};
+    var nn=S.pesq.filter(function(q){return typeof q.nota==="number"}); $("k4").textContent=nn.length?(nn.reduce(function(a,q){return a+q.nota},0)/nn.length).toFixed(1).replace(".",","):"—"; $("k4s").textContent=nn.length+" resposta"+(nn.length===1?"":"s")+" · "+pedidos+" pedido"+(pedidos===1?"":"s")+" de indicação";
+    var counts={prox:hoje.length+prox.length+semData.length,ind:inds.length,nps:S.pesq.length};
     $("tabs").innerHTML=TABS.map(function(t){return '<button class="tab" role="tab" type="button" data-t="'+t.id+'" aria-selected="'+(S.tab===t.id)+'">'+t.l+'<b>'+counts[t.id]+'</b></button>'}).join("");
     $("hint").textContent=TABS.filter(function(t){return t.id===S.tab})[0].h;
     if(!S.loaded) return;
     var h="";
     if(S.tab==="prox"){ h=semData.map(semDataCard).join("")+hoje.concat(prox).map(function(x){return remCard(x.p,x.s,true)}).join(""); if(!h) h='<div class="empty">Nenhum lembrete de pós-venda nos próximos 30 dias.</div>'; }
     if(S.tab==="cli"){ h=csm.slice().sort(function(a,b){return (base(b)||"").localeCompare(base(a)||"")}).map(cliCard).join("")||'<div class="empty">Nenhum contrato com vigência neste mês.</div>'; }
-    if(S.tab==="ind"){ h=inds.sort(function(a,b){return String(b.em).localeCompare(String(a.em))}).map(indCard).join("")||'<div class="empty">Nenhuma indicação registrada ainda. Elas entram pelos lembretes de 30 dias e 3 meses.</div>'; }
+    if(S.tab==="nps"){ h=S.pesq.slice().sort(function(a,b){return String(b._id).localeCompare(String(a._id))}).map(npsCard).join("")||'<div class="empty">Nenhuma avaliação ainda. A pesquisa vai na mensagem de 30 dias.</div>'; }
+    if(S.tab==="ind"){ h=(BV.code?'<article class="card"><div class="nm">Seu link de indicação</div><p class="note">Mande para qualquer pessoa: quem receber pode indicar amigos e família. A indicação cai no Funil e você recebe um aviso no celular.</p><div class="tel"><b>'+esc(pubLink("indicar"))+'</b><button class="btn" type="button" data-copylink="'+esc(pubLink("indicar"))+'">Copiar link</button></div></article>':'')+inds.sort(function(a,b){return String(b.em).localeCompare(String(a.em))}).map(indCard).join("")||'<div class="empty">Nenhuma indicação registrada ainda. Elas entram pelos lembretes de 30 dias e 3 meses.</div>'; }
     $("list").innerHTML=h;
+  }
+  function cliByTk(tk){ if(!tk) return null; var id=Object.keys(S.pv).filter(function(i){return S.pv[i].tk===tk})[0]; return id?S.p.filter(function(x){return x._id===id})[0]||null:null; }
+  function linkInds(){ var ja={}; Object.keys(S.pv).forEach(function(id){ (S.pv[id].indicacoes||[]).forEach(function(i){ if(i.leadId) ja[i.leadId]=1; }); });
+    return S.leads.filter(function(l){return l.viaLink&&!ja[l._id]}).map(function(l){ var c=cliByTk(l.indicadoPorTk); return {de:c?c._id:"",nome:l.nome,telefone:l.telefone,obs:(l.indicadoPorNome&&!c?"por "+l.indicadoPorNome:"")+" (pelo link)",em:l.criadoEm,leadId:l._id}; }); }
+  function npsCard(q){ var c=cliByTk(q.tk), cls=q.nota>=9?"o":q.nota>=7?"p":"w";
+    return '<article class="card'+(q.nota<=6?" late":"")+'"><div class="top"><div style="min-width:0"><div class="nm">'+esc(c?c.cliente:(q.quem||"Cliente pelo link"))+'</div><div class="meta"><span>respondida em '+br(q.em)+'</span>'+(c?'<span>'+esc(c.administradora||"")+'</span>':'')+'</div></div><span class="chip '+cls+'">nota '+q.nota+'</span></div>'+(q.comentario?'<p class="note" style="margin-top:8px">“'+esc(q.comentario)+'”</p>':'')+(c?telLine(c):'')+'</article>'; }
+  function mesRj(p){ var a=String(p.administradora||""), k=a.toLowerCase(); if(S.rj[a]!=null) return +S.rj[a];
+    for(var n in MESES_RJ){ if(k.indexOf(n)>=0) return MESES_RJ[n]; } return 0; }
+  function eventos(cs){
+    var out=[], lim=addDays(today,30);
+    cs.forEach(function(p){ var b=base(p); if(!b) return; var x=S.pv[p._id]||{}, f=x.feitos||{};
+      // reajuste anual: aviso 30 dias antes do 1º dia do mês de reajuste
+      var m=mesRj(p)||(+b.slice(5,7)), y=+today.slice(0,4);
+      for(var i=0;i<2;i++){ var R=(y+i)+"-"+(m<10?"0":"")+m+"-01", due=nextBiz(addDays(R,-30)), key="rj"+R.slice(0,7);
+        if(R<=addDays(b,60)||R<today||due>lim) continue;
+        if(!f[key]) out.push({p:p,s:{k:key,tpl:"rea",l:"Reajuste "+MESES[m-1],due:due,ind:false,mesrj:MESES[m-1]+" de "+R.slice(0,4)}}); break; }
+      // aniversário de cada beneficiário
+      (p.beneficiarios||[]).forEach(function(bn,j){ var n=String(bn.nascimento||""); if(!/^\d{4}-\d{2}-\d{2}$/.test(n)) return;
+        var md=n.slice(5), B=today.slice(0,4)+"-"+md; if(B<today) B=(+today.slice(0,4)+1)+"-"+md; if(diff(today,B)>7) return;
+        var key="bd"+B+"-"+j, nm=firstName(bn.nome||p.cliente); if(!f[key]) out.push({p:p,s:{k:key,tpl:"bday",l:"Aniversário · "+nm,due:B,ind:false,quem:nm}}); });
+      // nota baixa na pesquisa: ligar para o cliente
+      S.pesq.forEach(function(q){ if(q.nota>6||!x.tk||q.tk!==x.tk) return; var key="np"+q._id; if(!f[key]) out.push({p:p,s:{k:key,tpl:"",l:"Nota "+q.nota+" · ligar para entender",due:q.em||today,ind:false,nota:q}}); });
+    });
+    return out;
   }
   function telLine(p){ return '<div class="tel">WhatsApp: '+(p.telefone?'<b>'+esc(p.telefone)+'</b>':'<span>sem número na proposta</span>')+'</div>'; }
   function semDataCard(p){
@@ -285,10 +328,10 @@ details.box[open] summary{margin-bottom:10px}
       '<div class="tel">Data de vigência: <input type="date" data-base aria-label="Data de vigência de '+esc(p.cliente)+'"><button class="btn primary" type="button" data-act="base">Salvar data</button></div><p class="note">Com a vigência, a Central agenda os lembretes deste cliente.</p></article>';
   }
   function remCard(p,s,isToday){
-    var lt=diff(s.due,today), txt=S.drafts[p._id+s.k]!=null?S.drafts[p._id+s.k]:msgFor(p,s.k), w=fone(p.telefone);
+    var lt=diff(s.due,today), txt=S.drafts[p._id+s.k]!=null?S.drafts[p._id+s.k]:(s.nota?"Oi, "+firstName(p.cliente)+"! Vi sua avaliação e quero entender o que posso melhorar no seu atendimento. Podemos conversar rapidinho?":msgFor(p,s.tpl||s.k,s)), w=fone(p.telefone);
     var h='<article class="card'+(isToday&&lt>0?" late":"")+'" data-id="'+esc(p._id)+'" data-k="'+s.k+'">'+
       '<div class="top"><div style="min-width:0"><div class="nm">'+esc(p.cliente)+'</div><div class="meta"><span>vigência '+br(base(p))+'</span><span>'+esc(p.produto||"")+'</span><span>'+(p.vidas||0)+' vida'+(p.vidas==1?"":"s")+'</span></div></div>'+
-      '<div class="actions"><span class="chip '+(s.ind?"d7":"d2")+'">'+esc(s.l)+'</span>'+(lt>0?'<span class="chip w">atrasado '+lt+' dia'+(lt>1?"s":"")+'</span>':lt===0?'<span class="chip p">hoje</span>':'<span class="chip p">'+br(s.due)+' · em '+(-lt)+' dia'+(lt===-1?"":"s")+'</span>')+'</div></div>'+telLine(p);
+      '<div class="actions"><span class="chip '+(s.nota?"w":s.ind?"d7":"d2")+'">'+esc(s.l)+'</span>'+(lt>0?'<span class="chip w">atrasado '+lt+' dia'+(lt>1?"s":"")+'</span>':lt===0?'<span class="chip p">hoje</span>':'<span class="chip p">'+br(s.due)+' · em '+(-lt)+' dia'+(lt===-1?"":"s")+'</span>')+'</div></div>'+telLine(p)+(s.nota&&s.nota.comentario?'<p class="note">“'+esc(s.nota.comentario)+'”</p>':'');
     if(isToday){
       h+='<textarea class="msg" aria-label="Mensagem">'+esc(txt)+'</textarea>'+
         '<div class="actions"><button class="btn" type="button" data-act="copy">Copiar mensagem</button><a class="btn" data-act="wa" target="_blank" rel="noopener" href="https://wa.me/'+w+'?text='+encodeURIComponent(txt)+'">Abrir WhatsApp ↗</a>'+
@@ -325,6 +368,7 @@ details.box[open] summary{margin-bottom:10px}
   $("tabs").addEventListener("click",function(e){ var b=e.target.closest("[data-t]"); if(!b) return; S.tab=b.getAttribute("data-t"); render(); });
   $("list").addEventListener("input",function(e){ var t=e.target.closest(".msg"); if(!t) return; var c=t.closest("[data-id]"); S.drafts[c.getAttribute("data-id")+c.getAttribute("data-k")]=t.value; var a=c.querySelector('[data-act="wa"]'); if(a) a.href=a.href.split("?")[0]+"?text="+encodeURIComponent(t.value); });
   $("list").addEventListener("click",function(e){
+    var cl=e.target.closest("[data-copylink]"); if(cl){ try{navigator.clipboard.writeText(cl.getAttribute("data-copylink")).then(function(){cl.textContent="Copiado ✓"})}catch(er){} return; }
     var g=e.target.closest("[data-go]"); if(g){ try{parent.postMessage({type:"central:go",tab:g.getAttribute("data-go")},location.origin)}catch(er){} return; }
     var b=e.target.closest("[data-act]"); if(!b) return; var c=b.closest("[data-id]"); if(!c) return;
     var id=c.getAttribute("data-id"), k=c.getAttribute("data-k"), p=S.p.filter(function(x){return x._id===id})[0]; if(!p) return;
@@ -348,8 +392,10 @@ details.box[open] summary{margin-bottom:10px}
       return;
     }
   });
-  function fillTpl(){ $("tplBox").innerHTML=PASSOS.map(function(s){return '<label>'+esc(s.l)+'<textarea data-tk="'+s.k+'">'+esc(S.tpl[s.k]||DEF[s.k])+'</textarea></label>'}).join(""); }
-  $("saveTpl").onclick=function(){ if(!S.db) return; var o={}; document.querySelectorAll("[data-tk]").forEach(function(t){o[t.getAttribute("data-tk")]=t.value}); S.tpl=o; $("tplMsg").textContent="Salvando…"; S.db.collection("config").doc("posvenda").set(o).then(function(){$("tplMsg").textContent="Mensagens salvas."; S.drafts={}; render();},function(){$("tplMsg").textContent="Não consegui salvar.";}); };
+  function fillTpl(){ $("tplBox").innerHTML=PASSOS.concat(EXTRA_TPL).map(function(s){return '<label>'+esc(s.l)+'<textarea data-tk="'+s.k+'">'+esc(S.tpl[s.k]||DEF[s.k])+'</textarea></label>'}).join(""); fillRj(); }
+  function fillRj(){ var ops={}; clientes().forEach(function(p){ if(p.administradora) ops[p.administradora]=1; }); var ks=Object.keys(ops).sort();
+    $("rjBox").innerHTML=ks.length?ks.map(function(a){ var v=mesRj({administradora:a}); return '<label>'+esc(a)+'<select data-rj="'+esc(a)+'"><option value="0"'+(v?"":" selected")+'>Aniversário do contrato</option>'+MESES.map(function(n,i){return '<option value="'+(i+1)+'"'+(v===i+1?" selected":"")+'>'+n.charAt(0).toUpperCase()+n.slice(1)+'</option>'}).join("")+'</select></label>'; }).join(""):'<p class="note">Os contratos implantados aparecem aqui.</p>'; }
+  $("saveTpl").onclick=function(){ if(!S.db) return; var o={}; document.querySelectorAll("[data-tk]").forEach(function(t){o[t.getAttribute("data-tk")]=t.value}); var rj={}; document.querySelectorAll("[data-rj]").forEach(function(t){rj[t.getAttribute("data-rj")]=+t.value}); o.reajuste=rj; S.rj=rj; S.tpl=Object.assign({},DEF,o); $("tplMsg").textContent="Salvando…"; S.db.collection("config").doc("posvenda").set(o).then(function(){$("tplMsg").textContent="Mensagens salvas."; S.drafts={}; render();},function(){$("tplMsg").textContent="Não consegui salvar.";}); };
   $("resetTpl").onclick=function(){ document.querySelectorAll("[data-tk]").forEach(function(t){t.value=DEF[t.getAttribute("data-tk")]}); $("tplMsg").textContent="Toque em Salvar mensagens para usar o texto original."; };
   fillTpl(); render();
   if(window.CMES){ CMES.strip($("mesStrip")); CMES.on(function(){ render(); }); }
@@ -359,10 +405,11 @@ details.box[open] summary{margin-bottom:10px}
   cl.use("db").then(function(db){
     if(!db){ clearTimeout(timer); $("list").innerHTML='<div class="empty">Entre na Central com seu e-mail e senha para ver o pós-venda.</div>'; return; }
     S.db=db; prepBV(db);
-    db.collection("propostas").onSnapshot(function(s){ S.loaded=true; clearTimeout(timer); S.p=s.docs.map(function(d){var o=Object.assign({},d.data());o._id=d.id;return o}); render(); },function(){ clearTimeout(timer); $("list").innerHTML='<div class="empty">Não consegui ler os contratos.</div>'; });
+    db.collection("propostas").onSnapshot(function(s){ S.loaded=true; clearTimeout(timer); S.p=s.docs.map(function(d){var o=Object.assign({},d.data());o._id=d.id;return o}); render(); fillRj(); },function(){ clearTimeout(timer); $("list").innerHTML='<div class="empty">Não consegui ler os contratos.</div>'; });
     db.collection("posvenda").onSnapshot(function(s){ var m={}; s.docs.forEach(function(d){ m[d.id]=Object.assign({},d.data()); }); S.pv=m; render(); },function(){});
     db.collection("leads").where("origem","==","Indicação").onSnapshot(function(s){ S.leads=s.docs.map(function(d){var o=Object.assign({},d.data());o._id=d.id;return o}); render(); },function(){});
-    db.collection("config").doc("posvenda").onSnapshot(function(d){ var v=d&&d.exists&&d.data(); if(v&&v.bv&&/\[Seu nome\]/.test(v.bv)){ v=Object.assign({},v); delete v.bv; } if(v){ S.tpl=Object.assign({},DEF,v); fillTpl(); render(); } },function(){});
+    db.collection("config").doc("posvenda").onSnapshot(function(d){ var v=d&&d.exists&&d.data(); if(v){ v=Object.assign({},v); if(v.bv&&/\[Seu nome\]/.test(v.bv)) delete v.bv; if(v.d30===OLD_D30) delete v.d30; if(v.d90===OLD_D90) delete v.d90; S.rj=v.reajuste||{}; delete v.reajuste; S.tpl=Object.assign({},DEF,v); fillTpl(); render(); } },function(){});
+    db.collection("pesquisas").onSnapshot(function(s){ S.pesq=s.docs.map(function(d){var o=Object.assign({},d.data());o._id=d.id;return o}); render(); },function(){});
   });
 })();
 </script>
