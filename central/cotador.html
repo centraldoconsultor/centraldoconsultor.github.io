@@ -505,7 +505,7 @@ for(const g of ["g1t","g1p","g2t","g2p"]){
   P("blz","blz:"+g,"ad","Bluzz Executivo","A",10,t.exA,"blzExec",cp,ab);
 }
 // ---- Bluzz · Empresarial ----
-P("blz","blz:em","em","Bluzz Ambulatorial","AMB",3,[118.86,160.46,160.46],"blzAmb",CP.blzT,"Espírito Santo",{nota:"Valor para Sindicomerciários, Sintrafarma, Sintracodives, Sintracarnes, Sindepres e ACE-BSI. Outros sindicatos têm valor próprio."});
+P("blz","blz:em","em","Bluzz Ambulatorial","AMB",3,[118.86,160.45,160.45],"blzAmb",CP.blzT,"Espírito Santo",{nota:"Valor para Sindicomerciários, Sintrafarma, Sintracodives, Sintracarnes, Sindepres e ACE-BSI. Outros sindicatos têm valor próprio."});
 P("blz","blz:em","em","Bluzz Care","E",3,[189.69,462.93,1129.49],"blzCare",CP.blzT,"Espírito Santo");
 P("blz","blz:em","em","Bluzz Care Plus","E",3,[203.48,496.53,1211.56],"blzCarePlus",CP.blzT,"Espírito Santo");
 P("blz","blz:em","em","Bluzz Care Plus","A",3,[264.53,645.48,1575.03],"blzCarePlus",CP.blzT,"Espírito Santo");
@@ -524,8 +524,8 @@ P("mer","mer:ad","ad","Meridional Master","A",10,[297.44,333.14,373.11,432.81,51
 P("mer","mer:ad","ad","Meridional Prime","E",10,[266.83,298.85,334.71,388.26,458.15,540.61,670.36,871.47,1150.34,1587.47],"merPrime",CP.mer,"Espírito Santo");
 P("mer","mer:ad","ad","Meridional Prime","A",10,[350.45,392.50,439.60,509.94,601.73,710.04,880.45,1144.59,1510.86,2084.98],"merPrime",CP.mer,"Espírito Santo");
 // ---- Meridional · Empresarial ----
-[["mer:comp",[118.86,160.46,160.46],[167.95,404.75,971.41],[198.04,477.29,1145.49],[252.97,609.65,1463.17],[249.62,601.59,1443.82],[327.86,790.13,1896.32]],
- ["mer:liv",[142.64,192.55,192.55],[201.54,485.70,1165.69],[237.65,572.74,1374.59],[303.56,731.58,1755.80],[299.55,721.91,1732.59],[393.43,948.16,2275.59]]
+[["mer:comp",[118.86,160.45,160.45],[167.95,404.75,971.41],[198.04,477.29,1145.49],[252.97,609.65,1463.17],[249.62,601.59,1443.82],[327.86,790.13,1896.32]],
+ ["mer:liv",[118.86,160.45,160.45],[201.54,485.70,1165.69],[237.65,572.74,1374.59],[303.56,731.58,1755.80],[299.55,721.91,1732.59],[393.43,948.16,2275.59]]
 ].forEach(([g,amb,li,mE,mA,pE,pA])=>{
   P("mer",g,"em","Meridional Ambulatorial","AMB",3,amb,"merLight",CP.mer,"Espírito Santo");
   P("mer",g,"em","Meridional Light","E",3,li,"merLight",CP.mer,"Espírito Santo");
@@ -666,8 +666,8 @@ const NSA_MUN=["Vitória","Vila Velha","Cariacica","Serra","Guarapari","São Mat
 
 // ---- Meridional via Meridian ----
 const MDN_EM={
-  gv:{amb:[[128.36,173.29,173.29],[154.05,207.95,207.95]],li:[[183.09,441.25,1059.00],[219.71,529.50,1270.80]],mE:[[215.90,520.32,1248.78],[259.08,624.39,1498.53]],mA:[[275.78,664.63,1595.10],[330.93,797.55,1914.12]],pE:[[269.77,650.15,1560.36],[323.73,780.18,1872.43]],pA:[[354.32,853.91,2049.38],[425.18,1024.69,2459.26]]},
-  n:{amb:[[128.36,173.29,173.29],[154.05,207.95,207.95]],li:[[201.40,485.37,1164.90],[241.68,582.45,1397.88]],mE:[[237.49,572.36,1373.66],[284.99,686.83,1648.39]],mA:[[303.36,731.09,1754.61],[364.03,877.31,2105.53]],pE:[[296.75,715.16,1716.39],[356.10,858.20,2059.67]],pA:[[389.75,939.30,2254.32],[467.70,1127.16,2705.18]]}
+  gv:{amb:[[118.86,160.45,160.45],[118.86,160.45,160.45]],li:[[183.09,441.25,1059.00],[219.71,529.50,1270.80]],mE:[[215.90,520.32,1248.78],[259.08,624.39,1498.53]],mA:[[275.78,664.63,1595.10],[330.93,797.55,1914.12]],pE:[[269.77,650.15,1560.36],[323.73,780.18,1872.43]],pA:[[354.32,853.91,2049.38],[425.18,1024.69,2459.26]]},
+  n:{amb:[[118.86,160.45,160.45],[118.86,160.45,160.45]],li:[[201.40,485.37,1164.90],[241.68,582.45,1397.88]],mE:[[237.49,572.36,1373.66],[284.99,686.83,1648.39]],mA:[[303.36,731.09,1754.61],[364.03,877.31,2105.53]],pE:[[296.75,715.16,1716.39],[356.10,858.20,2059.67]],pA:[[389.75,939.30,2254.32],[467.70,1127.16,2705.18]]}
 };
 for(const [reg,lbl] of [["gv","Grande Vitória"],["n","Norte do ES"]]) for(const [ci,cg] of [[0,"c"],[1,"l"]]){
   const g="mdn:"+reg+cg, t=MDN_EM[reg];
@@ -769,8 +769,8 @@ for(const g of ["g1","g2","g3p","g4p"]){
   const par=g.endsWith("p");
   EZ_PROD.forEach(([nm,ac,rede],i)=>P("ezb","ezb:"+g,"ad",nm,ac,10,EZ[g][i],rede,par?CP.ezbP:CP.ezbT,EZ_AB,Object.assign({mun:EZ_MUN},(g==="g3p"&&i===0)?{nota:"Atenção: no informe, a faixa de 34 a 38 anos deste plano aparece como R$ 691,28. Confirme com a administradora."}:{})));
 }
-P("ezb","ezb:emt","em","Bluzz Ambulatorial","AMB",3,[118.87,160.47,160.47],"blzAmb","Sem coparticipação.",EZ_AB,{mun:EZ_MUN});
-P("ezb","ezb:emp","em","Bluzz Ambulatorial","AMB",3,[118.87,160.47,160.47],"blzAmb","Sem coparticipação.",EZ_AB,{mun:EZ_MUN});
+P("ezb","ezb:emt","em","Bluzz Ambulatorial","AMB",3,[118.86,160.45,160.45],"blzAmb","Sem coparticipação.",EZ_AB,{mun:EZ_MUN});
+P("ezb","ezb:emp","em","Bluzz Ambulatorial","AMB",3,[118.86,160.45,160.45],"blzAmb","Sem coparticipação.",EZ_AB,{mun:EZ_MUN});
 [["emp",[[243.48,594.22,1449.82],[254.93,622.05,1517.85],[331.40,808.67,1973.19],[281.86,687.83,1678.27],[366.41,894.19,2181.75]],CP.ezbP],
  ["emt",[[204.87,499.96,1219.85],[219.76,536.25,1308.48],[285.69,697.12,1701.03],[242.98,592.96,1446.78],[315.88,770.85,1880.82]],CP.ezbT]
 ].forEach(([g,t,cp])=>EZ_PROD.forEach(([nm,ac,rede],i)=>P("ezb","ezb:"+g,"em",nm,ac,3,t[i],rede,cp,EZ_AB,{mun:EZ_MUN})));
@@ -821,7 +821,7 @@ P("bvs","bvs:em","em","SBS Nacional Empresarial","E",10,[333.83,381.22,435.54,49
 P("bvs","bvs:em","em","SBS Nacional Empresarial","A",10,[430.36,492.24,563.16,644.98,739.03,854.41,1030.10,1333.80,1794.39,2487.25],"athPremium",CP.nacional,"Todo o território nacional (rede GAMA fora do ES)",{nota:"Valor inclui o odonto Samp Odonto Pleno."});
 // Bluzz via Unity (mesmos valores da Egrégora)
 const UNB_AB="Grande Vitória, norte, região serrana e sul do ES";
-P("unb","unb:emt","em","Bluzz Ambulatorial","AMB",3,[118.86,160.46,160.46],"blzAmb","Sem coparticipação.",UNB_AB);
+P("unb","unb:emt","em","Bluzz Ambulatorial","AMB",3,[118.86,160.45,160.45],"blzAmb","Sem coparticipação.",UNB_AB);
 [["unb:emt",CP.blzT,[["Bluzz Care","E",[189.69,462.93,1129.49],"blzCare"],["Bluzz Care Plus","E",[203.48,496.53,1211.56],"blzCarePlus"],["Bluzz Care Plus","A",[264.53,645.48,1575.03],"blzCarePlus"],["Bluzz Executivo","E",[224.98,549.04,1339.61],"blzExec"],["Bluzz Executivo","A",[292.48,713.75,1741.50],"blzExec"]]],
  ["unb:emp",CP.blzP,[["Bluzz Care","E",[225.45,550.20,1342.42],"blzCare"],["Bluzz Care Plus","E",[236.05,575.97,1405.41],"blzCarePlus"],["Bluzz Care Plus","A",[306.85,748.77,1827.03],"blzCarePlus"],["Bluzz Executivo","E",[260.99,636.88,1553.95],"blzExec"],["Bluzz Executivo","A",[339.27,827.95,2020.14],"blzExec"]]]
 ].forEach(([g,cp,rows])=>rows.forEach(([nm,ac,p,rede])=>P("unb",g,"em",nm,ac,3,p,rede,cp,UNB_AB)));
